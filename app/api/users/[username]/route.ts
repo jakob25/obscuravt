@@ -1,63 +1,43 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { supabaseAdmin } from '@/lib/supabase'
-import { DAILY_BONUS } from '@/lib/db-constants'
+import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@supabase/supabase-js';
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
 
 export async function GET(
   _req: NextRequest,
-  { params }: { params: { username: string } }
+  { params }: { params: Promise<{ username: string }> }
 ) {
-  const { data: user } = await supabaseAdmin
-    .from('users')
-    .select('username,coins,role,bio,joined_at,total_won,total_lost,bets_placed,bets_correct,biggest_win,biggest_loss,last_bonus,favorite_vtubers')
-    .eq('username', params.username)
-    .single()
+  const { username } = await params;
 
-  if (!user) return NextResponse.json({ error: 'User not found.' }, { status: 404 })
-  return NextResponse.json(user)
-}
+  try {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select(`
+        username,
+        display_name,
+        avatar_url,
+        bio,
+        lore,
+        coins,
+        role,
+        joined_at,
+        is_vtuber,
+        is_worker_vtuber,
+        favorite_vtubers
+      `)
+      .eq('username', username)
+      .single();
 
-export async function PATCH(
-  req: NextRequest,
-  { params }: { params: { username: string } }
-) {
-  const body = await req.json()
-  const allowed = ['bio', 'role', 'favorite_vtubers']
-  const update: Record<string, unknown> = {}
-  for (const key of allowed) {
-    if (key in body) update[key] = body[key]
-  }
-
-  // Daily bonus claim
-  if (body.claim_daily) {
-    const { data: user } = await supabaseAdmin
-      .from('users')
-      .select('coins,last_bonus')
-      .eq('username', params.username)
-      .single()
-
-    if (!user) return NextResponse.json({ error: 'User not found.' }, { status: 404 })
-
-    const now = new Date()
-    if (user.last_bonus) {
-      const last = new Date(user.last_bonus)
-      const diffHours = (now.getTime() - last.getTime()) / 3_600_000
-      if (diffHours < 20) {
-        const rem = 20 - diffHours
-        const h = Math.floor(rem)
-        const m = Math.floor((rem - h) * 60)
-        return NextResponse.json({ error: `Already claimed. Next bonus in ${h}h ${m}m.` }, { status: 429 })
-      }
+    if (error || !data) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    update.coins = user.coins + DAILY_BONUS
-    update.last_bonus = now.toISOString()
+    return NextResponse.json(data);
+  } catch (err) {
+    console.error(err);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
-
-  const { error } = await supabaseAdmin
-    .from('users')
-    .update(update)
-    .eq('username', params.username)
-
-  if (error) return NextResponse.json({ error: 'Update failed.' }, { status: 500 })
-  return NextResponse.json({ ok: true })
 }
