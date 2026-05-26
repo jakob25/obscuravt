@@ -2,7 +2,6 @@
 
 import { Suspense } from 'react'
 import { StarMap } from '@/components/common/star-map'
-import { vtubers, constellations } from '@/lib/mock-data'
 
 export default function DiscoverPage() {
   return (
@@ -15,7 +14,7 @@ export default function DiscoverPage() {
       </div>
       <div className="flex-1">
         <Suspense fallback={<div className="flex items-center justify-center h-96 text-muted-foreground">Loading star map…</div>}>
-          <StarMap vtubers={vtubers} constellations={constellations} />
+          <StarMap />
         </Suspense>
       </div>
     </div>
