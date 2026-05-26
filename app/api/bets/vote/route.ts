@@ -13,9 +13,9 @@ async function resolveBet(betId: string) {
   if (!votes?.length) return false
 
   const counts: Record<string, number> = {}
-  for (const v of votes) counts[v.option] = (counts[v.option] ?? 0) + 1
+  for (const v of votes as any[]) counts[v.option] = (counts[v.option] ?? 0) + 1
   const totalVotes = votes.length
-  const winner = Object.entries(counts).sort((a, b) => b[1] - a[1])[0][0]
+  const winner = Object.entries(counts).sort((a: [string, number], b: [string, number]) => b[1] - a[1])[0][0]
 
   if (counts[winner] <= totalVotes / 2 && totalVotes < MIN_VOTES) return false
 
@@ -24,7 +24,7 @@ async function resolveBet(betId: string) {
   const winners = (entries ?? []).filter((e: { option: string }) => e.option === winner)
   const winnerStake = winners.reduce((s: number, e: { amount: number }) => s + e.amount, 0)
 
-  for (const e of winners) {
+  for (const e of winners as any[]) {
     const share = winnerStake > 0 ? Math.floor(distributable * e.amount / winnerStake) : 0
     const { data: user } = await supabaseAdmin.from('users').select('*').eq('username', e.username).single()
     if (user) {
@@ -37,7 +37,7 @@ async function resolveBet(betId: string) {
     }
   }
 
-  for (const e of (entries ?? []).filter((e: { option: string }) => e.option !== winner)) {
+  for (const e of (entries ?? []).filter((e: { option: string }) => e.option !== winner) as any[]) {
     const { data: user } = await supabaseAdmin.from('users').select('*').eq('username', e.username).single()
     if (user) {
       await supabaseAdmin.from('users').update({

@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
 
   const dupes = (existing ?? []).filter((b: { title: string }) => {
     const bWords = new Set(b.title.toLowerCase().split(/\s+/).filter((w: string) => !stopWords.has(w)))
-    const overlap = [...titleWords].filter(w => bWords.has(w))
+    const overlap = [...titleWords].filter((w: string) => bWords.has(w))
     return overlap.length >= 3
   })
 

@@ -20,10 +20,10 @@ export async function GET(req: NextRequest) {
       .from('users')
       .select('username,bets_placed,bets_correct')
       .gte('bets_placed', 3)
-    const rows = (data ?? []).map(r => ({
+    const rows = (data ?? []).map((r: { username: string; bets_placed: number; bets_correct: number }) => ({
       ...r,
       pct: r.bets_placed > 0 ? r.bets_correct / r.bets_placed : 0,
-    })).sort((a, b) => b.pct - a.pct).slice(0, limit)
+    })).sort((a: any, b: any) => b.pct - a.pct).slice(0, limit)
     return NextResponse.json(rows)
   }
 
