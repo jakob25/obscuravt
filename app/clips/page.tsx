@@ -52,8 +52,7 @@ export default function ClipsPage() {
 
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {filtered.map(clip => {
-          const vtuber = getVTuberById(clip.vtuberId)
-          return <ClipCard key={clip.id} clip={clip} vtuber={vtuber} />
+          return <ClipCard key={clip.id} clip={clip} />
         })}
       </div>
     </div>
