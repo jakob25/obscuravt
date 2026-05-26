@@ -1,13 +1,14 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import type { ReactNode } from 'react'
 import { useAuth } from '@/lib/auth-context'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { User, Gift, TrendingUp, Trophy, LogOut } from 'lucide-react'
 import { ROLES } from '@/lib/db-constants'
 
-export default function MyProfilePage() {
+export default function MyProfilePage(): ReactNode {
   const { user, logout, refreshUser } = useAuth()
   const router = useRouter()
   const [profile, setProfile] = useState<Record<string, unknown> | null>(null)
