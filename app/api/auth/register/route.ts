@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabaseAdmin } from '@/lib/supabase'
 import { STARTING_COINS } from '@/lib/db-constants'
 import bcrypt from 'bcryptjs'
 
 export async function POST(req: NextRequest) {
+  const { supabaseAdmin } = await import('@/lib/supabase')
+
   const { username, password } = await req.json()
 
   if (!username || !password)

@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabaseAdmin } from '@/lib/supabase'
 import { randomUUID } from 'crypto'
 
 export async function POST(req: NextRequest) {
+  const { supabaseAdmin } = await import('@/lib/supabase')
+
   const { username, item_id } = await req.json()
 
   const { data: item } = await supabaseAdmin
