@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabaseAdmin } from '@/lib/supabase'
 import { randomUUID } from 'crypto'
 import { MIN_VOTES, HOUSE_CUT } from '@/lib/db-constants'
 
 async function resolveBet(betId: string) {
+  const { supabaseAdmin } = await import('@/lib/supabase')
+
   const { data: bet } = await supabaseAdmin.from('bets').select('*').eq('id', betId).single()
   if (!bet || !['voting', 'open'].includes(bet.status)) return false
 
@@ -52,6 +53,8 @@ async function resolveBet(betId: string) {
 }
 
 export async function POST(req: NextRequest) {
+  const { supabaseAdmin } = await import('@/lib/supabase')
+
   const { bet_id, username, option } = await req.json()
 
   if (!bet_id || !username || !option)

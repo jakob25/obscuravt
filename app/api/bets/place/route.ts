@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabaseAdmin } from '@/lib/supabase'
 import { randomUUID } from 'crypto'
 
 export async function POST(req: NextRequest) {
+  const { supabaseAdmin } = await import('@/lib/supabase')
+
   const { bet_id, username, option, amount } = await req.json()
 
   if (!bet_id || !username || !option || !amount)

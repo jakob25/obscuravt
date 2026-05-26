@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabaseAdmin } from '@/lib/supabase'
 import { randomUUID } from 'crypto'
 
 export async function GET(req: NextRequest) {
+  const { supabaseAdmin } = await import('@/lib/supabase')
+
   const { searchParams } = new URL(req.url)
   const status = searchParams.get('status')
 
@@ -15,6 +16,8 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  const { supabaseAdmin } = await import('@/lib/supabase')
+
   const body = await req.json()
   const { vtuber_name, stream_link, game_or_activity, title, description, options, category, created_by } = body
 
