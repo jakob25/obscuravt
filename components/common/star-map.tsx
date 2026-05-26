@@ -33,7 +33,7 @@ export function StarMap({ onVTuberSelect, onConstellationSelect, initialConstell
   const [hoveredStar, setHoveredStar] = useState<StarPosition | null>(null)
   const [hoveredConstellation, setHoveredConstellation] = useState<Constellation | null>(null)
   const [starPositions, setStarPositions] = useState<StarPosition[]>([])
-  const animationRef = useRef<number>()
+  const animationRef = useRef<number | null>(null)
   const mousePos = useRef({ x: 0, y: 0 })
 
   // Generate star positions based on constellations
@@ -199,144 +199,54 @@ export function StarMap({ onVTuberSelect, onConstellationSelect, initialConstell
         ctx.arc(x, y, size, 0, Math.PI * 2)
         ctx.fill()
       }
-      ctx.globalAlpha = 1
 
-      const showConstellationLabels = transform.k < ZOOM_THRESHOLD
-      const showIndividualStars = transform.k >= ZOOM_THRESHOLD
-
-      // Draw constellation connections (subtle lines between stars)
-      if (showIndividualStars) {
-        constellations.forEach(constellation => {
-          const clusterStars = starPositions.filter(
-            s => s.vtuber.category === constellation.id
-          )
-          
-          if (clusterStars.length > 1) {
-            ctx.strokeStyle = `${constellation.color}20`
-            ctx.lineWidth = 1 / transform.k
-            ctx.beginPath()
-            
-            // Connect stars in sequence
-            clusterStars.forEach((star, i) => {
-              if (i === 0) {
-                ctx.moveTo(star.x, star.y)
-              } else {
-                ctx.lineTo(star.x, star.y)
-              }
-            })
-            ctx.stroke()
-          }
-        })
-      }
-
-      // Draw constellation labels (when zoomed out)
-      if (showConstellationLabels) {
-        constellations.forEach(constellation => {
+      // Draw constellation centers and labels (when zoomed out)
+      if (transform.k < ZOOM_THRESHOLD) {
+        constellations.forEach((constellation) => {
           const centerX = (constellation.position.x / 1000) * 1000
           const centerY = (constellation.position.y / 600) * 800
-          const isHovered = hoveredConstellation?.id === constellation.id
 
-          // Constellation glow
-          const glowGradient = ctx.createRadialGradient(
-            centerX, centerY, 0,
-            centerX, centerY, isHovered ? 100 : 80
-          )
-          glowGradient.addColorStop(0, `${constellation.color}40`)
-          glowGradient.addColorStop(0.5, `${constellation.color}15`)
-          glowGradient.addColorStop(1, 'transparent')
-          ctx.fillStyle = glowGradient
+          ctx.fillStyle = constellation.color
           ctx.beginPath()
-          ctx.arc(centerX, centerY, isHovered ? 100 : 80, 0, Math.PI * 2)
+          ctx.arc(centerX, centerY, 8, 0, Math.PI * 2)
           ctx.fill()
 
-          // Constellation name
-          ctx.font = `${isHovered ? 'bold ' : ''}${16 / transform.k}px "Space Grotesk", sans-serif`
-          ctx.fillStyle = isHovered ? constellation.color : '#f5f0e6'
+          ctx.fillStyle = 'rgba(212, 165, 116, 0.9)'
+          ctx.font = 'bold 14px Space Grotesk, sans-serif'
           ctx.textAlign = 'center'
-          ctx.textBaseline = 'middle'
-          ctx.fillText(constellation.name, centerX, centerY)
-
-          // Star count
-          const count = getVTubersByConstellation(constellation.id).length
-          ctx.font = `${10 / transform.k}px "Space Grotesk", sans-serif`
-          ctx.fillStyle = '#888'
-          ctx.fillText(`${count} creators`, centerX, centerY + 20 / transform.k)
+          ctx.fillText(constellation.name, centerX, centerY - 20)
         })
       }
 
       // Draw individual stars (when zoomed in)
-      if (showIndividualStars) {
-        starPositions.forEach(star => {
-          const isHovered = hoveredStar?.vtuber.id === star.vtuber.id
-          const constellation = constellations.find(c => c.id === star.vtuber.category)
-          const color = constellation?.color || '#d4a574'
-          
-          // Gentle floating animation
-          const floatX = Math.sin(time + star.baseX * 0.01) * 2
-          const floatY = Math.cos(time * 1.3 + star.baseY * 0.01) * 2
-          const x = star.x + floatX
-          const y = star.y + floatY
-
-          // Star glow
-          if (isHovered) {
-            const glowGradient = ctx.createRadialGradient(x, y, 0, x, y, 30)
-            glowGradient.addColorStop(0, `${color}80`)
-            glowGradient.addColorStop(0.5, `${color}30`)
-            glowGradient.addColorStop(1, 'transparent')
-            ctx.fillStyle = glowGradient
-            ctx.beginPath()
-            ctx.arc(x, y, 30, 0, Math.PI * 2)
-            ctx.fill()
-          }
-
-          // Star core
-          const coreGradient = ctx.createRadialGradient(x, y, 0, x, y, isHovered ? 12 : 8)
-          coreGradient.addColorStop(0, '#ffffff')
-          coreGradient.addColorStop(0.3, color)
-          coreGradient.addColorStop(1, `${color}00`)
-          ctx.fillStyle = coreGradient
+      if (transform.k >= ZOOM_THRESHOLD) {
+        starPositions.forEach((star) => {
+          const alpha = 0.7 + Math.sin(time * 3 + star.x) * 0.3
+          ctx.fillStyle = `rgba(212, 165, 116, ${alpha})`
           ctx.beginPath()
-          ctx.arc(x, y, isHovered ? 12 : 8, 0, Math.PI * 2)
+          ctx.arc(star.x, star.y, 3.5, 0, Math.PI * 2)
           ctx.fill()
 
-          // Draw avatar as star (only when quite zoomed in)
-          if (transform.k >= 2) {
-            const img = new Image()
-            img.crossOrigin = 'anonymous'
-            img.src = star.vtuber.avatarUrl
-            
-            ctx.save()
-            ctx.beginPath()
-            ctx.arc(x, y, isHovered ? 15 : 10, 0, Math.PI * 2)
-            ctx.clip()
-            
-            // Draw avatar if loaded
-            try {
-              ctx.drawImage(img, x - (isHovered ? 15 : 10), y - (isHovered ? 15 : 10), isHovered ? 30 : 20, isHovered ? 30 : 20)
-            } catch {
-              // Fallback to colored circle
-              ctx.fillStyle = color
-              ctx.fill()
-            }
-            ctx.restore()
-
-            // Border
-            ctx.strokeStyle = isHovered ? '#d4a574' : `${color}80`
-            ctx.lineWidth = isHovered ? 2 : 1
-            ctx.beginPath()
-            ctx.arc(x, y, isHovered ? 15 : 10, 0, Math.PI * 2)
-            ctx.stroke()
-          }
-
-          // Star name (when hovered or very zoomed in)
-          if (isHovered || transform.k >= 3) {
-            ctx.font = `${isHovered ? 'bold ' : ''}${12 / transform.k}px "Space Grotesk", sans-serif`
-            ctx.fillStyle = isHovered ? '#d4a574' : '#f5f0e6'
-            ctx.textAlign = 'center'
-            ctx.textBaseline = 'top'
-            ctx.fillText(star.vtuber.name, x, y + (transform.k >= 2 ? 18 : 12))
-          }
+          // Glow effect
+          ctx.fillStyle = `rgba(212, 165, 116, ${alpha * 0.3})`
+          ctx.beginPath()
+          ctx.arc(star.x, star.y, 6, 0, Math.PI * 2)
+          ctx.fill()
         })
+      }
+
+      // Draw tooltip for hovered star
+      if (hoveredStar && transform.k >= ZOOM_THRESHOLD) {
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.8)'
+        ctx.fillRect(hoveredStar.x + 15, hoveredStar.y - 30, 180, 50)
+        
+        ctx.fillStyle = '#f0e8d0'
+        ctx.font = 'bold 13px Space Grotesk, sans-serif'
+        ctx.fillText(hoveredStar.vtuber.name, hoveredStar.x + 20, hoveredStar.y - 12)
+        
+        ctx.fillStyle = '#8b7355'
+        ctx.font = '12px Space Grotesk, sans-serif'
+        ctx.fillText('Click to view profile', hoveredStar.x + 20, hoveredStar.y + 5)
       }
 
       ctx.restore()
@@ -344,7 +254,7 @@ export function StarMap({ onVTuberSelect, onConstellationSelect, initialConstell
       animationRef.current = requestAnimationFrame(render)
     }
 
-    render()
+    animationRef.current = requestAnimationFrame(render)
 
     return () => {
       if (animationRef.current) {
