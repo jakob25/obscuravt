@@ -5,12 +5,12 @@ import { useAuth } from '@/lib/auth-context'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { User, Gift, TrendingUp, Trophy, LogOut } from 'lucide-react'
-import { ROLES } from '@/lib/db-constants'
+import { ROLES, type UserProfile } from '@/lib/db-constants'
 
 export default function MyProfilePage() {
   const { user, logout, refreshUser } = useAuth()
   const router = useRouter()
-  const [profile, setProfile] = useState<Record<string, unknown> | null>(null)
+  const [profile, setProfile] = useState<UserProfile | null>(null)
   const [dailyMsg, setDailyMsg] = useState('')
   const [claiming, setClaiming] = useState(false)
 
@@ -18,7 +18,7 @@ export default function MyProfilePage() {
     if (!user) { router.push('/'); return }
     fetch(`/api/users/${user.username}`)
       .then(r => r.json())
-      .then(setProfile)
+      .then((data) => setProfile(data as UserProfile))
       .catch(() => setProfile(null))
   }, [user, router])
 
@@ -37,7 +37,7 @@ export default function MyProfilePage() {
       setDailyMsg('+250 V-Coins claimed! 🎉')
       await refreshUser()
       const updated = await fetch(`/api/users/${user.username}`).then(r => r.json())
-      setProfile(updated)
+      setProfile(updated as UserProfile)
     } catch (e) {
       setDailyMsg('Failed to claim bonus. Try again.')
     }
@@ -52,7 +52,7 @@ export default function MyProfilePage() {
         body: JSON.stringify({ role }),
       })
       const updated = await fetch(`/api/users/${user.username}`).then(r => r.json())
-      setProfile(updated)
+      setProfile(updated as UserProfile)
       await refreshUser()
     } catch {}
   }
@@ -70,14 +70,14 @@ export default function MyProfilePage() {
           <div>
             <p className="text-sm text-muted-foreground">V-Coins Balance</p>
             <p className="text-3xl font-bold text-vault-gold">
-              {((profile?.coins as number) ?? user.coins).toLocaleString()}
+              {(profile?.coins ?? user.coins).toLocaleString()}
             </p>
           </div>
           <div className="text-right">
             <p className="text-sm text-muted-foreground">@{user.username}</p>
             {profile?.joined_at && (
               <p className="text-xs text-muted-foreground">
-                Joined {new Date(profile.joined_at as string).toLocaleDateString()}
+                Joined {new Date(profile.joined_at).toLocaleDateString()}
               </p>
             )}
           </div>
@@ -102,12 +102,12 @@ export default function MyProfilePage() {
           </h2>
           <div className="grid grid-cols-2 gap-4">
             {[
-              { label: 'Bets Placed', value: profile.bets_placed as number },
-              { label: 'Correct', value: profile.bets_correct as number },
-              { label: 'Total Won', value: `${((profile.total_won as number) ?? 0).toLocaleString()} 🪙` },
-              { label: 'Total Lost', value: `${((profile.total_lost as number) ?? 0).toLocaleString()} 🪙` },
-              { label: 'Biggest Win', value: `${((profile.biggest_win as number) ?? 0).toLocaleString()} 🪙` },
-              { label: 'Accuracy', value: profile.bets_placed ? `${(((profile.bets_correct as number) / (profile.bets_placed as number)) * 100).toFixed(1)}%` : 'N/A' },
+              { label: 'Bets Placed', value: profile.bets_placed },
+              { label: 'Correct', value: profile.bets_correct },
+              { label: 'Total Won', value: `${(profile.total_won ?? 0).toLocaleString()} 🪙` },
+              { label: 'Total Lost', value: `${(profile.total_lost ?? 0).toLocaleString()} 🪙` },
+              { label: 'Biggest Win', value: `${(profile.biggest_win ?? 0).toLocaleString()} 🪙` },
+              { label: 'Accuracy', value: profile.bets_placed ? `${((profile.bets_correct / profile.bets_placed) * 100).toFixed(1)}%` : 'N/A' },
             ].map(({ label, value }) => (
               <div key={label} className="bg-muted/30 rounded-lg p-3">
                 <p className="text-xs text-muted-foreground">{label}</p>

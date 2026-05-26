@@ -19,7 +19,6 @@ export const CATEGORIES = [
   'Chaos Moment',
   'Other',
 ] as const
-
 export type BetCategory = typeof CATEGORIES[number]
 
 export const ROLES = ['Viewer', 'Streamer', 'Clipper'] as const
@@ -144,4 +143,24 @@ export interface DbVTuberProfile {
   external_links: Array<{ platform: string; url: string }>
   submitted_by: string
   created_at: string
+}
+
+/**
+ * Shape returned by GET /api/users/[username]
+ * (password_hash is deliberately omitted by the API)
+ */
+export interface UserProfile {
+  username: string
+  coins: number
+  role: string | null
+  bio: string
+  joined_at: string
+  last_bonus: string | null
+  total_won: number
+  total_lost: number
+  biggest_win: number
+  biggest_loss: number
+  bets_correct: number
+  bets_placed: number
+  favorite_vtubers: string
 }
