@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabaseAdmin } from '@/lib/supabase'
 
 export async function GET(req: NextRequest) {
+  // Lazy import to avoid evaluating Supabase client at build time
+  // when environment variables may not be present
+  const { supabaseAdmin } = await import('@/lib/supabase')
+
   const { searchParams } = new URL(req.url)
   const username = searchParams.get('username')
 

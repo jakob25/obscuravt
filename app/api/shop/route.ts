@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabaseAdmin } from '@/lib/supabase'
 
 export async function GET(req: NextRequest) {
+  const { supabaseAdmin } = await import('@/lib/supabase')
+
   const { searchParams } = new URL(req.url)
   const username = searchParams.get('username')
 
