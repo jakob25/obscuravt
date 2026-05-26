@@ -241,7 +241,7 @@ export default function HomePage() {
               </div>
               <div className="divide-y divide-border">
                 {activeBets.map((bet) => {
-                  const vtuber = getVTuberById(bet.vtuberId)
+                  const vtuber = bet.vtuberId ? getVTuberById(bet.vtuberId) : null
                   const totalPool = bet.options.reduce((sum, opt) => sum + opt.totalScraps, 0)
                   return (
                     <Link
