@@ -21,7 +21,7 @@ export async function GET(req: NextRequest) {
       .from('users')
       .select('username,bets_placed,bets_correct')
       .gte('bets_placed', 3)
-    const rows = (data ?? []).map(r => ({
+    const rows = ((data ?? []) as any[]).map((r: any) => ({
       ...r,
       pct: r.bets_placed > 0 ? r.bets_correct / r.bets_placed : 0,
     })).sort((a, b) => b.pct - a.pct).slice(0, limit)
