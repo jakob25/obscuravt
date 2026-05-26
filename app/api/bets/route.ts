@@ -29,10 +29,10 @@ export async function POST(req: NextRequest) {
     .ilike('vtuber_name', `%${vtuber_name?.trim() ?? ''}%`)
 
   const stopWords = new Set(['the','a','an','is','will','they','on','of','or','and','in','for','their','this','does'])
-  const titleWords = new Set(title.toLowerCase().split(/\s+/).filter((w: string) => !stopWords.has(w)))
+  const titleWords: Set<string> = new Set(title.toLowerCase().split(/\s+/).filter((w: string) => !stopWords.has(w)))
 
   const dupes = (existing ?? []).filter((b: { title: string }) => {
-    const bWords = new Set(b.title.toLowerCase().split(/\s+/).filter((w: string) => !stopWords.has(w)))
+    const bWords: Set<string> = new Set(b.title.toLowerCase().split(/\s+/).filter((w: string) => !stopWords.has(w)))
     const overlap = [...titleWords].filter((w: string) => bWords.has(w))
     return overlap.length >= 3
   })
