@@ -67,7 +67,7 @@ export default function MyProfilePage(): ReactNode {
           </div>
           <div className="text-right">
             <p className="text-sm text-muted-foreground">@{user.username}</p>
-            {profile?.joined_at && (
+            {profile && 'joined_at' in profile && profile.joined_at && (
               <p className="text-xs text-muted-foreground">
                 Joined {new Date(profile.joined_at as string).toLocaleDateString()}
               </p>
