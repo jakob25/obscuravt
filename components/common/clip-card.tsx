@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import type { Clip } from '@/lib/types'
-import { getVTuberById } from '@/lib/mock-data'
+import { useVTuberById } from '@/hooks/use-data'
 import { getYouTubeEmbedUrl, formatTimestamp } from '@/lib/embed-utils'
 import { VibeTagList } from '@/components/common/vibe-tag'
 import { Play, ThumbsUp, ThumbsDown, Clock, User, ExternalLink } from 'lucide-react'
@@ -15,7 +15,7 @@ interface ClipCardProps {
 
 export function ClipCard({ clip, onPlay }: ClipCardProps) {
   const [isPlaying, setIsPlaying] = useState(false)
-  const vtuber = getVTuberById(clip.vtuberId)
+  const { vtuber } = useVTuberById(clip.vtuberId)
 
   const handlePlay = () => {
     setIsPlaying(true)

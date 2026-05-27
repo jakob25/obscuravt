@@ -1,10 +1,9 @@
 'use client'
 
-import * as React from 'react'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { vibeTags, vtubers } from '@/lib/mock-data'
+import { useVibeTags, useVTubers } from '@/hooks/use-data'
 import { validateClipUrl, extractVideoId, parseTimestamp } from '@/lib/embed-utils'
 import { Plus, X, AlertCircle, CheckCircle, Link as LinkIcon } from 'lucide-react'
 
@@ -26,6 +25,8 @@ export interface ClipSubmission {
 }
 
 export function ClipSubmitForm({ onSubmit, onCancel }: ClipSubmitFormProps) {
+  const { vibeTags } = useVibeTags()
+  const { vtubers } = useVTubers()
   const [url, setUrl] = useState('')
   const [urlError, setUrlError] = useState<string | null>(null)
   const [urlValid, setUrlValid] = useState(false)

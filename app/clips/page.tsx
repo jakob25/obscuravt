@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { clips, getVTuberById } from '@/lib/mock-data'
+import { useClips } from '@/hooks/use-data'
 import { ClipCard } from '@/components/common/clip-card'
 import { ClipSubmitForm } from '@/components/common/clip-submit-form'
 import { Button } from '@/components/ui/button'
@@ -9,6 +9,7 @@ import { Film, Plus } from 'lucide-react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 
 export default function ClipsPage() {
+  const { clips, loading } = useClips()
   const [filter, setFilter] = useState<'all' | 'raw' | 'edited'>('all')
 
   const filtered = filter === 'all' ? clips : clips.filter(c => c.type === filter)
@@ -50,12 +51,23 @@ export default function ClipsPage() {
         ))}
       </div>
 
-      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {filtered.map(clip => {
-          const vtuber = getVTuberById(clip.vtuberId)
-          return <ClipCard key={clip.id} clip={clip} />
-        })}
-      </div>
+      {loading ? (
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {[1,2,3,4,5,6].map(i => (
+            <div key={i} className="vault-card rounded-xl aspect-video animate-pulse bg-muted/30" />
+          ))}
+        </div>
+      ) : filtered.length === 0 ? (
+        <div className="text-center py-20 text-muted-foreground">
+          No clips yet. Be the first to submit one!
+        </div>
+      ) : (
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {filtered.map(clip => (
+            <ClipCard key={clip.id} clip={clip} />
+          ))}
+        </div>
+      )}
     </div>
   )
 }
