@@ -1,1 +1,0 @@
-the full vtuber-id-page content from drop

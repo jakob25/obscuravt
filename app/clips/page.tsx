@@ -1,1 +1,0 @@
-the full clips-page content from drop

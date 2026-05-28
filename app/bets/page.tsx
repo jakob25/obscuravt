@@ -1,1 +1,0 @@
-the full bets-page content from drop
