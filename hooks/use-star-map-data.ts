@@ -42,11 +42,6 @@ function rowToVTuber(row: Record<string, unknown>): VTuber {
     }
   }
 
-  // Handle dual platforms (e.g. "Twitch/YouTube")
-  if (platform.toLowerCase().includes('twitch') && platform.toLowerCase().includes('youtube') && link) {
-    // Already added one, add a generic twitter/website placeholder so profile shows both
-  }
-
   return {
     id: row.id as string,
     name: row.name as string,
@@ -102,12 +97,12 @@ export function useStarMapData(): StarMapData {
         if (vtRes.error) throw vtRes.error
         if (clustRes.error) throw clustRes.error
 
-        const mappedVtubers = (vtRes.data ?? []).map((row) =>
-          rowToVTuber(row as Record<string, unknown>)
+        const mappedVtubers = (vtRes.data ?? []).map((row: Record<string, unknown>) =>
+          rowToVTuber(row)
         )
 
         const mappedConstellations = (clustRes.data ?? [])
-          .map((row) => clusterToConstellation(row as Record<string, unknown>))
+          .map((row: Record<string, unknown>) => clusterToConstellation(row))
           .filter((c): c is Constellation => c !== null)
           // Only include constellations that actually have VTubers
           .filter((c) => mappedVtubers.some((v) => v.category === c.id))
