@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import type { VTuber, Constellation, Clip, Bet, BetOption, VibeTag } from '@/lib/types'
 
-// ── Types matching Supabase rows ──────────────────────────────────────────────
+// ── Types matching Supabase rows ──────────────────────────────────
 
 interface DbVTuber {
   id: string
@@ -53,7 +53,7 @@ interface DbCanonicalTag {
   sort_order: number
 }
 
-// ── Mappers ───────────────────────────────────────────────────────────────────
+// ── Mappers ─────────────────────────────────────────────
 
 export function dbVTuberToType(row: DbVTuber): VTuber {
   const clusterTag = (row.tags ?? []).find((t: string) => t.startsWith('clust_')) ?? 'clust_variety'
@@ -93,7 +93,7 @@ export function dbTagToVibeTag(row: DbCanonicalTag): VibeTag {
   }
 }
 
-// ── Hooks ─────────────────────────────────────────────────────────────────────
+// ── Hooks ────────────────────────────────────────────────────
 
 export function useVTubers() {
   const [vtubers, setVtubers] = useState<VTuber[]>([])
@@ -104,7 +104,7 @@ export function useVTubers() {
       .from('vtubers')
       .select('*')
       .eq('approved', true)
-      .then(({ data }) => {
+      .then(({ data }: { data: DbVTuber[] | null }) => {
         setVtubers((data ?? []).map(r => dbVTuberToType(r as DbVTuber)))
         setLoading(false)
       })
@@ -124,7 +124,7 @@ export function useVTuberById(id: string) {
       .select('*')
       .eq('id', id)
       .single()
-      .then(({ data }) => {
+      .then(({ data }: { data: DbVTuber | null }) => {
         setVtuber(data ? dbVTuberToType(data as DbVTuber) : null)
         setLoading(false)
       })
@@ -143,7 +143,7 @@ export function useVibeTags() {
       .select('*')
       .in('category', ['vibe', 'content'])
       .order('sort_order')
-      .then(({ data }) => {
+      .then(({ data }: { data: DbCanonicalTag[] | null }) => {
         setVibeTags((data ?? []).map(r => dbTagToVibeTag(r as DbCanonicalTag)))
         setLoading(false)
       })
@@ -168,7 +168,7 @@ export function useBets() {
       // For each bet get entry totals per option
       const mapped: Bet[] = await Promise.all(
         betRows.map(async (b: DbBet) => {
-          const { data: entries } = await supabase
+          const { data: entries }: { data: DbBetEntry[] | null } = await supabase
             .from('bet_entries')
             .select('option, amount')
             .eq('bet_id', b.id)
@@ -216,7 +216,7 @@ export function useClips() {
       .from('clips')
       .select('*')
       .order('created_at', { ascending: false })
-      .then(({ data }) => {
+      .then(({ data }: { data: DbClip[] | null }) => {
         const mapped: Clip[] = (data ?? []).map((c: DbClip) => ({
           id: c.id,
           vtuberId: c.profile_id ?? '',
