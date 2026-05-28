@@ -1,1 +1,0 @@
-the full clip-submit-form content from drop

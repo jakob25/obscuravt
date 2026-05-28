@@ -1,1 +1,0 @@
-the full vibe-tag content from drop

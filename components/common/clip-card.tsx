@@ -1,1 +1,0 @@
-the full clip-card content from drop
