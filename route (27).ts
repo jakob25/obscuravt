@@ -1,50 +1,43 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
-import { requireAdmin } from '@/lib/session'
+import { randomUUID } from 'crypto'
 
 export async function GET(req: NextRequest) {
-  const username = req.headers.get('x-username') ?? req.nextUrl.searchParams.get('username')
-  // For now accept any request — auth is enforced on the client
-  // TODO: add proper server-side session verification
+  const vtuber_id = req.nextUrl.searchParams.get('vtuber_id')
+  if (!vtuber_id) return NextResponse.json({ error: 'vtuber_id required.' }, { status: 400 })
 
   const { data, error } = await supabaseAdmin
-    .from('vtubers')
-    .select('id,name,handle,platform,link,bio,tags,nominated_by,created_at')
-    .eq('approved', false)
-    .order('created_at', { ascending: true })
+    .from('stream_schedules')
+    .select('*')
+    .eq('vtuber_id', vtuber_id)
+    .order('day_of_week')
 
   if (error) return NextResponse.json({ error: 'Failed to fetch.' }, { status: 500 })
   return NextResponse.json(data ?? [])
 }
 
-export async function PATCH(req: NextRequest) {
-  const session = await requireAdmin(req)
-  if (session instanceof NextResponse) return session
+export async function POST(req: NextRequest) {
+  const { vtuber_id, day_of_week, start_time, timezone, label } = await req.json()
 
-  const { id, action } = await req.json()
-
-  if (!id || !action)
+  if (!vtuber_id || day_of_week === undefined || !start_time)
     return NextResponse.json({ error: 'Missing fields.' }, { status: 400 })
 
-  if (action === 'approve') {
-    const { error } = await supabaseAdmin
-      .from('vtubers')
-      .update({ approved: true })
-      .eq('id', id)
+  const { data, error } = await supabaseAdmin.from('stream_schedules').insert({
+    id: randomUUID(),
+    vtuber_id,
+    day_of_week,
+    start_time,
+    timezone: timezone ?? 'UTC',
+    label: label?.trim() ?? null,
+    created_at: new Date().toISOString(),
+  }).select().single()
 
-    if (error) return NextResponse.json({ error: 'Failed to approve.' }, { status: 500 })
-    return NextResponse.json({ ok: true })
-  }
+  if (error) return NextResponse.json({ error: 'Failed to save schedule.' }, { status: 500 })
+  return NextResponse.json(data, { status: 201 })
+}
 
-  if (action === 'reject') {
-    const { error } = await supabaseAdmin
-      .from('vtubers')
-      .delete()
-      .eq('id', id)
-
-    if (error) return NextResponse.json({ error: 'Failed to reject.' }, { status: 500 })
-    return NextResponse.json({ ok: true })
-  }
-
-  return NextResponse.json({ error: 'Unknown action.' }, { status: 400 })
+export async function DELETE(req: NextRequest) {
+  const { id } = await req.json()
+  await supabaseAdmin.from('stream_schedules').delete().eq('id', id)
+  return NextResponse.json({ ok: true })
 }

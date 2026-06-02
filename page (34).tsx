@@ -1,74 +1,68 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { requireAuth } from '@/lib/session'
-import { rateLimits } from '@/lib/rate-limit'
 import { supabaseAdmin } from '@/lib/supabase'
-import { DAILY_BONUS } from '@/lib/db-constants'
 
-export async function GET(
-  _req: NextRequest,
-  { params }: { params: { username: string } }
-) {
-  const { data: user } = await supabaseAdmin
-    .from('users')
-    .select('username,coins,role,bio,joined_at,total_won,total_lost,bets_placed,bets_correct,biggest_win,biggest_loss,last_bonus,favorite_vtubers')
-    .eq('username', params.username)
-    .single()
+export async function POST(req: NextRequest) {
+  const { username, vtuber_id, display_name, bio } = await req.json()
 
-  if (!user) return NextResponse.json({ error: 'User not found.' }, { status: 404 })
-  return NextResponse.json(user)
+  if (!username || !vtuber_id)
+    return NextResponse.json({ error: 'Missing fields.' }, { status: 400 })
+
+  // Check not already claimed
+  const { data: existing } = await supabaseAdmin
+    .from('profiles').select('id').eq('vtuber_name', vtuber_id).single()
+  if (existing)
+    return NextResponse.json({ error: 'This profile has already been claimed.' }, { status: 409 })
+
+  const { data: vtProfile } = await supabaseAdmin
+    .from('vtubers').select('name').eq('id', vtuber_id).single()
+  if (!vtProfile)
+    return NextResponse.json({ error: 'VTuber not found.' }, { status: 404 })
+
+  const { error } = await supabaseAdmin.from('profiles').insert({
+    username,
+    vtuber_name: vtuber_id,
+    display_name: display_name?.trim() || vtProfile.name,
+    avatar_url: null,
+    banner_url: null,
+    bio: bio?.trim() ?? '',
+    vibe_tags: {},
+    total_endorsements: 0,
+    discoverable: true,
+    claimed_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  })
+
+  if (error) return NextResponse.json({ error: 'Failed to claim profile.' }, { status: 500 })
+
+  // Update user role to Streamer
+  await supabaseAdmin.from('users').update({ role: 'Streamer' }).eq('username', username)
+
+  return NextResponse.json({ ok: true })
 }
 
-export async function PATCH(
-  req: NextRequest,
-  { params }: { params: { username: string } }
-) {
-  const rl = await rateLimits.write(req)
-  if (!rl.ok) return rl.response!
+export async function GET(req: NextRequest) {
+  const username = req.nextUrl.searchParams.get('username')
+  const vtuber_id = req.nextUrl.searchParams.get('vtuber_id')
 
-  const session = await requireAuth(req)
-  if (session instanceof NextResponse) return session
+  let q = supabaseAdmin.from('profiles').select('*')
+  if (username) q = q.eq('username', username)
+  if (vtuber_id) q = q.eq('vtuber_name', vtuber_id)
 
-  // Prevent users from modifying other users' data
-  if (session.username !== params.username)
-    return NextResponse.json({ error: 'Forbidden.' }, { status: 403 })
+  const { data } = await q.single()
+  return NextResponse.json(data ?? null)
+}
 
-  const body = await req.json()
-  const allowed = ['bio', 'role', 'favorite_vtubers']
-  const update: Record<string, unknown> = {}
-  for (const key of allowed) {
-    if (key in body) update[key] = body[key]
-  }
+export async function PATCH(req: NextRequest) {
+  const { username, discoverable, display_name, bio } = await req.json()
+  if (!username) return NextResponse.json({ error: 'Username required.' }, { status: 400 })
 
-  // Daily bonus claim
-  if (body.claim_daily) {
-    const { data: user } = await supabaseAdmin
-      .from('users')
-      .select('coins,last_bonus')
-      .eq('username', params.username)
-      .single()
-
-    if (!user) return NextResponse.json({ error: 'User not found.' }, { status: 404 })
-
-    const now = new Date()
-    if (user.last_bonus) {
-      const last = new Date(user.last_bonus)
-      const diffHours = (now.getTime() - last.getTime()) / 3_600_000
-      if (diffHours < 20) {
-        const rem = 20 - diffHours
-        const h = Math.floor(rem)
-        const m = Math.floor((rem - h) * 60)
-        return NextResponse.json({ error: `Already claimed. Next bonus in ${h}h ${m}m.` }, { status: 429 })
-      }
-    }
-
-    update.coins = user.coins + DAILY_BONUS
-    update.last_bonus = now.toISOString()
-  }
+  const update: Record<string, unknown> = { updated_at: new Date().toISOString() }
+  if (discoverable !== undefined) update.discoverable = discoverable
+  if (display_name !== undefined) update.display_name = display_name.trim()
+  if (bio !== undefined) update.bio = bio.trim()
 
   const { error } = await supabaseAdmin
-    .from('users')
-    .update(update)
-    .eq('username', params.username)
+    .from('profiles').update(update).eq('username', username)
 
   if (error) return NextResponse.json({ error: 'Update failed.' }, { status: 500 })
   return NextResponse.json({ ok: true })
