@@ -1,1 +1,171 @@
-1|2|3|4|5|6|7|8|9|10|11|12|13|14|15|16|17|18|19|20|21|22|23|24|25|26|27|28|29|30|31|32|33|34|35|36|37|38|39|40|41|42|43|44|45|46|47|48|49|50|51|52|53|54|55|56|57|58|59|60|61|62|63|64|65|66|67|68|69|70|71|72|73|74|75|76|77|78|79|80|81|82|83|84|85|86|87|88|89|90|91|92|93|94|95|96|97|98|99|100|101|102|103|104|105|106|107|108|109|110|111|112|113|114|115|116|117|118|119|120|121|122|123|124|125|126|127|128|129|130|131|132|133|134|135|136|137|138|139|140|141|142|143|144|145|146|147|148|149|150|151|152|153|154|155|156|157|158|159|160|161|162|163|164|165|166|167|168|169|170|171|172
+# VTVault 🌟
+
+> The ultimate discovery hub for VTubers, fans, and raw clips.
+> Find creators by vibe or niche — not subscriber count. Every clip funnels back to the creator.
+
+---
+
+## Setup
+
+```bash
+git clone https://github.com/jakob25/VTVAULT-V2.git
+cd VTVAULT-V2
+pnpm install
+cp .env.example .env.local   # fill in credentials
+pnpm dev
+```
+
+---
+
+## Environment Variables
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
+SESSION_SECRET=          # openssl rand -base64 32
+ADMIN_USERNAMES=jakob25,admin
+```
+
+---
+
+## Database
+
+Run `supabase-schema.sql` in your Supabase SQL editor.
+All tables, indexes, RLS policies, seed data (achievements, shop items, canonical tags) are included.
+
+---
+
+## Project Structure
+
+```
+├── app/
+│   ├── page.tsx                    Home — customizable widget dashboard
+│   ├── layout.tsx                  Root layout + AuthProvider + AddButton
+│   ├── globals.css
+│   │
+│   ├── discover/                   Vibe Map + Niche Map toggle
+│   ├── clips/                      Raw & edited clip browser
+│   ├── bets/                       Community prediction market
+│   ├── find-my-oshi/               Personality quiz
+│   ├── search/                     Search by name / tag / constellation
+│   ├── leaderboard/                Richest · Most Accurate · Hall of Loss
+│   ├── achievements/               Badge showcase
+│   ├── shop/                       Vault Scraps cosmetics
+│   ├── notifications/              Notification inbox
+│   ├── weekly/                     Weekly digest (resets Monday)
+│   ├── forums/                     Per-constellation discussion boards
+│   ├── tag-validator/              Rapid-fire tag confirm/challenge
+│   ├── silhouette/                 VTuber guessing game
+│   ├── creator/                    Creator dashboard (claimed profiles only)
+│   ├── admin/                      VTuber approval + Tag Manager
+│   ├── login/
+│   ├── my-profile/                 User profile + daily bonus
+│   ├── user/[username]/            Public user profiles
+│   ├── vtuber/[id]/                Dossier profile (clips/photos/fanart/cmdmi/schedule)
+│   │
+│   ├── api/
+│       ├── auth/login · register · logout · me
+│       ├── bets/       GET·POST · place · vote
+│       ├── clips/      GET·POST · vote
+│       ├── cmdmi/      ideas · pledge
+│       ├── fan-art/
+│       ├── forums/     posts · vote
+│       ├── leaderboard/
+│       ├── notifications/
+│       ├── photos/
+│       ├── schedules/
+│       ├── shop/       items · purchase
+│       ├── tags/       GET·POST·PATCH·DELETE (admin)
+│       ├── tag-validator/
+│       ├── users/[username]/
+│       ├── vtubers/    submit · claim
+│       ├── weekly/
+│       ├── admin/pending/
+│
+├── components/
+│   ├── ui/                         shadcn/ui base components
+│   ├── layout/navbar.tsx           Auth-aware nav + notification bell
+│   ├── common/
+│       ├── star-map.tsx            Vibe Map (D3 canvas, refs-only hot path)
+│       ├── niche-map.tsx           Niche Map (content-based clusters)
+│       ├── clip-card.tsx           Clip card with upvote + platform link
+│       ├── photo-gallery.tsx       Glass · Flickr · 500px · Imgur · Twitter/X
+│       ├── vibe-tag.tsx            Tag display (fetches from Supabase)
+│       ├── collab-tools.tsx        Vibe matching + blind mode (Streamer only)
+│       ├── dashboard-customizer.tsx Drag-and-drop widget config
+│       ├── add-button.tsx          Global FAB — VTuber · Clip · Bet
+│       ├── bet-submit-form.tsx
+│       ├── clip-submit-form.tsx
+│       ├── vtuber-submit-form.tsx
+│
+├── hooks/
+│   ├── use-data.ts                 useVTubers · useClips · useBets · useVibeTags · useCanonicalTags
+│   ├── use-star-map-data.ts        Vibe map — all cluster data from Supabase
+│   ├── use-niche-map-data.ts       Niche map — cluster + content mappings from Supabase
+│
+├── lib/
+│   ├── session.ts                  JWT httpOnly cookie session (jose)
+│   ├── rate-limit.ts               Sliding window rate limiter
+│   ├── validation.ts               Zod schemas + input sanitization
+│   ├── security.ts                 CSP + security headers
+│   ├── auth-context.tsx            React auth context (cookie-based)
+│   ├── supabase.ts                 Supabase client (anon + admin)
+│   ├── db-constants.ts             STARTING_COINS · DAILY_BONUS · CATEGORIES · ROLES
+│   ├── types.ts                    All TypeScript interfaces
+│   ├── embed-utils.ts              YouTube/Twitch embed helpers
+│   ├── photo-utils.ts              Multi-platform photo URL parser
+│   ├── utils.ts                    cn() + shared helpers
+│
+├── middleware.ts                   Security headers on every response
+├── supabase-schema.sql             Full schema + RLS + seed data
+├── .env.example
+```
+
+---
+
+## Self-Sustaining Data
+
+Everything discovery-critical lives in Supabase, not code:
+
+| What | Where | How to add more |
+|---|---|---|
+| Vibe constellations | `canonical_tags` where `category='cluster'` | INSERT with color, position_x, position_y, description |
+| Niche clusters | `canonical_tags` where `category='niche_cluster'` | INSERT with above + content_tag_ids array |
+| Vibe tags | `canonical_tags` where `category='vibe'` | INSERT — auto-appears in all tag UIs |
+| Content tags | `canonical_tags` where `category='content'` | INSERT — auto-maps to niche clusters |
+| VTubers | `vtubers` table | Submit via UI → admin approves |
+| Achievements | `achievements` table | INSERT — auto-checked on bet win |
+| Shop items | `cosmetic_items` table | INSERT — appears in shop immediately |
+
+Admin panel (`/admin`) has a Tag Manager tab for adding/removing tags without touching SQL.
+
+---
+
+## Security
+
+| Layer | Implementation |
+|---|---|
+| Sessions | Signed JWT in httpOnly cookie (jose), never localStorage |
+| Rate limiting | Auth 10/15min · Writes 30/min · Transactions 20/min |
+| Validation | Zod schemas on every POST, HTML stripped from all inputs |
+| Authorization | `requireAuth()` on all writes — username from session, never body |
+| Admin | `requireAdmin()` reads `ADMIN_USERNAMES` env var |
+| Headers | CSP · X-Frame-Options · HSTS · X-Content-Type-Options (middleware) |
+| Scraps | Server re-verifies balance before every transaction |
+
+---
+
+## Tech Stack
+
+Next.js 16 · TypeScript · Tailwind CSS v4 · shadcn/ui · Supabase · D3 · bcryptjs · jose · zod
+
+---
+
+## Credits
+
+UI: [v0.dev](https://v0.dev) · Backend logic: [jakob25/VTuber-Vault](https://github.com/jakob25/VTuber-Vault) · Built with Claude
+
+## License
+
+MIT
