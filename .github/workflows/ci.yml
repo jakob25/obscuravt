@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Setup pnpm
+      uses: pnpm/action-setup@v4
+      with:
+        version: 9
+
+    - name: Setup Node
+      uses: actions/setup-node@v4
+      with:
+        node-version: 22
+        cache: 'pnpm'
+
+    - name: Install deps
+      run: pnpm install --frozen-lockfile
+
+    - name: Lint code
+      run: pnpm lint
+
+    - name: TypeScript check
+      run: pnpm typecheck
+
+    - name: Unit tests + coverage
+      run: pnpm test:unit:coverage
+
+    # E2E (Playwright) kept out of this CI because it targets the deployed Vercel URL + specific bypass share.
+    # Use ./run-tests.sh <url> manually or in deploy workflows when needed.
