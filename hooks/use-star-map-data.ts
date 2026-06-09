@@ -4,32 +4,14 @@ import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import type { VTuber, Constellation } from '@/lib/types'
 
-// ── DB row types ──────────────────────────────────────────────────────────────
-
-interface DbVTuber {
-  id: string
-  name: string
-  handle: string
-  platform: string
-  link: string
-  bio: string
-  tags: string[]
-  approved: boolean
-  spotlight: boolean
-}
-
 interface DbClusterTag {
   id: string
   tag: string
-  category: string
-  sort_order: number
   color: string | null
   position_x: number | null
   position_y: number | null
   description: string | null
 }
-
-// ── Mapper ────────────────────────────────────────────────────────────────────
 
 export function rowToVTuber(row: Record<string, unknown>): VTuber {
   const tags = (row.tags as string[]) ?? []
@@ -56,19 +38,9 @@ export function rowToVTuber(row: Record<string, unknown>): VTuber {
   }
 }
 
-function dbClusterToConstellation(row: DbClusterTag): Constellation | null {
-  // Requires position and color from DB — no fallbacks, no hardcoding
-  if (!row.color || row.position_x == null || row.position_y == null) return null
-  return {
-    id: row.id,
-    name: row.tag,
-    description: row.description ?? '',
-    position: { x: row.position_x, y: row.position_y },
-    color: row.color,
-  }
+export function getVTubersByConstellationLive(vtubers: VTuber[], constellationId: string): VTuber[] {
+  return vtubers.filter((v) => v.category === constellationId)
 }
-
-// ── Hook ─────────────────────────────────────────────────────────────────────
 
 interface StarMapData {
   vtubers: VTuber[]
@@ -90,9 +62,9 @@ export function useStarMapData(): StarMapData {
           supabase.from('vtubers').select('*').eq('approved', true),
           supabase
             .from('canonical_tags')
-            .select('id, tag, category, sort_order, color, position_x, position_y, description')
+            .select('id, tag, color, position_x, position_y, description')
             .eq('category', 'cluster')
-            .not('color', 'is', null)         // only clusters with metadata in DB
+            .not('color', 'is', null)
             .not('position_x', 'is', null)
             .order('sort_order'),
         ])
@@ -100,19 +72,29 @@ export function useStarMapData(): StarMapData {
         if (vtRes.error) throw vtRes.error
         if (clusterRes.error) throw clusterRes.error
 
-        const mappedVtubers = (vtRes.data ?? []).map((r) => rowToVTuber(r as Record<string, unknown>))
+        const mappedVtubers = (vtRes.data ?? []).map(
+          (row: Record<string, unknown>) => rowToVTuber(row)
+        )
 
         const mappedConstellations = (clusterRes.data ?? [])
-          .map((r) => dbClusterToConstellation(r as DbClusterTag))
+          .map((r: DbClusterTag) => {
+            if (!r.color || r.position_x == null || r.position_y == null) return null
+            return {
+              id: r.id,
+              name: r.tag,
+              description: r.description ?? '',
+              position: { x: r.position_x, y: r.position_y },
+              color: r.color,
+            } as Constellation
+          })
           .filter((c): c is Constellation => c !== null)
-          // Only show constellations that have at least one VTuber
           .filter((c) => mappedVtubers.some((v) => v.category === c.id))
 
         setVtubers(mappedVtubers)
         setConstellations(mappedConstellations)
       } catch (err) {
-        console.error('Star map data error:', err)
-        setError('Failed to load star map data.')
+        console.error('Star map error:', err)
+        setError('Failed to load.')
       } finally {
         setLoading(false)
       }
@@ -121,8 +103,4 @@ export function useStarMapData(): StarMapData {
   }, [])
 
   return { vtubers, constellations, loading, error }
-}
-
-export function getVTubersByConstellationLive(vtubers: VTuber[], constellationId: string): VTuber[] {
-  return vtubers.filter((v) => v.category === constellationId)
 }
