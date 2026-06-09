@@ -39,7 +39,6 @@ export default function DiscoverPage() {
   return (
     <div className="relative w-full flex flex-col" style={{ height: 'calc(100vh - 64px)' }}>
 
-      {/* Compact floating toggle — sits on top of the map, not above it */}
       <div className="absolute top-3 left-4 z-20 flex items-center gap-1 p-1 rounded-xl bg-black/70 border border-white/10 backdrop-blur-sm">
         <button
           onClick={() => setMode('vibe')}
@@ -65,7 +64,6 @@ export default function DiscoverPage() {
         </button>
       </div>
 
-      {/* Map fills everything */}
       <div className="flex-1 relative">
         {mode === 'vibe' ? <StarMap /> : <NicheMap />}
         <FirstTimerBanner />
