@@ -4,12 +4,8 @@ import { useRef, useEffect, useState, useCallback } from 'react'
 import { zoom, zoomIdentity, ZoomTransform, D3ZoomEvent } from 'd3-zoom'
 import { select } from 'd3-selection'
 import { useRouter } from 'next/navigation'
-import type { VTuber, Constellation } from '@/lib/types'
 import { useStarMapData, getVTubersByConstellationLive } from '@/hooks/use-star-map-data'
-
-interface StarMapProps {
-  initialConstellation?: string
-}
+import type { VTuber, Constellation } from '@/lib/types'
 
 interface StarPosition {
   vtuber: VTuber
@@ -21,8 +17,8 @@ const ZOOM_THRESHOLD = 1.5
 const MIN_ZOOM = 0.4
 const MAX_ZOOM = 5
 
-export function StarMap({ initialConstellation }: StarMapProps) {
-  const { vtubers, constellations, loading, error } = useStarMapData()
+export function StarMap() {
+  const { vtubers, constellations, loading } = useStarMapData()
   const router = useRouter()
 
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -30,26 +26,27 @@ export function StarMap({ initialConstellation }: StarMapProps) {
   const rafRef = useRef<number | undefined>(undefined)
   const timeRef = useRef(0)
 
-  // All hot-path state in refs — prevents RAF restarts on every zoom
+  // All hot-path state in refs — avoids stale closures in canvas loop
   const transformRef = useRef<ZoomTransform>(zoomIdentity)
   const starPositionsRef = useRef<StarPosition[]>([])
   const hoveredStarRef = useRef<StarPosition | null>(null)
   const hoveredConstRef = useRef<Constellation | null>(null)
-  const imageCache = useRef<Map<string, HTMLImageElement>>(new Map())
   const constellationsRef = useRef<Constellation[]>([])
   const vtubersRef = useRef<VTuber[]>([])
+  const imageCache = useRef<Map<string, HTMLImageElement>>(new Map())
+  const zoomBehaviorRef = useRef<ReturnType<typeof zoom<HTMLCanvasElement, unknown>> | null>(null)
 
-  // Mirror data into refs
-  useEffect(() => { constellationsRef.current = constellations }, [constellations])
-  useEffect(() => { vtubersRef.current = vtubers }, [vtubers])
-
-  // React state only for overlay UI
+  // Only use React state for things that affect overlay UI
   const [dimensions, setDimensions] = useState({ width: 900, height: 600 })
   const [zoomPct, setZoomPct] = useState(100)
   const [tooltip, setTooltip] = useState<{ vtuber: VTuber; sx: number; sy: number } | null>(null)
   const [constHint, setConstHint] = useState<Constellation | null>(null)
 
-  // Pre-load avatar images
+  // Keep refs in sync
+  useEffect(() => { constellationsRef.current = constellations }, [constellations])
+  useEffect(() => { vtubersRef.current = vtubers }, [vtubers])
+
+  // Preload avatar images
   useEffect(() => {
     vtubers.forEach(v => {
       if (!imageCache.current.has(v.id)) {
@@ -68,8 +65,8 @@ export function StarMap({ initialConstellation }: StarMapProps) {
     constellations.forEach(c => {
       const members = getVTubersByConstellationLive(vtubers, c.id)
       members.forEach((vtuber, i) => {
-        const angle = (i / Math.max(members.length, 1)) * Math.PI * 2 + i * 0.4
-        const radius = 52 + (i % 3) * 30
+        const angle = (i / Math.max(members.length, 1)) * Math.PI * 2 + i * 0.42
+        const radius = 55 + (i % 3) * 32
         positions.push({
           vtuber,
           x: c.position.x + Math.cos(angle) * radius,
@@ -92,43 +89,36 @@ export function StarMap({ initialConstellation }: StarMapProps) {
     return () => obs.disconnect()
   }, [])
 
-  // D3 zoom
-  const zoomBehaviorRef = useRef<ReturnType<typeof zoom<HTMLCanvasElement, unknown>> | null>(null)
-
+  // D3 zoom setup
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
     const sel = select(canvas)
-
     const zb = zoom<HTMLCanvasElement, unknown>()
       .scaleExtent([MIN_ZOOM, MAX_ZOOM])
       .on('zoom', (event: D3ZoomEvent<HTMLCanvasElement, unknown>) => {
         transformRef.current = event.transform
         setZoomPct(Math.round(event.transform.k * 100))
+        // Clear tooltip on pan/zoom
+        setTooltip(null)
       })
-
     zoomBehaviorRef.current = zb
     sel.call(zb)
-
-    if (initialConstellation && constellations.length) {
-      const c = constellations.find(x => x.id === initialConstellation)
-      if (c) {
-        const t = zoomIdentity
-          .translate(dimensions.width / 2 - c.position.x * 2, dimensions.height / 2 - c.position.y * 2)
-          .scale(2)
-        sel.call(zb.transform, t)
-      }
-    }
-
     return () => { sel.on('.zoom', null) }
-  }, [dimensions.width, dimensions.height, initialConstellation, constellations])
+  }, [dimensions.width, dimensions.height])
 
-  // Render loop — reads only refs, never React state
+  // ── Main render loop ─────────────────────────────────────────────────────────
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
     const ctx = canvas.getContext('2d')
     if (!ctx) return
+
+    // CCTV glitch state
+    let glitchTimer = 0
+    let glitchActive = false
+    let glitchIntensity = 0
+    let nextGlitch = 2 + Math.random() * 4
 
     const render = () => {
       timeRef.current += 0.016
@@ -136,31 +126,108 @@ export function StarMap({ initialConstellation }: StarMapProps) {
       const tr = transformRef.current
       const k = tr.k
       const { width, height } = dimensions
-      const stars = starPositionsRef.current
       const consts = constellationsRef.current
-      const vts = vtubersRef.current
+      const stars = starPositionsRef.current
       const hovStar = hoveredStarRef.current
       const hovConst = hoveredConstRef.current
 
       ctx.clearRect(0, 0, width, height)
+
+      // ── Background ───────────────────────────────────────────────────────────
+      ctx.fillStyle = '#020408'
+      ctx.fillRect(0, 0, width, height)
+
+      // Deep space vignette
+      const vig = ctx.createRadialGradient(width / 2, height / 2, 0, width / 2, height / 2, Math.max(width, height) * 0.75)
+      vig.addColorStop(0, 'rgba(5,10,30,0)')
+      vig.addColorStop(1, 'rgba(0,0,8,0.85)')
+      ctx.fillStyle = vig
+      ctx.fillRect(0, 0, width, height)
+
+      // ── CCTV Glitch effects ───────────────────────────────────────────────────
+      glitchTimer += 0.016
+      if (glitchTimer > nextGlitch) {
+        glitchActive = true
+        glitchIntensity = 0.3 + Math.random() * 0.7
+        glitchTimer = 0
+        nextGlitch = 1.5 + Math.random() * 5
+        setTimeout(() => { glitchActive = false }, 80 + Math.random() * 120)
+      }
+
+      // Scanlines — always on, subtle
+      ctx.save()
+      for (let y = 0; y < height; y += 3) {
+        ctx.globalAlpha = 0.04
+        ctx.fillStyle = '#000'
+        ctx.fillRect(0, y, width, 1)
+      }
+      ctx.globalAlpha = 1
+      ctx.restore()
+
+      // Static noise — always faint
+      ctx.save()
+      const noiseCount = 400
+      for (let i = 0; i < noiseCount; i++) {
+        const nx = Math.random() * width
+        const ny = Math.random() * height
+        const nb = Math.random()
+        ctx.globalAlpha = nb * 0.06
+        ctx.fillStyle = nb > 0.5 ? '#fff' : '#0af'
+        ctx.fillRect(nx, ny, 1, 1)
+      }
+      ctx.globalAlpha = 1
+      ctx.restore()
+
+      // Active glitch: horizontal tear + color fringe
+      if (glitchActive) {
+        const tearCount = Math.floor(glitchIntensity * 5)
+        for (let i = 0; i < tearCount; i++) {
+          const gy = Math.random() * height
+          const gh = 1 + Math.random() * 4
+          const gx = (Math.random() - 0.5) * 30 * glitchIntensity
+          ctx.save()
+          ctx.globalAlpha = 0.15 + Math.random() * 0.2
+          // Copy a horizontal slice and shift it
+          try {
+            const slice = ctx.getImageData(0, Math.max(0, gy - gh), width, gh * 2)
+            ctx.putImageData(slice, gx, Math.max(0, gy - gh))
+          } catch (_) {}
+          ctx.restore()
+        }
+        // Color fringe flash
+        ctx.save()
+        ctx.globalAlpha = 0.04 * glitchIntensity
+        ctx.fillStyle = `hsl(${Math.random() * 60 + 160}, 100%, 60%)`
+        ctx.fillRect(0, Math.random() * height, width, 2 + Math.random() * 8)
+        ctx.globalAlpha = 1
+        ctx.restore()
+
+        // Extra static burst
+        ctx.save()
+        for (let i = 0; i < 200 * glitchIntensity; i++) {
+          ctx.globalAlpha = Math.random() * 0.3
+          ctx.fillStyle = Math.random() > 0.5 ? '#0ff' : '#f0f'
+          ctx.fillRect(Math.random() * width, Math.random() * height, 1, 1)
+        }
+        ctx.globalAlpha = 1
+        ctx.restore()
+      }
+
+      // ── Apply map transform ───────────────────────────────────────────────────
       ctx.save()
       ctx.translate(tr.x, tr.y)
       ctx.scale(k, k)
 
-      // Background
-      ctx.fillStyle = '#090910'
-      ctx.fillRect(-1000, -800, 3000, 2600)
-
-      // Background ambient stars
+      // Ambient background stars
       for (let i = 0; i < 220; i++) {
         const bx = ((i * 43 + 7) % 1100) - 50
         const by = ((i * 71 + 13) % 900) - 50
-        const sz = (i % 3) * 0.35 + 0.25
-        const tw = Math.sin(t * 1.4 + i * 0.8) * 0.22 + 0.55
-        ctx.globalAlpha = tw * 0.45
-        ctx.fillStyle = i % 9 === 0 ? '#d4a574' : '#e8e0d0'
+        const tw = Math.sin(t * 1.6 + i * 0.9) * 0.3 + 0.7
+        ctx.globalAlpha = tw * 0.5
+        const hue = (i * 37) % 360
+        ctx.fillStyle = `hsl(${hue}, 60%, 80%)`
         ctx.beginPath()
-        ctx.arc(bx, by, sz, 0, Math.PI * 2)
+        ctx.arc(bx, by, (i % 3) * 0.4 + 0.3, 0, Math.PI * 2)
         ctx.fill()
       }
       ctx.globalAlpha = 1
@@ -168,17 +235,17 @@ export function StarMap({ initialConstellation }: StarMapProps) {
       const showStars = k >= ZOOM_THRESHOLD
 
       if (showStars) {
-        // Connector lines
+        // ── Connection lines between stars ──────────────────────────────────
         consts.forEach(c => {
           const members = stars.filter(s => s.vtuber.category === c.id)
           if (members.length < 2) return
-          ctx.strokeStyle = `${c.color}28`
-          ctx.lineWidth = 1.2 / k
-          ctx.setLineDash([5 / k, 7 / k])
+          ctx.strokeStyle = `${c.color}35`
+          ctx.lineWidth = 1.5 / k
+          ctx.setLineDash([6 / k, 8 / k])
           ctx.beginPath()
           members.forEach((s, i) => {
-            const fx = s.x + Math.sin(t * 0.7 + s.x * 0.012) * 1.5
-            const fy = s.y + Math.cos(t * 1.0 + s.y * 0.012) * 1.5
+            const fx = s.x + Math.sin(t * 0.7 + s.x * 0.012) * 2
+            const fy = s.y + Math.cos(t * 1.0 + s.y * 0.012) * 2
             if (i === 0) ctx.moveTo(fx, fy)
             else ctx.lineTo(fx, fy)
           })
@@ -186,28 +253,42 @@ export function StarMap({ initialConstellation }: StarMapProps) {
           ctx.setLineDash([])
         })
 
-        // Stars
+        // ── Individual stars ────────────────────────────────────────────────
         stars.forEach(star => {
           const isHov = hovStar?.vtuber.id === star.vtuber.id
           const c = consts.find(x => x.id === star.vtuber.category)
-          const color = c?.color ?? '#d4a574'
-          const fx = star.x + Math.sin(t * 0.7 + star.x * 0.012) * 1.8
-          const fy = star.y + Math.cos(t * 1.0 + star.y * 0.012) * 1.8
-          const r = isHov ? 15 : 9
+          const color = c?.color ?? '#64b5f6'
 
-          // Hover glow
+          const fx = star.x + Math.sin(t * 0.7 + star.x * 0.012) * 2
+          const fy = star.y + Math.cos(t * 1.0 + star.y * 0.012) * 2
+          const r = isHov ? 16 : 10
+
+          // Glow — vibrant and large
           if (isHov) {
-            const g = ctx.createRadialGradient(fx, fy, 0, fx, fy, 45)
-            g.addColorStop(0, `${color}80`)
-            g.addColorStop(0.5, `${color}28`)
-            g.addColorStop(1, 'transparent')
-            ctx.fillStyle = g
+            const g1 = ctx.createRadialGradient(fx, fy, 0, fx, fy, 55)
+            g1.addColorStop(0, `${color}cc`)
+            g1.addColorStop(0.3, `${color}55`)
+            g1.addColorStop(1, 'transparent')
+            ctx.fillStyle = g1
             ctx.beginPath()
-            ctx.arc(fx, fy, 45, 0, Math.PI * 2)
+            ctx.arc(fx, fy, 55, 0, Math.PI * 2)
             ctx.fill()
           }
 
-          // Avatar or star dot
+          // Ambient pulse glow
+          const pulse = Math.sin(t * 2.5 + star.x * 0.05) * 0.4 + 0.6
+          const g2 = ctx.createRadialGradient(fx, fy, 0, fx, fy, r * 2.5)
+          g2.addColorStop(0, `${color}${isHov ? 'ff' : 'aa'}`)
+          g2.addColorStop(0.5, `${color}${isHov ? '88' : '44'}`)
+          g2.addColorStop(1, 'transparent')
+          ctx.globalAlpha = pulse * (isHov ? 1 : 0.8)
+          ctx.fillStyle = g2
+          ctx.beginPath()
+          ctx.arc(fx, fy, r * 2.5, 0, Math.PI * 2)
+          ctx.fill()
+          ctx.globalAlpha = 1
+
+          // Avatar or colored core
           if (k >= 2) {
             const img = imageCache.current.get(star.vtuber.id)
             if (img?.complete && img.naturalWidth > 0) {
@@ -227,15 +308,17 @@ export function StarMap({ initialConstellation }: StarMapProps) {
               ctx.arc(fx, fy, r, 0, Math.PI * 2)
               ctx.fill()
             }
-            ctx.strokeStyle = isHov ? '#d4a574' : `${color}90`
+            // Ring
+            ctx.strokeStyle = isHov ? '#ffffff' : `${color}cc`
             ctx.lineWidth = (isHov ? 2.5 : 1.5) / k
             ctx.beginPath()
             ctx.arc(fx, fy, r, 0, Math.PI * 2)
             ctx.stroke()
           } else {
+            // Point star
             const core = ctx.createRadialGradient(fx, fy, 0, fx, fy, r)
             core.addColorStop(0, '#ffffff')
-            core.addColorStop(0.35, color)
+            core.addColorStop(0.25, color)
             core.addColorStop(1, `${color}00`)
             ctx.fillStyle = core
             ctx.beginPath()
@@ -243,91 +326,110 @@ export function StarMap({ initialConstellation }: StarMapProps) {
             ctx.fill()
           }
 
-          // Name
+          // Label
           if (isHov || k >= 3.5) {
-            const fs = Math.max(10, 12 / k)
-            ctx.font = `${isHov ? '600 ' : ''}${fs}px "Space Grotesk", sans-serif`
+            const fs = Math.max(10, 13 / k)
+            ctx.font = `${isHov ? '700' : '500'} ${fs}px "Space Grotesk", sans-serif`
             ctx.textAlign = 'center'
             ctx.textBaseline = 'top'
-            const ly = fy + r + 4 / k
-            ctx.fillStyle = 'rgba(0,0,0,0.75)'
-            ctx.fillText(star.vtuber.name, fx + 0.5, ly + 0.5)
-            ctx.fillStyle = isHov ? '#d4a574' : '#f0e8d0'
+            const ly = fy + r + 5 / k
+            // Shadow
+            ctx.fillStyle = 'rgba(0,0,0,0.8)'
+            ctx.fillText(star.vtuber.name, fx + 0.8, ly + 0.8)
+            ctx.fillStyle = isHov ? '#ffffff' : '#e8f4ff'
             ctx.fillText(star.vtuber.name, fx, ly)
           }
         })
 
       } else {
-        // Zoomed out: constellation orbs
+        // ── Constellation orbs (zoomed out) ─────────────────────────────────
         consts.forEach(c => {
           const cx = c.position.x
           const cy = c.position.y
           const isHov = hovConst?.id === c.id
-          const count = getVTubersByConstellationLive(vts, c.id).length
-          const pulse = Math.sin(t * 1.1 + cx * 0.003) * 0.12 + 0.88
-          const orbR = (isHov ? 90 : 72) * pulse
+          const count = getVTubersByConstellationLive(vtubersRef.current, c.id).length
+          const pulse = Math.sin(t * 1.2 + cx * 0.004) * 0.1 + 0.9
+          const orbR = (isHov ? 95 : 75) * pulse
 
-          // Nebula
-          const neb = ctx.createRadialGradient(cx, cy, 0, cx, cy, orbR * 1.8)
-          neb.addColorStop(0, `${c.color}55`)
-          neb.addColorStop(0.45, `${c.color}1a`)
+          // Outer nebula — VIBRANT
+          const neb = ctx.createRadialGradient(cx, cy, 0, cx, cy, orbR * 2.2)
+          neb.addColorStop(0, `${c.color}88`)
+          neb.addColorStop(0.35, `${c.color}33`)
+          neb.addColorStop(0.7, `${c.color}11`)
           neb.addColorStop(1, 'transparent')
           ctx.fillStyle = neb
           ctx.beginPath()
-          ctx.arc(cx, cy, orbR * 1.8, 0, Math.PI * 2)
+          ctx.arc(cx, cy, orbR * 2.2, 0, Math.PI * 2)
           ctx.fill()
 
-          // Orb
-          const orb = ctx.createRadialGradient(cx - orbR * 0.25, cy - orbR * 0.25, 0, cx, cy, orbR)
-          orb.addColorStop(0, `${c.color}cc`)
-          orb.addColorStop(0.55, `${c.color}55`)
-          orb.addColorStop(1, `${c.color}0a`)
+          // Core orb — bright and saturated
+          const orb = ctx.createRadialGradient(cx - orbR * 0.2, cy - orbR * 0.2, 0, cx, cy, orbR)
+          orb.addColorStop(0, '#ffffff')
+          orb.addColorStop(0.15, `${c.color}ff`)
+          orb.addColorStop(0.55, `${c.color}99`)
+          orb.addColorStop(1, `${c.color}22`)
           ctx.fillStyle = orb
           ctx.beginPath()
           ctx.arc(cx, cy, orbR, 0, Math.PI * 2)
           ctx.fill()
 
-          ctx.strokeStyle = isHov ? c.color : `${c.color}70`
-          ctx.lineWidth = (isHov ? 2 : 1) / k
+          // Bright ring
+          ctx.strokeStyle = isHov ? '#ffffff' : `${c.color}dd`
+          ctx.lineWidth = (isHov ? 2.5 : 1.5) / k
+          ctx.shadowColor = c.color
+          ctx.shadowBlur = isHov ? 20 / k : 10 / k
           ctx.beginPath()
           ctx.arc(cx, cy, orbR, 0, Math.PI * 2)
           ctx.stroke()
+          ctx.shadowBlur = 0
 
-          // Orbiting mini stars
+          // Orbiting mini-stars
           for (let i = 0; i < Math.min(count, 8); i++) {
-            const ang = (i / Math.min(count, 8)) * Math.PI * 2 + t * 0.28
-            const mr = orbR * 0.62
-            ctx.globalAlpha = 0.65
-            ctx.fillStyle = '#fff'
+            const ang = (i / Math.min(count, 8)) * Math.PI * 2 + t * (isHov ? 0.5 : 0.3)
+            const sx = cx + Math.cos(ang) * orbR * 0.7
+            const sy = cy + Math.sin(ang) * orbR * 0.7
+            ctx.globalAlpha = 0.9
+            ctx.fillStyle = '#ffffff'
             ctx.beginPath()
-            ctx.arc(cx + Math.cos(ang) * mr, cy + Math.sin(ang) * mr, 2.8 / k, 0, Math.PI * 2)
+            ctx.arc(sx, sy, 3 / k, 0, Math.PI * 2)
             ctx.fill()
-            ctx.globalAlpha = 1
           }
+          ctx.globalAlpha = 1
 
           // Label
-          const fs = 15 / k
-          ctx.font = `600 ${fs}px "Space Grotesk", sans-serif`
+          const fs = 16 / k
+          ctx.font = `700 ${fs}px "Space Grotesk", sans-serif`
           ctx.textAlign = 'center'
           ctx.textBaseline = 'middle'
-          ctx.fillStyle = 'rgba(0,0,0,0.55)'
-          ctx.fillText(c.name, cx + 1, cy + 1)
-          ctx.fillStyle = isHov ? '#ffffff' : '#f0e8d0'
+          // Glow text effect
+          ctx.shadowColor = c.color
+          ctx.shadowBlur = isHov ? 18 / k : 8 / k
+          ctx.fillStyle = '#ffffff'
           ctx.fillText(c.name, cx, cy)
-          ctx.font = `${10 / k}px "Space Grotesk", sans-serif`
-          ctx.fillStyle = isHov ? c.color : '#888'
-          ctx.fillText(`${count} creators`, cx, cy + fs * 1.25)
+          ctx.shadowBlur = 0
+
+          ctx.font = `500 ${11 / k}px "Space Grotesk", sans-serif`
+          ctx.fillStyle = isHov ? c.color : 'rgba(200,220,255,0.7)'
+          ctx.fillText(`${count} creator${count !== 1 ? 's' : ''}`, cx, cy + fs * 1.3)
+
+          if (isHov) {
+            ctx.font = `400 ${9 / k}px "Space Grotesk", sans-serif`
+            ctx.fillStyle = 'rgba(200,220,255,0.5)'
+            ctx.fillText('click to zoom in', cx, cy + fs * 2.5)
+          }
         })
       }
 
       ctx.restore()
+
       rafRef.current = requestAnimationFrame(render)
     }
 
     render()
     return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current) }
-  }, [dimensions]) // intentionally minimal deps — refs handle the rest
+  }, [dimensions])
 
+  // ── Mouse move — uses refs, no stale closures ─────────────────────────────
   const handleMouseMove = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current
     if (!canvas) return
@@ -338,11 +440,17 @@ export function StarMap({ initialConstellation }: StarMapProps) {
 
     if (tr.k >= ZOOM_THRESHOLD) {
       const hitR2 = (22 / tr.k) ** 2
-      const hit = starPositionsRef.current.find(s => (s.x - mx) ** 2 + (s.y - my) ** 2 < hitR2) ?? null
+      const hit = starPositionsRef.current.find(s =>
+        (s.x - mx) ** 2 + (s.y - my) ** 2 < hitR2
+      ) ?? null
+
       hoveredStarRef.current = hit
       hoveredConstRef.current = null
+
       if (hit) {
-        setTooltip({ vtuber: hit.vtuber, sx: hit.x * tr.k + tr.x, sy: hit.y * tr.k + tr.y })
+        const sx = hit.x * tr.k + tr.x
+        const sy = hit.y * tr.k + tr.y
+        setTooltip({ vtuber: hit.vtuber, sx, sy })
         setConstHint(null)
         canvas.style.cursor = 'pointer'
       } else {
@@ -351,7 +459,9 @@ export function StarMap({ initialConstellation }: StarMapProps) {
       }
     } else {
       hoveredStarRef.current = null
-      const hit = constellationsRef.current.find(c => (c.position.x - mx) ** 2 + (c.position.y - my) ** 2 < 80 ** 2) ?? null
+      const hit = constellationsRef.current.find(c =>
+        (c.position.x - mx) ** 2 + (c.position.y - my) ** 2 < 85 ** 2
+      ) ?? null
       hoveredConstRef.current = hit
       setConstHint(hit)
       setTooltip(null)
@@ -366,17 +476,23 @@ export function StarMap({ initialConstellation }: StarMapProps) {
     setConstHint(null)
   }, [])
 
+  // ── Click — reads from refs, always fresh ─────────────────────────────────
   const handleClick = useCallback(() => {
-    if (hoveredStarRef.current) {
-      router.push(`/vtuber/${hoveredStarRef.current.vtuber.id}`)
-      return
-    }
-    const hc = hoveredConstRef.current
+    const star = hoveredStarRef.current
+    const c = hoveredConstRef.current
     const canvas = canvasRef.current
     const zb = zoomBehaviorRef.current
-    if (hc && canvas && zb) {
+
+    if (star) {
+      // Navigate to VTuber profile
+      router.push(`/vtuber/${star.vtuber.id}`)
+      return
+    }
+
+    if (c && canvas && zb) {
+      // Zoom into constellation
       const t = zoomIdentity
-        .translate(dimensions.width / 2 - hc.position.x * 2.5, dimensions.height / 2 - hc.position.y * 2.5)
+        .translate(dimensions.width / 2 - c.position.x * 2.5, dimensions.height / 2 - c.position.y * 2.5)
         .scale(2.5)
       select(canvas).call(zb.transform, t)
     }
@@ -384,29 +500,23 @@ export function StarMap({ initialConstellation }: StarMapProps) {
 
   if (loading) {
     return (
-      <div className="w-full min-h-[500px] flex flex-col items-center justify-center gap-4 bg-[#090910]">
+      <div className="w-full min-h-[500px] flex flex-col items-center justify-center gap-4 bg-[#020408]">
         <div className="relative w-16 h-16">
-          <div className="absolute inset-0 rounded-full border border-vault-gold/20 animate-ping" />
-          <div className="absolute inset-0 rounded-full border border-vault-gold/40 animate-pulse" />
+          <div className="absolute inset-0 rounded-full border border-cyan-400/20 animate-ping" />
+          <div className="absolute inset-0 rounded-full border border-cyan-400/40 animate-pulse" />
           <div className="absolute inset-0 flex items-center justify-center">
-            <div className="h-2 w-2 rounded-full bg-vault-gold animate-pulse" />
+            <div className="h-2 w-2 rounded-full bg-cyan-400 animate-pulse" />
           </div>
         </div>
-        <p className="text-sm text-muted-foreground animate-pulse tracking-widest uppercase">Mapping the stars…</p>
-      </div>
-    )
-  }
-
-  if (error) {
-    return (
-      <div className="w-full min-h-[500px] flex items-center justify-center bg-[#090910]">
-        <p className="text-sm text-red-400">{error}</p>
+        <p className="text-sm text-cyan-400/60 animate-pulse tracking-widest uppercase text-xs">
+          Mapping constellations…
+        </p>
       </div>
     )
   }
 
   return (
-    <div ref={containerRef} className="relative w-full h-full min-h-[500px] bg-[#090910] overflow-hidden">
+    <div ref={containerRef} className="relative w-full h-full min-h-[500px] bg-[#020408] overflow-hidden">
       <canvas
         ref={canvasRef}
         width={dimensions.width}
@@ -419,49 +529,50 @@ export function StarMap({ initialConstellation }: StarMapProps) {
       />
 
       {/* Zoom indicator */}
-      <div className="absolute bottom-4 left-4 flex items-center gap-2 px-3 py-1.5 rounded-lg bg-black/60 border border-white/10 text-xs select-none">
+      <div className="absolute bottom-4 left-4 flex items-center gap-2 px-3 py-1.5 rounded-lg bg-black/70 border border-white/10 text-xs select-none">
         <span className="text-white/40">zoom</span>
-        <span className="text-vault-cream font-medium tabular-nums">{zoomPct}%</span>
+        <span className="text-white font-medium tabular-nums">{zoomPct}%</span>
         {zoomPct < ZOOM_THRESHOLD * 100 && (
-          <span className="text-vault-gold/60">· scroll in to see creators</span>
+          <span className="text-cyan-400/60">· scroll in to see creators</span>
         )}
       </div>
 
       {/* Instructions */}
-      <div className="absolute top-4 right-4 px-3 py-1.5 rounded-lg bg-black/60 border border-white/10 text-xs text-white/35 select-none">
+      <div className="absolute top-4 right-4 px-3 py-1.5 rounded-lg bg-black/60 border border-white/10 text-xs text-white/30 select-none">
         scroll to zoom · drag to pan · click to explore
       </div>
 
-      {/* Star tooltip */}
+      {/* VTuber tooltip — click target */}
       {tooltip && (
         <div
-          className="absolute pointer-events-none z-20"
+          className="absolute z-20 pointer-events-none"
           style={{
-            left: Math.min(tooltip.sx + 20, dimensions.width - 250),
-            top: Math.max(tooltip.sy - 12, 8),
+            left: Math.min(tooltip.sx + 20, dimensions.width - 260),
+            top: Math.max(tooltip.sy - 16, 8),
           }}
         >
-          <div className="w-52 rounded-xl bg-[#0e0e1c]/96 border border-vault-gold/30 shadow-2xl backdrop-blur-sm overflow-hidden">
+          <div className="w-56 rounded-xl bg-black/95 border border-cyan-400/30 shadow-2xl shadow-cyan-900/40 overflow-hidden backdrop-blur-sm">
             <div className="flex items-center gap-3 p-3 border-b border-white/5">
               <img
                 src={tooltip.vtuber.avatarUrl}
                 alt={tooltip.vtuber.name}
-                className="h-9 w-9 rounded-full border border-vault-gold/40 flex-shrink-0"
+                className="h-10 w-10 rounded-full border border-cyan-400/40 flex-shrink-0"
               />
               <div className="min-w-0">
-                <div className="font-semibold text-vault-cream text-sm truncate">{tooltip.vtuber.name}</div>
-                <div className="text-[10px] text-vault-gold/70 truncate">
-                  {constellations.find(c => c.id === tooltip.vtuber.category)?.name ?? ''}
-                </div>
+                <p className="font-bold text-white text-sm truncate">{tooltip.vtuber.name}</p>
+                <p className="text-xs text-cyan-400/70 truncate">
+                  {constellationsRef.current.find(c => c.id === tooltip.vtuber.category)?.name ?? ''}
+                </p>
               </div>
             </div>
             {tooltip.vtuber.bio && (
-              <p className="px-3 py-2 text-[11px] text-white/50 line-clamp-2 leading-relaxed">
+              <p className="px-3 py-2 text-xs text-white/50 line-clamp-2 leading-relaxed">
                 {tooltip.vtuber.bio}
               </p>
             )}
-            <div className="px-3 pb-2.5 pt-0.5 text-[10px] text-vault-gold/80 flex items-center gap-1">
-              ↗ Click to view profile
+            <div className="px-3 pb-2.5 pt-0.5 text-xs text-cyan-400/80 flex items-center gap-1.5">
+              <span className="inline-block h-1.5 w-1.5 rounded-full bg-cyan-400 animate-pulse" />
+              Click to open profile
             </div>
           </div>
         </div>
@@ -469,13 +580,11 @@ export function StarMap({ initialConstellation }: StarMapProps) {
 
       {/* Constellation hint */}
       {constHint && !tooltip && (
-        <div
-          className="absolute bottom-14 left-4 flex items-center gap-2 px-3 py-1.5 rounded-lg bg-black/70 border text-xs select-none"
-          style={{ borderColor: `${constHint.color}50` }}
-        >
-          <div className="h-2 w-2 rounded-full flex-shrink-0" style={{ backgroundColor: constHint.color }} />
-          <span className="text-vault-cream font-medium">{constHint.name}</span>
-          <span className="text-white/35">· click to zoom in</span>
+        <div className="absolute bottom-14 left-4 flex items-center gap-2 px-3 py-1.5 rounded-lg bg-black/80 border text-xs select-none"
+          style={{ borderColor: `${constHint.color}60` }}>
+          <div className="h-2 w-2 rounded-full flex-shrink-0 animate-pulse" style={{ background: constHint.color }} />
+          <span className="text-white font-medium">{constHint.name}</span>
+          <span className="text-white/40">· click to zoom in</span>
         </div>
       )}
     </div>
