@@ -1,17 +1,13 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { supabase } from '@/lib/supabase'
+import { createClient } from '@supabase/supabase-js'
 import type { VTuber, Constellation } from '@/lib/types'
 
-interface DbClusterTag {
-  id: string
-  tag: string
-  color: string | null
-  position_x: number | null
-  position_y: number | null
-  description: string | null
-}
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+)
 
 export function rowToVTuber(row: Record<string, unknown>): VTuber {
   const tags = (row.tags as string[]) ?? []
@@ -77,14 +73,14 @@ export function useStarMapData(): StarMapData {
         )
 
         const mappedConstellations = (clusterRes.data ?? [])
-          .map((r: DbClusterTag) => {
+          .map((r: Record<string, unknown>) => {
             if (!r.color || r.position_x == null || r.position_y == null) return null
             return {
-              id: r.id,
-              name: r.tag,
-              description: r.description ?? '',
-              position: { x: r.position_x, y: r.position_y },
-              color: r.color,
+              id: r.id as string,
+              name: r.tag as string,
+              description: (r.description as string) ?? '',
+              position: { x: r.position_x as number, y: r.position_y as number },
+              color: r.color as string,
             } as Constellation
           })
           .filter((c): c is Constellation => c !== null)
