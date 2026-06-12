@@ -1,346 +1,276 @@
 'use client'
 
 import { useRef, useEffect, useState, useCallback } from 'react'
-import { zoom, zoomIdentity, ZoomTransform, D3ZoomEvent } from 'd3-zoom'
+import { zoom, D3ZoomEvent } from 'd3-zoom'
 import { select } from 'd3-selection'
-import { useRouter } from 'next/navigation'
-import type { VTuber, Constellation } from '@/lib/types'
-import { useNicheMapData, getVTubersByNicheCluster } from '@/hooks/use-niche-map-data'
+import { createClient } from '@/lib/supabase/client'
 
-interface StarPosition { vtuber: VTuber; x: number; y: number }
+interface NicheNode {
+  id: string
+  tag: string
+  color: string
+  position_x: number
+  position_y: number
+  description: string
+  vtuber_count: number
+}
 
-const ZOOM_THRESHOLD = 1.5
+interface NicheMapProps {
+  onNodeSelect?: (node: NicheNode) => void
+}
+
 const MIN_ZOOM = 0.4
 const MAX_ZOOM = 5
 
-export function NicheMap() {
-  const { vtubers, constellations, loading, error } = useNicheMapData()
-  const router = useRouter()
-
+export function NicheMap({ onNodeSelect }: NicheMapProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
-  const rafRef = useRef<number | undefined>(undefined)
-  const timeRef = useRef(0)
+  const [dimensions, setDimensions] = useState({ width: 800, height: 600 })
+  const [transform, setTransform] = useState({ x: 0, y: 0, k: 1 })
+  const [nodes, setNodes] = useState<NicheNode[]>([])
+  const [hoveredNode, setHoveredNode] = useState<NicheNode | null>(null)
+  const animationRef = useRef<number>()
 
-  const transformRef = useRef<ZoomTransform>(zoomIdentity)
-  const starPositionsRef = useRef<StarPosition[]>([])
-  const hoveredStarRef = useRef<StarPosition | null>(null)
-  const hoveredConstRef = useRef<Constellation | null>(null)
-  const imageCache = useRef<Map<string, HTMLImageElement>>(new Map())
-  const constellationsRef = useRef<Constellation[]>([])
-  const vtubersRef = useRef<VTuber[]>([])
-  const zoomBehaviorRef = useRef<ReturnType<typeof zoom<HTMLCanvasElement, unknown>> | null>(null)
-
-  useEffect(() => { constellationsRef.current = constellations }, [constellations])
-  useEffect(() => { vtubersRef.current = vtubers }, [vtubers])
-
-  const [dimensions, setDimensions] = useState({ width: 900, height: 600 })
-  const [zoomPct, setZoomPct] = useState(100)
-  const [tooltip, setTooltip] = useState<{ vtuber: VTuber; sx: number; sy: number } | null>(null)
-  const [constHint, setConstHint] = useState<Constellation | null>(null)
-
+  // Fetch niche_cluster data from Supabase
   useEffect(() => {
-    vtubers.forEach(v => {
-      if (!imageCache.current.has(v.id)) {
-        const img = new Image(); img.crossOrigin = 'anonymous'; img.src = v.avatarUrl
-        imageCache.current.set(v.id, img)
-      }
-    })
-  }, [vtubers])
+    const supabase = createClient()
+    supabase
+      .from('canonical_tags')
+      .select('id, tag, color, position_x, position_y, description')
+      .eq('category', 'niche_cluster')
+      .order('sort_order')
+      .then(async ({ data: tags, error }) => {
+        if (error || !tags) return
 
-  useEffect(() => {
-    if (!vtubers.length || !constellations.length) return
-    const positions: StarPosition[] = []
-    constellations.forEach(c => {
-      const members = getVTubersByNicheCluster(vtubers, c.id)
-      members.forEach((vtuber, i) => {
-        const angle = (i / Math.max(members.length, 1)) * Math.PI * 2 + i * 0.4
-        const radius = 52 + (i % 3) * 30
-        positions.push({ vtuber, x: c.position.x + Math.cos(angle) * radius, y: c.position.y + Math.sin(angle) * radius })
+        // Count vtubers per niche cluster
+        const { data: vtubers } = await supabase
+          .from('vtubers')
+          .select('id, tags')
+          .eq('status', 'approved')
+
+        const enriched: NicheNode[] = tags.map(t => ({
+          id: t.id,
+          tag: t.tag,
+          color: t.color ?? '#888888',
+          position_x: t.position_x ?? 500,
+          position_y: t.position_y ?? 400,
+          description: t.description ?? '',
+          vtuber_count: vtubers?.filter(v => Array.isArray(v.tags) && v.tags.includes(t.id)).length ?? 0,
+        }))
+
+        setNodes(enriched)
       })
-    })
-    starPositionsRef.current = positions
-  }, [vtubers, constellations])
-
-  useEffect(() => {
-    const el = containerRef.current; if (!el) return
-    const obs = new ResizeObserver(([entry]) => {
-      if (entry) setDimensions({ width: entry.contentRect.width, height: Math.max(entry.contentRect.height, 500) })
-    })
-    obs.observe(el)
-    setDimensions({ width: el.clientWidth, height: Math.max(el.clientHeight, 500) })
-    return () => obs.disconnect()
   }, [])
 
+  // Handle resize
   useEffect(() => {
-    const canvas = canvasRef.current; if (!canvas) return
-    const sel = select(canvas)
-    const zb = zoom<HTMLCanvasElement, unknown>()
+    const updateDimensions = () => {
+      if (containerRef.current) {
+        const rect = containerRef.current.getBoundingClientRect()
+        setDimensions({ width: rect.width, height: rect.height })
+      }
+    }
+    updateDimensions()
+    window.addEventListener('resize', updateDimensions)
+    return () => window.removeEventListener('resize', updateDimensions)
+  }, [])
+
+  // Setup d3-zoom
+  useEffect(() => {
+    if (!canvasRef.current) return
+    const canvas = select(canvasRef.current)
+    const zoomBehavior = zoom<HTMLCanvasElement, unknown>()
       .scaleExtent([MIN_ZOOM, MAX_ZOOM])
       .on('zoom', (event: D3ZoomEvent<HTMLCanvasElement, unknown>) => {
-        transformRef.current = event.transform
-        setZoomPct(Math.round(event.transform.k * 100))
+        setTransform({ x: event.transform.x, y: event.transform.y, k: event.transform.k })
       })
-    zoomBehaviorRef.current = zb
-    sel.call(zb)
-    return () => { sel.on('.zoom', null) }
-  }, [dimensions.width, dimensions.height])
+    canvas.call(zoomBehavior)
+    return () => { canvas.on('.zoom', null) }
+  }, [dimensions])
 
+  // Mouse hover
+  const handleMouseMove = useCallback((event: React.MouseEvent<HTMLCanvasElement>) => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const rect = canvas.getBoundingClientRect()
+    const x = (event.clientX - rect.left - transform.x) / transform.k
+    const y = (event.clientY - rect.top - transform.y) / transform.k
+    const hovered = nodes.find(node => {
+      const dx = node.position_x - x
+      const dy = node.position_y - y
+      return Math.sqrt(dx * dx + dy * dy) < 70
+    })
+    setHoveredNode(hovered ?? null)
+  }, [transform, nodes])
+
+  const handleClick = useCallback(() => {
+    if (hoveredNode && onNodeSelect) onNodeSelect(hoveredNode)
+  }, [hoveredNode, onNodeSelect])
+
+  // Render loop
   useEffect(() => {
-    const canvas = canvasRef.current; if (!canvas) return
-    const ctx = canvas.getContext('2d'); if (!ctx) return
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+
+    let time = 0
 
     const render = () => {
-      timeRef.current += 0.016
-      const t = timeRef.current
-      const tr = transformRef.current
-      const k = tr.k
-      const { width, height } = dimensions
-      const stars = starPositionsRef.current
-      const consts = constellationsRef.current
-      const vts = vtubersRef.current
-      const hovStar = hoveredStarRef.current
-      const hovConst = hoveredConstRef.current
+      time += 0.016
+      ctx.clearRect(0, 0, dimensions.width, dimensions.height)
 
-      ctx.clearRect(0, 0, width, height)
       ctx.save()
-      ctx.translate(tr.x, tr.y)
-      ctx.scale(k, k)
+      ctx.translate(transform.x, transform.y)
+      ctx.scale(transform.k, transform.k)
 
-      // Dark parchment-ish background for niche map — slightly different from vibe map
-      ctx.fillStyle = '#080c10'
-      ctx.fillRect(-1000, -800, 3000, 2600)
+      // Background gradient
+      const gradient = ctx.createRadialGradient(500, 400, 0, 500, 400, 800)
+      gradient.addColorStop(0, 'rgba(26, 26, 26, 1)')
+      gradient.addColorStop(1, 'rgba(18, 18, 20, 1)')
+      ctx.fillStyle = gradient
+      ctx.fillRect(-1000, -1000, 3000, 3000)
 
-      // Ambient stars
-      for (let i = 0; i < 180; i++) {
-        const bx = ((i * 43 + 7) % 1100) - 50
-        const by = ((i * 71 + 13) % 900) - 50
-        const tw = Math.sin(t * 1.4 + i * 0.8) * 0.2 + 0.5
-        ctx.globalAlpha = tw * 0.35
-        ctx.fillStyle = '#c8e8ff'
+      // Background particles
+      for (let i = 0; i < 200; i++) {
+        const x = (i * 37) % 1200 - 100
+        const y = (i * 53) % 1000 - 100
+        const size = (i % 3) * 0.5 + 0.5
+        const twinkle = Math.sin(time * 2 + i) * 0.3 + 0.7
+        ctx.globalAlpha = twinkle * 0.15
+        ctx.fillStyle = 'rgba(212, 165, 116, 1)'
         ctx.beginPath()
-        ctx.arc(bx, by, (i % 3) * 0.35 + 0.25, 0, Math.PI * 2)
+        ctx.arc(x, y, size, 0, Math.PI * 2)
         ctx.fill()
       }
       ctx.globalAlpha = 1
 
-      const showStars = k >= ZOOM_THRESHOLD
-
-      if (showStars) {
-        // Connection lines
-        consts.forEach(c => {
-          const members = stars.filter(s => s.vtuber.category === c.id)
-          if (members.length < 2) return
-          ctx.strokeStyle = `${c.color}28`
-          ctx.lineWidth = 1.2 / k
-          ctx.setLineDash([5 / k, 7 / k])
-          ctx.beginPath()
-          members.forEach((s, i) => {
-            const fx = s.x + Math.sin(t * 0.7 + s.x * 0.012) * 1.5
-            const fy = s.y + Math.cos(t * 1.0 + s.y * 0.012) * 1.5
-            if (i === 0) { ctx.moveTo(fx, fy) } else { ctx.lineTo(fx, fy) }
-          })
-          ctx.stroke(); ctx.setLineDash([])
-        })
-
-        // Stars
-        stars.forEach(star => {
-          const isHov = hovStar?.vtuber.id === star.vtuber.id
-          const c = consts.find(x => x.id === star.vtuber.category) ?? null
-          const color = c?.color ?? '#64b5f6'
-          const fx = star.x + Math.sin(t * 0.7 + star.x * 0.012) * 1.8
-          const fy = star.y + Math.cos(t * 1.0 + star.y * 0.012) * 1.8
-          const r = isHov ? 15 : 9
-
-          if (isHov) {
-            const g = ctx.createRadialGradient(fx, fy, 0, fx, fy, 45)
-            g.addColorStop(0, `${color}80`); g.addColorStop(0.5, `${color}28`); g.addColorStop(1, 'transparent')
-            ctx.fillStyle = g; ctx.beginPath(); ctx.arc(fx, fy, 45, 0, Math.PI * 2); ctx.fill()
-          }
-
-          if (k >= 2) {
-            const img = imageCache.current.get(star.vtuber.id)
-            if (img?.complete && img.naturalWidth > 0) {
-              ctx.save(); ctx.beginPath(); ctx.arc(fx, fy, r, 0, Math.PI * 2); ctx.clip()
-              ctx.drawImage(img, fx - r, fy - r, r * 2, r * 2); ctx.restore()
-            } else {
-              const core = ctx.createRadialGradient(fx, fy, 0, fx, fy, r)
-              core.addColorStop(0, '#fff'); core.addColorStop(0.4, color); core.addColorStop(1, `${color}00`)
-              ctx.fillStyle = core; ctx.beginPath(); ctx.arc(fx, fy, r, 0, Math.PI * 2); ctx.fill()
-            }
-            ctx.strokeStyle = isHov ? '#d4a574' : `${color}90`
-            ctx.lineWidth = (isHov ? 2.5 : 1.5) / k
-            ctx.beginPath(); ctx.arc(fx, fy, r, 0, Math.PI * 2); ctx.stroke()
-          } else {
-            const core = ctx.createRadialGradient(fx, fy, 0, fx, fy, r)
-            core.addColorStop(0, '#ffffff'); core.addColorStop(0.35, color); core.addColorStop(1, `${color}00`)
-            ctx.fillStyle = core; ctx.beginPath(); ctx.arc(fx, fy, r, 0, Math.PI * 2); ctx.fill()
-          }
-
-          if (isHov || k >= 3.5) {
-            const fs = Math.max(10, 12 / k)
-            ctx.font = `${isHov ? '600 ' : ''}${fs}px "Space Grotesk", sans-serif`
-            ctx.textAlign = 'center'; ctx.textBaseline = 'top'
-            const ly = fy + r + 4 / k
-            ctx.fillStyle = 'rgba(0,0,0,0.75)'; ctx.fillText(star.vtuber.name, fx + 0.5, ly + 0.5)
-            ctx.fillStyle = isHov ? '#d4a574' : '#f0e8d0'; ctx.fillText(star.vtuber.name, fx, ly)
-          }
-        })
-      } else {
-        // Zoomed out: niche cluster orbs
-        consts.forEach(c => {
-          const cx = c.position.x; const cy = c.position.y
-          const isHov = hovConst?.id === c.id
-          const count = getVTubersByNicheCluster(vts, c.id).length
-          const pulse = Math.sin(t * 1.1 + cx * 0.003) * 0.12 + 0.88
-          const orbR = (isHov ? 90 : 72) * pulse
-
-          const neb = ctx.createRadialGradient(cx, cy, 0, cx, cy, orbR * 1.8)
-          neb.addColorStop(0, `${c.color}55`); neb.addColorStop(0.45, `${c.color}1a`); neb.addColorStop(1, 'transparent')
-          ctx.fillStyle = neb; ctx.beginPath(); ctx.arc(cx, cy, orbR * 1.8, 0, Math.PI * 2); ctx.fill()
-
-          const orb = ctx.createRadialGradient(cx - orbR * 0.25, cy - orbR * 0.25, 0, cx, cy, orbR)
-          orb.addColorStop(0, `${c.color}cc`); orb.addColorStop(0.55, `${c.color}55`); orb.addColorStop(1, `${c.color}0a`)
-          ctx.fillStyle = orb; ctx.beginPath(); ctx.arc(cx, cy, orbR, 0, Math.PI * 2); ctx.fill()
-
-          ctx.strokeStyle = isHov ? c.color : `${c.color}70`
-          ctx.lineWidth = (isHov ? 2 : 1) / k
-          ctx.beginPath(); ctx.arc(cx, cy, orbR, 0, Math.PI * 2); ctx.stroke()
-
-          for (let i = 0; i < Math.min(count, 8); i++) {
-            const ang = (i / Math.min(count, 8)) * Math.PI * 2 + t * 0.28
-            ctx.globalAlpha = 0.65; ctx.fillStyle = '#fff'
-            ctx.beginPath(); ctx.arc(cx + Math.cos(ang) * orbR * 0.62, cy + Math.sin(ang) * orbR * 0.62, 2.8 / k, 0, Math.PI * 2); ctx.fill()
-            ctx.globalAlpha = 1
-          }
-
-          const fs = 15 / k
-          ctx.font = `600 ${fs}px "Space Grotesk", sans-serif`
-          ctx.textAlign = 'center'; ctx.textBaseline = 'middle'
-          ctx.fillStyle = 'rgba(0,0,0,0.55)'; ctx.fillText(c.name, cx + 1, cy + 1)
-          ctx.fillStyle = isHov ? '#ffffff' : '#f0e8d0'; ctx.fillText(c.name, cx, cy)
-          ctx.font = `${10 / k}px "Space Grotesk", sans-serif`
-          ctx.fillStyle = isHov ? c.color : '#888'
-          ctx.fillText(`${count} creators`, cx, cy + fs * 1.25)
-        })
+      if (nodes.length === 0) {
+        // Skeleton loading dots while data arrives
+        ctx.font = `${14 / transform.k}px "Space Grotesk", sans-serif`
+        ctx.fillStyle = 'rgba(255,255,255,0.2)'
+        ctx.textAlign = 'center'
+        ctx.textBaseline = 'middle'
+        ctx.fillText('Loading…', 500, 450)
+        ctx.restore()
+        animationRef.current = requestAnimationFrame(render)
+        return
       }
 
+      // Connection lines between all nodes
+      for (let i = 0; i < nodes.length; i++) {
+        for (let j = i + 1; j < nodes.length; j++) {
+          const a = nodes[i], b = nodes[j]
+          const dist = Math.sqrt((a.position_x - b.position_x) ** 2 + (a.position_y - b.position_y) ** 2)
+          if (dist < 350) {
+            ctx.strokeStyle = `rgba(255,255,255,${0.04 * (1 - dist / 350)})`
+            ctx.lineWidth = 1 / transform.k
+            ctx.beginPath()
+            ctx.moveTo(a.position_x, a.position_y)
+            ctx.lineTo(b.position_x, b.position_y)
+            ctx.stroke()
+          }
+        }
+      }
+
+      // Draw nodes
+      nodes.forEach(node => {
+        const isHovered = hoveredNode?.id === node.id
+        const pulse = Math.sin(time * 1.5 + node.position_x * 0.01) * 3
+        const r = 52 + (isHovered ? pulse + 6 : 0)
+
+        // Outer glow
+        const glowGradient = ctx.createRadialGradient(node.position_x, node.position_y, 0, node.position_x, node.position_y, r * 2.2)
+        glowGradient.addColorStop(0, node.color + (isHovered ? '55' : '28'))
+        glowGradient.addColorStop(0.5, node.color + '10')
+        glowGradient.addColorStop(1, 'transparent')
+        ctx.fillStyle = glowGradient
+        ctx.beginPath()
+        ctx.arc(node.position_x, node.position_y, r * 2.2, 0, Math.PI * 2)
+        ctx.fill()
+
+        // Bubble fill
+        const fill = ctx.createRadialGradient(node.position_x - r * 0.3, node.position_y - r * 0.3, 0, node.position_x, node.position_y, r)
+        fill.addColorStop(0, node.color + (isHovered ? 'cc' : '88'))
+        fill.addColorStop(0.7, node.color + (isHovered ? '55' : '40'))
+        fill.addColorStop(1, node.color + '18')
+        ctx.fillStyle = fill
+        ctx.beginPath()
+        ctx.arc(node.position_x, node.position_y, r, 0, Math.PI * 2)
+        ctx.fill()
+
+        // Border
+        ctx.strokeStyle = node.color + (isHovered ? 'ee' : '66')
+        ctx.lineWidth = (isHovered ? 2.5 : 1.5) / transform.k
+        ctx.beginPath()
+        ctx.arc(node.position_x, node.position_y, r, 0, Math.PI * 2)
+        ctx.stroke()
+
+        // Node name
+        ctx.font = `${isHovered ? 'bold ' : ''}${14 / transform.k}px "Space Grotesk", sans-serif`
+        ctx.fillStyle = isHovered ? '#ffffff' : '#f5f0e6dd'
+        ctx.textAlign = 'center'
+        ctx.textBaseline = 'middle'
+        ctx.fillText(node.tag, node.position_x, node.position_y - (node.vtuber_count > 0 ? 8 : 0))
+
+        // Creator count
+        if (node.vtuber_count > 0) {
+          ctx.font = `${10 / transform.k}px "Space Grotesk", sans-serif`
+          ctx.fillStyle = node.color + (isHovered ? 'ff' : 'bb')
+          ctx.fillText(`${node.vtuber_count} creator${node.vtuber_count !== 1 ? 's' : ''}`, node.position_x, node.position_y + 10)
+        }
+      })
+
       ctx.restore()
-      rafRef.current = requestAnimationFrame(render)
+      animationRef.current = requestAnimationFrame(render)
     }
 
     render()
-    return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current) }
-  }, [dimensions])
 
-  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
-    const canvas = canvasRef.current; if (!canvas) return
-    const rect = canvas.getBoundingClientRect()
-    const tr = transformRef.current
-    const mx = (e.clientX - rect.left - tr.x) / tr.k
-    const my = (e.clientY - rect.top - tr.y) / tr.k
-
-    if (tr.k >= ZOOM_THRESHOLD) {
-      const hitR2 = (22 / tr.k) ** 2
-      const hit = starPositionsRef.current.find(s => (s.x - mx) ** 2 + (s.y - my) ** 2 < hitR2) ?? null
-      hoveredStarRef.current = hit; hoveredConstRef.current = null
-      if (hit) { setTooltip({ vtuber: hit.vtuber, sx: hit.x * tr.k + tr.x, sy: hit.y * tr.k + tr.y }); setConstHint(null); canvas.style.cursor = 'pointer' }
-      else { setTooltip(null); canvas.style.cursor = 'grab' }
-    } else {
-      hoveredStarRef.current = null
-      const hit = constellationsRef.current.find(c => (c.position.x - mx) ** 2 + (c.position.y - my) ** 2 < 80 ** 2) ?? null
-      hoveredConstRef.current = hit; setConstHint(hit); setTooltip(null)
-      canvas.style.cursor = hit ? 'pointer' : 'grab'
+    return () => {
+      if (animationRef.current) cancelAnimationFrame(animationRef.current)
     }
-  }, [])
-
-  const handleMouseLeave = useCallback(() => {
-    hoveredStarRef.current = null; hoveredConstRef.current = null; setTooltip(null); setConstHint(null)
-  }, [])
-
-  const handleClick = useCallback(() => {
-    if (hoveredStarRef.current) { router.push(`/vtuber/${hoveredStarRef.current.vtuber.id}`); return }
-    const hc = hoveredConstRef.current
-    const canvas = canvasRef.current; const zb = zoomBehaviorRef.current
-    if (hc && canvas && zb) {
-      const t = zoomIdentity.translate(dimensions.width / 2 - hc.position.x * 2.5, dimensions.height / 2 - hc.position.y * 2.5).scale(2.5)
-      select(canvas).call(zb.transform, t)
-    }
-  }, [router, dimensions.width, dimensions.height])
-
-  if (loading) {
-    return (
-      <div className="w-full min-h-[500px] flex flex-col items-center justify-center gap-4 bg-[#080c10]">
-        <div className="relative w-16 h-16">
-          <div className="absolute inset-0 rounded-full border border-blue-400/20 animate-ping" />
-          <div className="absolute inset-0 rounded-full border border-blue-400/40 animate-pulse" />
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="h-2 w-2 rounded-full bg-blue-400 animate-pulse" />
-          </div>
-        </div>
-        <p className="text-sm text-muted-foreground animate-pulse tracking-widest uppercase">Mapping niches…</p>
-      </div>
-    )
-  }
-
-  if (error) {
-    return (
-      <div className="w-full min-h-[500px] flex items-center justify-center bg-[#080c10]">
-        <p className="text-sm text-red-400">{error}</p>
-      </div>
-    )
-  }
+  }, [dimensions, transform, nodes, hoveredNode])
 
   return (
-    <div ref={containerRef} className="relative w-full h-full min-h-[500px] bg-[#080c10] overflow-hidden">
+    <div ref={containerRef} className="relative w-full h-full min-h-[500px]">
       <canvas
         ref={canvasRef}
         width={dimensions.width}
         height={dimensions.height}
-        className="w-full h-full"
-        style={{ touchAction: 'none', cursor: 'grab' }}
+        className="w-full h-full cursor-grab active:cursor-grabbing"
         onMouseMove={handleMouseMove}
-        onMouseLeave={handleMouseLeave}
         onClick={handleClick}
+        style={{ touchAction: 'none' }}
       />
 
-      <div className="absolute bottom-4 left-4 flex items-center gap-2 px-3 py-1.5 rounded-lg bg-black/60 border border-white/10 text-xs select-none">
-        <span className="text-white/40">zoom</span>
-        <span className="text-vault-cream font-medium tabular-nums">{zoomPct}%</span>
-        {zoomPct < ZOOM_THRESHOLD * 100 && <span className="text-blue-400/60">· scroll in to see creators</span>}
-      </div>
-
-      <div className="absolute top-4 right-4 px-3 py-1.5 rounded-lg bg-black/60 border border-white/10 text-xs text-white/35 select-none">
-        scroll to zoom · drag to pan · click to explore
-      </div>
-
-      {tooltip && (
-        <div className="absolute pointer-events-none z-20"
-          style={{ left: Math.min(tooltip.sx + 20, dimensions.width - 250), top: Math.max(tooltip.sy - 12, 8) }}>
-          <div className="w-52 rounded-xl bg-[#0e0e1c]/96 border border-blue-400/30 shadow-2xl backdrop-blur-sm overflow-hidden">
-            <div className="flex items-center gap-3 p-3 border-b border-white/5">
-              <img src={tooltip.vtuber.avatarUrl} alt={tooltip.vtuber.name} className="h-9 w-9 rounded-full border border-blue-400/40 flex-shrink-0" />
-              <div className="min-w-0">
-                <div className="font-semibold text-vault-cream text-sm truncate">{tooltip.vtuber.name}</div>
-                <div className="text-[10px] text-blue-400/70 truncate">
-                  {constellations.find(c => c.id === tooltip.vtuber.category)?.name ?? ''}
-                </div>
-              </div>
-            </div>
-            {tooltip.vtuber.bio && <p className="px-3 py-2 text-[11px] text-white/50 line-clamp-2 leading-relaxed">{tooltip.vtuber.bio}</p>}
-            <div className="px-3 pb-2.5 pt-0.5 text-[10px] text-blue-400/80 flex items-center gap-1">↗ Click to view profile</div>
+      {hoveredNode && (
+        <div
+          className="absolute pointer-events-none z-10 p-3 rounded-lg bg-vault-charcoal border border-vault-bronze/50 shadow-xl max-w-[220px]"
+          style={{
+            left: (hoveredNode.position_x * transform.k + transform.x) + 65,
+            top: (hoveredNode.position_y * transform.k + transform.y) - 40,
+          }}
+        >
+          <div className="font-semibold text-vault-cream text-sm">{hoveredNode.tag}</div>
+          {hoveredNode.description && (
+            <div className="text-xs text-muted-foreground mt-1">{hoveredNode.description}</div>
+          )}
+          <div className="text-xs mt-1.5" style={{ color: hoveredNode.color }}>
+            {hoveredNode.vtuber_count} creator{hoveredNode.vtuber_count !== 1 ? 's' : ''}
           </div>
         </div>
       )}
 
-      {constHint && !tooltip && (
-        <div className="absolute bottom-14 left-4 flex items-center gap-2 px-3 py-1.5 rounded-lg bg-black/70 border text-xs select-none"
-          style={{ borderColor: `${constHint.color}50` }}>
-          <div className="h-2 w-2 rounded-full flex-shrink-0" style={{ backgroundColor: constHint.color }} />
-          <span className="text-vault-cream font-medium">{constHint.name}</span>
-          <span className="text-white/35">· click to zoom in</span>
-        </div>
-      )}
+      <div className="absolute bottom-4 left-4 flex items-center gap-2 px-3 py-2 rounded-lg bg-vault-deep/80 border border-border text-sm">
+        <span className="text-muted-foreground">Zoom:</span>
+        <span className="text-vault-cream font-medium">{Math.round(transform.k * 100)}%</span>
+      </div>
+
+      <div className="absolute top-4 right-4 px-3 py-2 rounded-lg bg-vault-deep/80 border border-border text-xs text-muted-foreground">
+        Scroll to zoom &bull; Drag to pan
+      </div>
     </div>
   )
 }
+  
