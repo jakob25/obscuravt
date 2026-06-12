@@ -1,9 +1,14 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { supabase } from '@/lib/supabase'
+import { createClient } from '@supabase/supabase-js'
 import type { VTuber, Constellation } from '@/lib/types'
 import { rowToVTuber } from '@/hooks/use-star-map-data'
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+)
 
 interface DbNicheCluster {
   id: string
@@ -12,28 +17,17 @@ interface DbNicheCluster {
   position_x: number | null
   position_y: number | null
   description: string | null
-  content_tag_ids: string[] | null   // ← from DB, no hardcoding
-  sort_order: number
+  content_tag_ids: string[] | null
 }
 
-// Assign a VTuber to a niche cluster based purely on DB-driven content tag mappings
-function assignNicheCluster(
-  vtags: string[],
-  clusters: DbNicheCluster[]
-): string | null {
-  let bestCluster: string | null = null
+function assignNicheCluster(vtags: string[], clusters: DbNicheCluster[]): string | null {
+  let best: string | null = null
   let bestScore = 0
-
-  for (const cluster of clusters) {
-    const contentTags = cluster.content_tag_ids ?? []
-    const score = contentTags.filter(t => vtags.includes(t)).length
-    if (score > bestScore) {
-      bestScore = score
-      bestCluster = cluster.id
-    }
+  for (const c of clusters) {
+    const score = (c.content_tag_ids ?? []).filter(t => vtags.includes(t)).length
+    if (score > bestScore) { bestScore = score; best = c.id }
   }
-
-  return bestCluster
+  return best
 }
 
 interface NicheMapData {
@@ -56,7 +50,7 @@ export function useNicheMapData(): NicheMapData {
           supabase.from('vtubers').select('*').eq('approved', true),
           supabase
             .from('canonical_tags')
-            .select('id, tag, color, position_x, position_y, description, content_tag_ids, sort_order')
+            .select('id, tag, color, position_x, position_y, description, content_tag_ids')
             .eq('category', 'niche_cluster')
             .not('color', 'is', null)
             .not('position_x', 'is', null)
@@ -68,17 +62,14 @@ export function useNicheMapData(): NicheMapData {
 
         const dbClusters = (clusterRes.data ?? []) as DbNicheCluster[]
 
-        // Map VTubers, overriding category with niche cluster
         const mapped = (vtRes.data ?? [])
-          .map((row) => {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const vt = rowToVTuber(row as any)
+          .map((row: Record<string, unknown>) => {
+            const vt = rowToVTuber(row)
             const nicheCluster = assignNicheCluster(vt.vibeTags, dbClusters)
             return { ...vt, category: nicheCluster ?? '' }
           })
-          .filter(v => v.category !== '') // drop VTubers with no niche match
+          .filter(v => v.category !== '')
 
-        // Build constellations from DB rows, only include ones with VTubers
         const usedIds = new Set(mapped.map(v => v.category))
         const consts: Constellation[] = dbClusters
           .filter(c => usedIds.has(c.id) && c.color && c.position_x != null && c.position_y != null)
