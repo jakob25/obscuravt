@@ -40,7 +40,6 @@ export function StarMap() {
   const [dimensions, setDimensions] = useState({ width: 900, height: 600 })
   const [zoomPct, setZoomPct] = useState(100)
   const [tooltip, setTooltip] = useState<{ vtuber: VTuber; sx: number; sy: number } | null>(null)
-  const [constHint, setConstHint] = useState<Constellation | null>(null)
 
   // Keep refs in sync
   useEffect(() => { constellationsRef.current = constellations }, [constellations])
@@ -451,7 +450,6 @@ export function StarMap() {
         const sx = hit.x * tr.k + tr.x
         const sy = hit.y * tr.k + tr.y
         setTooltip({ vtuber: hit.vtuber, sx, sy })
-        setConstHint(null)
         canvas.style.cursor = 'pointer'
       } else {
         setTooltip(null)
@@ -463,7 +461,6 @@ export function StarMap() {
         (c.position.x - mx) ** 2 + (c.position.y - my) ** 2 < 85 ** 2
       ) ?? null
       hoveredConstRef.current = hit
-      setConstHint(hit)
       setTooltip(null)
       canvas.style.cursor = hit ? 'pointer' : 'grab'
     }
@@ -473,7 +470,6 @@ export function StarMap() {
     hoveredStarRef.current = null
     hoveredConstRef.current = null
     setTooltip(null)
-    setConstHint(null)
   }, [])
 
   // ── Click — reads from refs, always fresh ─────────────────────────────────
@@ -498,23 +494,6 @@ export function StarMap() {
     }
   }, [router, dimensions.width, dimensions.height])
 
-  if (loading) {
-    return (
-      <div className="w-full min-h-[500px] flex flex-col items-center justify-center gap-4 bg-[#020408]">
-        <div className="relative w-16 h-16">
-          <div className="absolute inset-0 rounded-full border border-cyan-400/20 animate-ping" />
-          <div className="absolute inset-0 rounded-full border border-cyan-400/40 animate-pulse" />
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="h-2 w-2 rounded-full bg-cyan-400 animate-pulse" />
-          </div>
-        </div>
-        <p className="text-sm text-cyan-400/60 animate-pulse tracking-widest uppercase text-xs">
-          Mapping constellations…
-        </p>
-      </div>
-    )
-  }
-
   return (
     <div ref={containerRef} className="relative w-full h-full min-h-[500px] bg-[#020408] overflow-hidden">
       <canvas
@@ -522,25 +501,45 @@ export function StarMap() {
         width={dimensions.width}
         height={dimensions.height}
         className="w-full h-full"
-        style={{ touchAction: 'none', cursor: 'grab' }}
+        style={{ touchAction: 'none', cursor: loading ? 'default' : 'grab' }}
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
         onClick={handleClick}
       />
 
+      {/* Loading overlay — rendered on top of canvas so refs are always attached */}
+      {loading && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-[#020408]">
+          <div className="relative w-16 h-16">
+            <div className="absolute inset-0 rounded-full border border-cyan-400/20 animate-ping" />
+            <div className="absolute inset-0 rounded-full border border-cyan-400/40 animate-pulse" />
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="h-2 w-2 rounded-full bg-cyan-400 animate-pulse" />
+            </div>
+          </div>
+          <p className="text-sm text-cyan-400/60 animate-pulse tracking-widest uppercase text-xs">
+            Mapping constellations…
+          </p>
+        </div>
+      )}
+
       {/* Zoom indicator */}
-      <div className="absolute bottom-4 left-4 flex items-center gap-2 px-3 py-1.5 rounded-lg bg-black/70 border border-white/10 text-xs select-none">
-        <span className="text-white/40">zoom</span>
-        <span className="text-white font-medium tabular-nums">{zoomPct}%</span>
-        {zoomPct < ZOOM_THRESHOLD * 100 && (
-          <span className="text-cyan-400/60">· scroll in to see creators</span>
-        )}
-      </div>
+      {!loading && (
+        <div className="absolute bottom-4 left-4 flex items-center gap-2 px-3 py-1.5 rounded-lg bg-black/70 border border-white/10 text-xs select-none">
+          <span className="text-white/40">zoom</span>
+          <span className="text-white font-medium tabular-nums">{zoomPct}%</span>
+          {zoomPct < ZOOM_THRESHOLD * 100 && (
+            <span className="text-cyan-400/60">· scroll in to see creators</span>
+          )}
+        </div>
+      )}
 
       {/* Instructions */}
-      <div className="absolute top-4 right-4 px-3 py-1.5 rounded-lg bg-black/60 border border-white/10 text-xs text-white/30 select-none">
-        scroll to zoom · drag to pan · click to explore
-      </div>
+      {!loading && (
+        <div className="absolute top-4 right-4 px-3 py-1.5 rounded-lg bg-black/60 border border-white/10 text-xs text-white/30 select-none">
+          scroll to zoom · drag to pan · click to explore
+        </div>
+      )}
 
       {/* VTuber tooltip — click target */}
       {tooltip && (
@@ -578,15 +577,6 @@ export function StarMap() {
         </div>
       )}
 
-      {/* Constellation hint */}
-      {constHint && !tooltip && (
-        <div className="absolute bottom-14 left-4 flex items-center gap-2 px-3 py-1.5 rounded-lg bg-black/80 border text-xs select-none"
-          style={{ borderColor: `${constHint.color}60` }}>
-          <div className="h-2 w-2 rounded-full flex-shrink-0 animate-pulse" style={{ background: constHint.color }} />
-          <span className="text-white font-medium">{constHint.name}</span>
-          <span className="text-white/40">· click to zoom in</span>
-        </div>
-      )}
     </div>
   )
 }
