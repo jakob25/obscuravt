@@ -34,6 +34,50 @@ export function rowToVTuber(row: Record<string, unknown>): VTuber {
   }
 }
 
+// Place stars around a constellation center without overlapping
+export function placeStars(
+  members: VTuber[],
+  cx: number,
+  cy: number,
+  starRadius: number = 12
+): Array<{ vtuber: VTuber; x: number; y: number }> {
+  const placed: Array<{ vtuber: VTuber; x: number; y: number }> = []
+  const minDist = starRadius * 2.8 // minimum gap between star centers
+
+  for (const vtuber of members) {
+    let bestX = cx
+    let bestY = cy
+    let found = false
+
+    // Try rings of increasing radius until we find a non-overlapping spot
+    for (let ring = 1; ring <= 8 && !found; ring++) {
+      const ringRadius = 55 + ring * 35
+      const spotsInRing = Math.max(6, Math.floor((2 * Math.PI * ringRadius) / (minDist * 1.1)))
+
+      for (let i = 0; i < spotsInRing && !found; i++) {
+        const angle = (i / spotsInRing) * Math.PI * 2 + ring * 0.5
+        const tx = cx + Math.cos(angle) * ringRadius
+        const ty = cy + Math.sin(angle) * ringRadius
+
+        // Check distance to all already-placed stars
+        const overlaps = placed.some(
+          (p) => Math.hypot(p.x - tx, p.y - ty) < minDist
+        )
+
+        if (!overlaps) {
+          bestX = tx
+          bestY = ty
+          found = true
+        }
+      }
+    }
+
+    placed.push({ vtuber, x: bestX, y: bestY })
+  }
+
+  return placed
+}
+
 export function getVTubersByConstellationLive(vtubers: VTuber[], constellationId: string): VTuber[] {
   return vtubers.filter((v) => v.category === constellationId)
 }
