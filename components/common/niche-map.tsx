@@ -3,7 +3,7 @@
 import { useRef, useEffect, useState, useCallback } from 'react'
 import { zoom, D3ZoomEvent } from 'd3-zoom'
 import { select } from 'd3-selection'
-import { createClient } from '@/lib/supabase/client'
+import { supabase } from '@/lib/supabase'
 
 interface NicheNode {
   id: string
@@ -33,7 +33,7 @@ export function NicheMap({ onNodeSelect }: NicheMapProps) {
 
   // Fetch niche_cluster data from Supabase
   useEffect(() => {
-    const supabase = createClient()
+    
     supabase
       .from('canonical_tags')
       .select('id, tag, color, position_x, position_y, description')
@@ -46,7 +46,7 @@ export function NicheMap({ onNodeSelect }: NicheMapProps) {
         const { data: vtubers } = await supabase
           .from('vtubers')
           .select('id, tags')
-          .eq('status', 'approved')
+          .eq('approved', true)
 
         const enriched: NicheNode[] = tags.map(t => ({
           id: t.id,
@@ -273,4 +273,3 @@ export function NicheMap({ onNodeSelect }: NicheMapProps) {
     </div>
   )
 }
-  
