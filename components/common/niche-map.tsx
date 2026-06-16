@@ -29,7 +29,7 @@ export function NicheMap({ onNodeSelect }: NicheMapProps) {
   const [transform, setTransform] = useState({ x: 0, y: 0, k: 1 })
   const [nodes, setNodes] = useState<NicheNode[]>([])
   const [hoveredNode, setHoveredNode] = useState<NicheNode | null>(null)
-  const animationRef = useRef<number>()
+  const animationRef = useRef<number>(0)
 
   // Fetch niche_cluster data from Supabase
   useEffect(() => {
