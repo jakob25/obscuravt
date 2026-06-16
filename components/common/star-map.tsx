@@ -117,7 +117,7 @@ export function StarMap() {
     let glitchTimer = 0
     let glitchActive = false
     let glitchIntensity = 0
-    let nextGlitch = 2 + Math.random() * 4
+    let nextGlitch = 1 + Math.random() * 2
 
     const render = () => {
       timeRef.current += 0.016
@@ -149,33 +149,21 @@ export function StarMap() {
         glitchActive = true
         glitchIntensity = 0.3 + Math.random() * 0.7
         glitchTimer = 0
-        nextGlitch = 1.5 + Math.random() * 5
+        nextGlitch = 0.8 + Math.random() * 3
         setTimeout(() => { glitchActive = false }, 80 + Math.random() * 120)
       }
 
       // Scanlines — always on, subtle
       ctx.save()
-      for (let y = 0; y < height; y += 3) {
-        ctx.globalAlpha = 0.04
+      for (let y = 0; y < height; y += 2) {
+        ctx.globalAlpha = 0.12
         ctx.fillStyle = '#000'
         ctx.fillRect(0, y, width, 1)
       }
       ctx.globalAlpha = 1
       ctx.restore()
 
-      // Static noise — always faint
-      ctx.save()
-      const noiseCount = 400
-      for (let i = 0; i < noiseCount; i++) {
-        const nx = Math.random() * width
-        const ny = Math.random() * height
-        const nb = Math.random()
-        ctx.globalAlpha = nb * 0.06
-        ctx.fillStyle = nb > 0.5 ? '#fff' : '#0af'
-        ctx.fillRect(nx, ny, 1, 1)
-      }
-      ctx.globalAlpha = 1
-      ctx.restore()
+
 
       // Active glitch: horizontal tear + color fringe
       if (glitchActive) {
@@ -185,7 +173,7 @@ export function StarMap() {
           const gh = 1 + Math.random() * 4
           const gx = (Math.random() - 0.5) * 30 * glitchIntensity
           ctx.save()
-          ctx.globalAlpha = 0.15 + Math.random() * 0.2
+          ctx.globalAlpha = 0.35 + Math.random() * 0.3
           // Copy a horizontal slice and shift it
           try {
             const slice = ctx.getImageData(0, Math.max(0, gy - gh), width, gh * 2)
@@ -195,7 +183,7 @@ export function StarMap() {
         }
         // Color fringe flash
         ctx.save()
-        ctx.globalAlpha = 0.04 * glitchIntensity
+        ctx.globalAlpha = 0.18 * glitchIntensity
         ctx.fillStyle = `hsl(${Math.random() * 60 + 160}, 100%, 60%)`
         ctx.fillRect(0, Math.random() * height, width, 2 + Math.random() * 8)
         ctx.globalAlpha = 1
