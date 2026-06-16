@@ -37,18 +37,7 @@ const ZOOM_THRESHOLD = 1.5
 const MIN_ZOOM = 0.4
 const MAX_ZOOM = 5
 
-const SCATTER: Record<string, { x: number; y: number }> = {
-  nclust_library:  { x: 140,  y: 110 },
-  nclust_atelier:  { x: 380,  y: 80  },
-  nclust_darkroom: { x: 660,  y: 140 },
-  nclust_gym:      { x: 900,  y: 90  },
-  nclust_station:  { x: 820,  y: 310 },
-  nclust_arcade:   { x: 100,  y: 370 },
-  nclust_lab:      { x: 310,  y: 430 },
-  nclust_kitchen:  { x: 750,  y: 520 },
-  nclust_studio:   { x: 480,  y: 600 },
-  nclust_globe:    { x: 200,  y: 640 },
-}
+
 
 export function NicheMap({ onVTuberSelect, onClusterSelect }: NicheMapProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -66,7 +55,7 @@ export function NicheMap({ onVTuberSelect, onClusterSelect }: NicheMapProps) {
     async function load() {
       const { data: tags, error } = await supabase
         .from('canonical_tags')
-        .select('id, tag, color, description, content_tag_ids')
+        .select('id, tag, color, position_x, position_y, description, content_tag_ids')
         .eq('category', 'niche_cluster')
         .order('sort_order')
 
@@ -81,8 +70,8 @@ export function NicheMap({ onVTuberSelect, onClusterSelect }: NicheMapProps) {
         id: t.id,
         tag: t.tag,
         color: t.color ?? '#888888',
-        position_x: SCATTER[t.id]?.x ?? 500,
-        position_y: SCATTER[t.id]?.y ?? 400,
+        position_x: t.position_x ?? 500,
+        position_y: t.position_y ?? 400,
         description: t.description ?? '',
         content_tag_ids: (t as any).content_tag_ids ?? [],
       }))
