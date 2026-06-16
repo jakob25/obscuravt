@@ -33,30 +33,49 @@ export function NicheMap({ onNodeSelect }: NicheMapProps) {
 
   // Fetch niche_cluster data from Supabase
   useEffect(() => {
-    
     supabase
       .from('canonical_tags')
-      .select('id, tag, color, position_x, position_y, description')
+      .select('id, tag, color, position_x, position_y, description, content_tag_ids')
       .eq('category', 'niche_cluster')
       .order('sort_order')
       .then(async ({ data: tags, error }) => {
         if (error || !tags) return
 
-        // Count vtubers per niche cluster
         const { data: vtubers } = await supabase
           .from('vtubers')
           .select('id, tags')
           .eq('approved', true)
 
-        const enriched: NicheNode[] = tags.map(t => ({
-          id: t.id,
-          tag: t.tag,
-          color: t.color ?? '#888888',
-          position_x: t.position_x ?? 500,
-          position_y: t.position_y ?? 400,
-          description: t.description ?? '',
-          vtuber_count: vtubers?.filter(v => Array.isArray(v.tags) && v.tags.includes(t.id)).length ?? 0,
-        }))
+        // Scattered positions — not a ring
+        const SCATTER: Record<string, { x: number; y: number }> = {
+          nclust_library:  { x: 140,  y: 110 },
+          nclust_atelier:  { x: 380,  y: 80  },
+          nclust_darkroom: { x: 660,  y: 140 },
+          nclust_gym:      { x: 900,  y: 90  },
+          nclust_station:  { x: 820,  y: 310 },
+          nclust_arcade:   { x: 100,  y: 370 },
+          nclust_lab:      { x: 310,  y: 430 },
+          nclust_kitchen:  { x: 750,  y: 520 },
+          nclust_studio:   { x: 480,  y: 600 },
+          nclust_globe:    { x: 200,  y: 640 },
+        }
+
+        const enriched: NicheNode[] = tags.map(t => {
+          const contentTagIds: string[] = (t as any).content_tag_ids ?? []
+          const count = vtubers?.filter(v =>
+            Array.isArray(v.tags) && contentTagIds.some((cid: string) => v.tags.includes(cid))
+          ).length ?? 0
+          const pos = SCATTER[t.id] ?? { x: 500, y: 400 }
+          return {
+            id: t.id,
+            tag: t.tag,
+            color: t.color ?? '#888888',
+            position_x: pos.x,
+            position_y: pos.y,
+            description: t.description ?? '',
+            vtuber_count: count,
+          }
+        })
 
         setNodes(enriched)
       })
