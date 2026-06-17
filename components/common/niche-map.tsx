@@ -41,7 +41,6 @@ const MAX_ZOOM = 5
 
 export function NicheMap({ onVTuberSelect, onClusterSelect }: NicheMapProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  const staticFramesRef = useRef<HTMLCanvasElement[]>([])
   const containerRef = useRef<HTMLDivElement>(null)
   const [dimensions, setDimensions] = useState({ width: 800, height: 600 })
   const [transform, setTransform] = useState({ x: 0, y: 0, k: 1 })
@@ -52,36 +51,6 @@ export function NicheMap({ onVTuberSelect, onClusterSelect }: NicheMapProps) {
   const animationRef = useRef<number>(0)
 
   // Fetch clusters + vtubers, build star positions
-  useEffect(() => {
-    const W = 320, H = 240, FRAMES = 16
-    const frames: HTMLCanvasElement[] = []
-    for (let f = 0; f < FRAMES; f++) {
-      const off = document.createElement('canvas')
-      off.width = W; off.height = H
-      const oc = off.getContext('2d')!
-      const img = oc.createImageData(W, H)
-      const d = img.data
-      for (let i = 0; i < d.length; i += 4) {
-        const v = Math.random()
-        const b = v * v * 220
-        d[i]   = b * 0.45
-        d[i+1] = b * 0.55
-        d[i+2] = b * 1.4
-        d[i+3] = 18 + v * 45
-      }
-      if (Math.random() > 0.65) {
-        const by = Math.floor(Math.random() * H)
-        for (let x = 0; x < W; x++) {
-          const idx = (by * W + x) * 4
-          d[idx] = 160; d[idx+1] = 210; d[idx+2] = 255; d[idx+3] = 50 + Math.random() * 60
-        }
-      }
-      oc.putImageData(img, 0, 0)
-      frames.push(off)
-    }
-    staticFramesRef.current = frames
-  }, [])
-
   useEffect(() => {
     async function load() {
       const { data: tags, error } = await supabase
@@ -213,19 +182,6 @@ export function NicheMap({ onVTuberSelect, onClusterSelect }: NicheMapProps) {
     const render = () => {
       time += 0.016
       ctx.clearRect(0, 0, dimensions.width, dimensions.height)
-
-      // ── Analog static ─────────────────────────────────────────────────────────
-      const sFrames = staticFramesRef.current
-      if (sFrames.length > 0) {
-        const sIdx = Math.floor(time * 6) % sFrames.length
-        ctx.save()
-        ctx.globalAlpha = 0.22
-        ctx.globalCompositeOperation = 'screen'
-        ctx.drawImage(sFrames[sIdx], 0, 0, dimensions.width, dimensions.height)
-        ctx.globalCompositeOperation = 'source-over'
-        ctx.globalAlpha = 1
-        ctx.restore()
-      }
 
       ctx.save()
       ctx.translate(transform.x, transform.y)
@@ -430,7 +386,7 @@ export function NicheMap({ onVTuberSelect, onClusterSelect }: NicheMapProps) {
         className="w-full h-full cursor-grab active:cursor-grabbing"
         onMouseMove={handleMouseMove}
         onClick={handleClick}
-        style={{ touchAction: 'none' }}
+        style={{ touchAction: 'none', position: 'relative', zIndex: 1 }}
       />
 
       {/* Zoom indicator */}
