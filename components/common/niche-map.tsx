@@ -386,7 +386,7 @@ export function NicheMap({ onVTuberSelect, onClusterSelect }: NicheMapProps) {
         className="w-full h-full cursor-grab active:cursor-grabbing"
         onMouseMove={handleMouseMove}
         onClick={handleClick}
-        style={{ touchAction: 'none', position: 'relative', zIndex: 1 }}
+        style={{ touchAction: 'none' }}
       />
 
       {/* Zoom indicator */}
