@@ -1,117 +1,82 @@
 'use client'
 
 import { useRef, useEffect, useState, useCallback } from 'react'
-import { zoom, D3ZoomEvent } from 'd3-zoom'
+import { zoom, zoomIdentity, ZoomTransform, D3ZoomEvent } from 'd3-zoom'
 import { select } from 'd3-selection'
-import { supabase } from '@/lib/supabase'
+import { useRouter } from 'next/navigation'
+import { useNicheMapData, getVTubersByNicheCluster } from '@/hooks/use-niche-map-data'
+import type { VTuber, Constellation } from '@/lib/types'
 
-interface NicheCluster {
-  id: string
-  tag: string
-  color: string
-  position_x: number
-  position_y: number
-  description: string
-  content_tag_ids: string[]
-}
-
-interface VTuberStar {
-  id: string
-  name: string
-  avatar_url: string
-  tags: string[]
-  // which niche cluster this star belongs to
-  cluster_id: string
+interface StarPosition {
+  vtuber: VTuber
   x: number
   y: number
-  baseX: number
-  baseY: number
-}
-
-interface NicheMapProps {
-  onVTuberSelect?: (id: string) => void
-  onClusterSelect?: (cluster: NicheCluster) => void
 }
 
 const ZOOM_THRESHOLD = 1.5
 const MIN_ZOOM = 0.4
 const MAX_ZOOM = 5
 
+export function NicheMap() {
+  const { vtubers, constellations, loading } = useNicheMapData()
+  const router = useRouter()
 
-
-export function NicheMap({ onVTuberSelect, onClusterSelect }: NicheMapProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
+  const rafRef = useRef<number | undefined>(undefined)
+  const timeRef = useRef(0)
+
+  // All hot-path state in refs — avoids stale closures in canvas loop
+  const transformRef = useRef<ZoomTransform>(zoomIdentity)
+  const starPositionsRef = useRef<StarPosition[]>([])
+  const hoveredStarRef = useRef<StarPosition | null>(null)
+  const hoveredConstRef = useRef<Constellation | null>(null)
+  const constellationsRef = useRef<Constellation[]>([])
+  const vtubersRef = useRef<VTuber[]>([])
+  const imageCache = useRef<Map<string, HTMLImageElement>>(new Map())
+  const zoomBehaviorRef = useRef<ReturnType<typeof zoom<HTMLCanvasElement, unknown>> | null>(null)
+
+  // Only use React state for things that affect overlay UI
   const [dimensions, setDimensions] = useState({ width: 900, height: 600 })
-  const [transform, setTransform] = useState({ x: 0, y: 0, k: 1 })
-  const [clusters, setClusters] = useState<NicheCluster[]>([])
-  const [starPositions, setStarPositions] = useState<VTuberStar[]>([])
-  const [hoveredStar, setHoveredStar] = useState<VTuberStar | null>(null)
-  const [hoveredCluster, setHoveredCluster] = useState<NicheCluster | null>(null)
-  const animationRef = useRef<number>(0)
+  const [zoomPct, setZoomPct] = useState(100)
+  const [tooltip, setTooltip] = useState<{ vtuber: VTuber; sx: number; sy: number } | null>(null)
 
-  // Fetch clusters + vtubers, build star positions
+  // Keep refs in sync
+  useEffect(() => { constellationsRef.current = constellations }, [constellations])
+  useEffect(() => { vtubersRef.current = vtubers }, [vtubers])
+
+  // Preload avatar images
   useEffect(() => {
-    async function load() {
-      const { data: tags, error } = await supabase
-        .from('canonical_tags')
-        .select('id, tag, color, position_x, position_y, description, content_tag_ids')
-        .eq('category', 'niche_cluster')
-        .order('sort_order')
+    vtubers.forEach(v => {
+      if (!imageCache.current.has(v.id)) {
+        const img = new Image()
+        img.crossOrigin = 'anonymous'
+        img.src = v.avatarUrl
+        imageCache.current.set(v.id, img)
+      }
+    })
+  }, [vtubers])
 
-      if (error || !tags) return
-
-      const { data: vtubers } = await supabase
-        .from('vtubers')
-        .select('id, name, avatar_url, tags')
-        .eq('approved', true)
-
-      const builtClusters: NicheCluster[] = tags.map(t => ({
-        id: t.id,
-        tag: t.tag,
-        color: t.color ?? '#888888',
-        position_x: t.position_x ?? 500,
-        position_y: t.position_y ?? 400,
-        description: t.description ?? '',
-        content_tag_ids: (t as any).content_tag_ids ?? [],
-      }))
-
-      setClusters(builtClusters)
-
-      // Build star positions — a vtuber can appear in multiple clusters
-      const stars: VTuberStar[] = []
-      builtClusters.forEach(cluster => {
-        const matched = vtubers?.filter(v =>
-          Array.isArray(v.tags) &&
-          cluster.content_tag_ids.some((cid: string) => v.tags.includes(cid))
-        ) ?? []
-
-        matched.forEach((v, index) => {
-          const angle = (index / Math.max(matched.length, 1)) * Math.PI * 2 + (index * 0.4)
-          const radius = 45 + (index % 3) * 25
-          const x = cluster.position_x + Math.cos(angle) * radius
-          const y = cluster.position_y + Math.sin(angle) * radius
-          stars.push({
-            id: v.id,
-            name: v.name,
-            avatar_url: v.avatar_url ?? '',
-            tags: v.tags ?? [],
-            cluster_id: cluster.id,
-            x,
-            y,
-            baseX: x,
-            baseY: y,
-          })
+  // Build star positions
+  useEffect(() => {
+    if (!vtubers.length || !constellations.length) return
+    const positions: StarPosition[] = []
+    constellations.forEach(c => {
+      const members = getVTubersByNicheCluster(vtubers, c.id)
+      members.forEach((vtuber, i) => {
+        const angle = (i / Math.max(members.length, 1)) * Math.PI * 2 + i * 0.42
+        const radius = 55 + (i % 3) * 32
+        positions.push({
+          vtuber,
+          x: c.position.x + Math.cos(angle) * radius,
+          y: c.position.y + Math.sin(angle) * radius,
         })
       })
+    })
+    starPositionsRef.current = positions
+  }, [vtubers, constellations])
 
-      setStarPositions(stars)
-    }
-
-    load()
-  }, [])
-
-  // Handle resize
+  // Resize observer
   useEffect(() => {
     const el = containerRef.current
     if (!el) return
@@ -123,314 +88,502 @@ export function NicheMap({ onVTuberSelect, onClusterSelect }: NicheMapProps) {
     return () => obs.disconnect()
   }, [])
 
-  // D3 zoom
+  // D3 zoom setup
   useEffect(() => {
-    if (!canvasRef.current) return
-    const canvas = select(canvasRef.current)
-    const zoomBehavior = zoom<HTMLCanvasElement, unknown>()
-      .scaleExtent([MIN_ZOOM, MAX_ZOOM])
-      .on('zoom', (event: D3ZoomEvent<HTMLCanvasElement, unknown>) => {
-        setTransform({ x: event.transform.x, y: event.transform.y, k: event.transform.k })
-      })
-    canvas.call(zoomBehavior)
-    return () => { canvas.on('.zoom', null) }
-  }, [dimensions.width, dimensions.height])
-
-  // Mouse hover
-  const handleMouseMove = useCallback((event: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current
     if (!canvas) return
-    const rect = canvas.getBoundingClientRect()
-    const x = (event.clientX - rect.left - transform.x) / transform.k
-    const y = (event.clientY - rect.top - transform.y) / transform.k
-
-    if (transform.k >= ZOOM_THRESHOLD) {
-      const hitRadius = 20 / transform.k
-      const hovered = starPositions.find(star => {
-        const dx = star.x - x
-        const dy = star.y - y
-        return Math.sqrt(dx * dx + dy * dy) < hitRadius
+    const sel = select(canvas)
+    const zb = zoom<HTMLCanvasElement, unknown>()
+      .scaleExtent([MIN_ZOOM, MAX_ZOOM])
+      .on('zoom', (event: D3ZoomEvent<HTMLCanvasElement, unknown>) => {
+        transformRef.current = event.transform
+        setZoomPct(Math.round(event.transform.k * 100))
+        // Clear tooltip on pan/zoom
+        setTooltip(null)
       })
-      setHoveredStar(hovered ?? null)
-      setHoveredCluster(null)
-    } else {
-      const hovered = clusters.find(c => {
-        const dx = c.position_x - x
-        const dy = c.position_y - y
-        return Math.sqrt(dx * dx + dy * dy) < 70
-      })
-      setHoveredCluster(hovered ?? null)
-      setHoveredStar(null)
-    }
-  }, [transform, starPositions, clusters])
+    zoomBehaviorRef.current = zb
+    sel.call(zb)
+    return () => { sel.on('.zoom', null) }
+  }, [dimensions.width, dimensions.height])
 
-  const handleClick = useCallback(() => {
-    if (hoveredStar && onVTuberSelect) onVTuberSelect(hoveredStar.id)
-    else if (hoveredCluster && onClusterSelect) onClusterSelect(hoveredCluster)
-  }, [hoveredStar, hoveredCluster, onVTuberSelect, onClusterSelect])
-
-  // Render loop
+  // ── Main render loop ─────────────────────────────────────────────────────────
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
     const ctx = canvas.getContext('2d')
     if (!ctx) return
 
-    let time = 0
+    // CCTV glitch state
+    let glitchTimer = 0
+    let glitchActive = false
+    let glitchIntensity = 0
+    let nextGlitch = 2 + Math.random() * 4
 
     const render = () => {
-      time += 0.016
-      ctx.clearRect(0, 0, dimensions.width, dimensions.height)
+      timeRef.current += 0.016
+      const t = timeRef.current
+      const tr = transformRef.current
+      const k = tr.k
+      const { width, height } = dimensions
+      const consts = constellationsRef.current
+      const stars = starPositionsRef.current
+      const hovStar = hoveredStarRef.current
+      const hovConst = hoveredConstRef.current
 
+      ctx.clearRect(0, 0, width, height)
+
+      // ── Background ───────────────────────────────────────────────────────────
+      ctx.fillStyle = '#020408'
+      ctx.fillRect(0, 0, width, height)
+
+      // Deep space vignette
+      const vig = ctx.createRadialGradient(width / 2, height / 2, 0, width / 2, height / 2, Math.max(width, height) * 0.75)
+      vig.addColorStop(0, 'rgba(5,10,30,0)')
+      vig.addColorStop(1, 'rgba(0,0,8,0.85)')
+      ctx.fillStyle = vig
+      ctx.fillRect(0, 0, width, height)
+
+      // ── CCTV Glitch effects ───────────────────────────────────────────────────
+      glitchTimer += 0.016
+      if (glitchTimer > nextGlitch) {
+        glitchActive = true
+        glitchIntensity = 0.3 + Math.random() * 0.7
+        glitchTimer = 0
+        nextGlitch = 1.5 + Math.random() * 5
+        setTimeout(() => { glitchActive = false }, 80 + Math.random() * 120)
+      }
+
+      // Scanlines — always on, subtle
       ctx.save()
-      ctx.translate(transform.x, transform.y)
-      ctx.scale(transform.k, transform.k)
+      for (let y = 0; y < height; y += 3) {
+        ctx.globalAlpha = 0.04
+        ctx.fillStyle = '#000'
+        ctx.fillRect(0, y, width, 1)
+      }
+      ctx.globalAlpha = 1
+      ctx.restore()
 
-      // Background
-      const gradient = ctx.createRadialGradient(500, 400, 0, 500, 400, 800)
-      gradient.addColorStop(0, 'rgba(26, 26, 26, 1)')
-      gradient.addColorStop(1, 'rgba(18, 18, 20, 1)')
-      ctx.fillStyle = gradient
-      ctx.fillRect(-1000, -1000, 3000, 3000)
+      // Static noise — always faint
+      ctx.save()
+      const noiseCount = 400
+      for (let i = 0; i < noiseCount; i++) {
+        const nx = Math.random() * width
+        const ny = Math.random() * height
+        const nb = Math.random()
+        ctx.globalAlpha = nb * 0.06
+        ctx.fillStyle = nb > 0.5 ? '#fff' : '#0af'
+        ctx.fillRect(nx, ny, 1, 1)
+      }
+      ctx.globalAlpha = 1
+      ctx.restore()
 
-      // Background stars
-      ctx.fillStyle = 'rgba(212, 165, 116, 0.2)'
-      for (let i = 0; i < 200; i++) {
-        const bx = (i * 37) % 1200 - 100
-        const by = (i * 53) % 1000 - 100
-        const size = (i % 3) * 0.5 + 0.5
-        const twinkle = Math.sin(time * 2 + i) * 0.3 + 0.7
-        ctx.globalAlpha = twinkle * 0.4
+      // Active glitch: horizontal tear + color fringe
+      if (glitchActive) {
+        const tearCount = Math.floor(glitchIntensity * 5)
+        for (let i = 0; i < tearCount; i++) {
+          const gy = Math.random() * height
+          const gh = 1 + Math.random() * 4
+          const gx = (Math.random() - 0.5) * 30 * glitchIntensity
+          ctx.save()
+          ctx.globalAlpha = 0.15 + Math.random() * 0.2
+          // Copy a horizontal slice and shift it
+          try {
+            const slice = ctx.getImageData(0, Math.max(0, gy - gh), width, gh * 2)
+            ctx.putImageData(slice, gx, Math.max(0, gy - gh))
+          } catch (_) {}
+          ctx.restore()
+        }
+        // Color fringe flash
+        ctx.save()
+        ctx.globalAlpha = 0.04 * glitchIntensity
+        ctx.fillStyle = `hsl(${Math.random() * 60 + 160}, 100%, 60%)`
+        ctx.fillRect(0, Math.random() * height, width, 2 + Math.random() * 8)
+        ctx.globalAlpha = 1
+        ctx.restore()
+
+        // Extra static burst
+        ctx.save()
+        for (let i = 0; i < 200 * glitchIntensity; i++) {
+          ctx.globalAlpha = Math.random() * 0.3
+          ctx.fillStyle = Math.random() > 0.5 ? '#0ff' : '#f0f'
+          ctx.fillRect(Math.random() * width, Math.random() * height, 1, 1)
+        }
+        ctx.globalAlpha = 1
+        ctx.restore()
+      }
+
+      // ── Apply map transform ───────────────────────────────────────────────────
+      ctx.save()
+      ctx.translate(tr.x, tr.y)
+      ctx.scale(k, k)
+
+      // Ambient background stars
+      for (let i = 0; i < 220; i++) {
+        const bx = ((i * 43 + 7) % 1100) - 50
+        const by = ((i * 71 + 13) % 900) - 50
+        const tw = Math.sin(t * 1.6 + i * 0.9) * 0.3 + 0.7
+        ctx.globalAlpha = tw * 0.5
+        const hue = (i * 37) % 360
+        ctx.fillStyle = `hsl(${hue}, 60%, 80%)`
         ctx.beginPath()
-        ctx.arc(bx, by, size, 0, Math.PI * 2)
+        ctx.arc(bx, by, (i % 3) * 0.4 + 0.3, 0, Math.PI * 2)
         ctx.fill()
       }
       ctx.globalAlpha = 1
 
-      const showClusters = transform.k < ZOOM_THRESHOLD
-      const showStars = transform.k >= ZOOM_THRESHOLD
+      const showStars = k >= ZOOM_THRESHOLD
 
-      // --- ZOOMED OUT: draw cluster bubbles ---
-      if (showClusters) {
-        clusters.forEach(cluster => {
-          const isHovered = hoveredCluster?.id === cluster.id
-          const cx = cluster.position_x
-          const cy = cluster.position_y
-          const count = starPositions.filter(s => s.cluster_id === cluster.id).length
-
-          // Outer glow
-          const glowR = isHovered ? 100 : 80
-          const glow = ctx.createRadialGradient(cx, cy, 0, cx, cy, glowR)
-          glow.addColorStop(0, cluster.color + (isHovered ? '50' : '30'))
-          glow.addColorStop(0.5, cluster.color + '15')
-          glow.addColorStop(1, 'transparent')
-          ctx.fillStyle = glow
+      if (showStars) {
+        // ── Connection lines between stars ──────────────────────────────────
+        consts.forEach(c => {
+          const members = stars.filter(s => s.vtuber.category === c.id)
+          if (members.length < 2) return
+          ctx.strokeStyle = `${c.color}35`
+          ctx.lineWidth = 1.5 / k
+          ctx.setLineDash([6 / k, 8 / k])
           ctx.beginPath()
-          ctx.arc(cx, cy, glowR, 0, Math.PI * 2)
-          ctx.fill()
-
-          // Bubble fill
-          const bubbleR = isHovered ? 58 : 48
-          const fill = ctx.createRadialGradient(cx - bubbleR * 0.3, cy - bubbleR * 0.3, 0, cx, cy, bubbleR)
-          fill.addColorStop(0, cluster.color + (isHovered ? 'cc' : '88'))
-          fill.addColorStop(0.7, cluster.color + (isHovered ? '55' : '40'))
-          fill.addColorStop(1, cluster.color + '18')
-          ctx.fillStyle = fill
-          ctx.beginPath()
-          ctx.arc(cx, cy, bubbleR, 0, Math.PI * 2)
-          ctx.fill()
-
-          // Bubble border
-          ctx.strokeStyle = cluster.color + (isHovered ? 'ee' : '66')
-          ctx.lineWidth = (isHovered ? 2.5 : 1.5) / transform.k
-          ctx.beginPath()
-          ctx.arc(cx, cy, bubbleR, 0, Math.PI * 2)
+          members.forEach((s, i) => {
+            const fx = s.x + Math.sin(t * 0.7 + s.x * 0.012) * 2
+            const fy = s.y + Math.cos(t * 1.0 + s.y * 0.012) * 2
+            if (i === 0) ctx.moveTo(fx, fy)
+            else ctx.lineTo(fx, fy)
+          })
           ctx.stroke()
+          ctx.setLineDash([])
+        })
 
-          // Mini stars inside the bubble (decorative — same pattern as star-map bg stars)
-          const miniCount = Math.min(count, 8)
-          for (let i = 0; i < miniCount; i++) {
-            const angle = (i / miniCount) * Math.PI * 2
-            const r = bubbleR * 0.55
-            const sx = cx + Math.cos(angle + time * 0.3) * r
-            const sy = cy + Math.sin(angle + time * 0.3) * r
-            const twinkle = Math.sin(time * 3 + i * 1.3) * 0.4 + 0.6
-            ctx.globalAlpha = twinkle
-            const starGrad = ctx.createRadialGradient(sx, sy, 0, sx, sy, 5 / transform.k)
-            starGrad.addColorStop(0, '#ffffff')
-            starGrad.addColorStop(0.4, cluster.color)
-            starGrad.addColorStop(1, cluster.color + '00')
-            ctx.fillStyle = starGrad
+        // ── Individual stars ────────────────────────────────────────────────
+        stars.forEach(star => {
+          const isHov = hovStar?.vtuber.id === star.vtuber.id
+          const c = consts.find(x => x.id === star.vtuber.category)
+          const color = c?.color ?? '#64b5f6'
+
+          const fx = star.x + Math.sin(t * 0.7 + star.x * 0.012) * 2
+          const fy = star.y + Math.cos(t * 1.0 + star.y * 0.012) * 2
+          const r = isHov ? 16 : 10
+
+          // Glow — vibrant and large
+          if (isHov) {
+            const g1 = ctx.createRadialGradient(fx, fy, 0, fx, fy, 55)
+            g1.addColorStop(0, `${color}cc`)
+            g1.addColorStop(0.3, `${color}55`)
+            g1.addColorStop(1, 'transparent')
+            ctx.fillStyle = g1
             ctx.beginPath()
-            ctx.arc(sx, sy, 5 / transform.k, 0, Math.PI * 2)
+            ctx.arc(fx, fy, 55, 0, Math.PI * 2)
+            ctx.fill()
+          }
+
+          // Ambient pulse glow
+          const pulse = Math.sin(t * 2.5 + star.x * 0.05) * 0.4 + 0.6
+          const g2 = ctx.createRadialGradient(fx, fy, 0, fx, fy, r * 2.5)
+          g2.addColorStop(0, `${color}${isHov ? 'ff' : 'aa'}`)
+          g2.addColorStop(0.5, `${color}${isHov ? '88' : '44'}`)
+          g2.addColorStop(1, 'transparent')
+          ctx.globalAlpha = pulse * (isHov ? 1 : 0.8)
+          ctx.fillStyle = g2
+          ctx.beginPath()
+          ctx.arc(fx, fy, r * 2.5, 0, Math.PI * 2)
+          ctx.fill()
+          ctx.globalAlpha = 1
+
+          // Avatar or colored core
+          if (k >= 2) {
+            const img = imageCache.current.get(star.vtuber.id)
+            if (img?.complete && img.naturalWidth > 0) {
+              ctx.save()
+              ctx.beginPath()
+              ctx.arc(fx, fy, r, 0, Math.PI * 2)
+              ctx.clip()
+              ctx.drawImage(img, fx - r, fy - r, r * 2, r * 2)
+              ctx.restore()
+            } else {
+              const core = ctx.createRadialGradient(fx, fy, 0, fx, fy, r)
+              core.addColorStop(0, '#fff')
+              core.addColorStop(0.4, color)
+              core.addColorStop(1, `${color}00`)
+              ctx.fillStyle = core
+              ctx.beginPath()
+              ctx.arc(fx, fy, r, 0, Math.PI * 2)
+              ctx.fill()
+            }
+            // Ring
+            ctx.strokeStyle = isHov ? '#ffffff' : `${color}cc`
+            ctx.lineWidth = (isHov ? 2.5 : 1.5) / k
+            ctx.beginPath()
+            ctx.arc(fx, fy, r, 0, Math.PI * 2)
+            ctx.stroke()
+          } else {
+            // Point star
+            const core = ctx.createRadialGradient(fx, fy, 0, fx, fy, r)
+            core.addColorStop(0, '#ffffff')
+            core.addColorStop(0.25, color)
+            core.addColorStop(1, `${color}00`)
+            ctx.fillStyle = core
+            ctx.beginPath()
+            ctx.arc(fx, fy, r, 0, Math.PI * 2)
+            ctx.fill()
+          }
+
+          // Label
+          if (isHov || k >= 3.5) {
+            const fs = Math.max(10, 13 / k)
+            ctx.font = `${isHov ? '700' : '500'} ${fs}px "Space Grotesk", sans-serif`
+            ctx.textAlign = 'center'
+            ctx.textBaseline = 'top'
+            const ly = fy + r + 5 / k
+            // Shadow
+            ctx.fillStyle = 'rgba(0,0,0,0.8)'
+            ctx.fillText(star.vtuber.name, fx + 0.8, ly + 0.8)
+            ctx.fillStyle = isHov ? '#ffffff' : '#e8f4ff'
+            ctx.fillText(star.vtuber.name, fx, ly)
+          }
+        })
+
+      } else {
+        // ── Constellation orbs (zoomed out) ─────────────────────────────────
+        consts.forEach(c => {
+          const cx = c.position.x
+          const cy = c.position.y
+          const isHov = hovConst?.id === c.id
+          const count = getVTubersByNicheCluster(vtubersRef.current, c.id).length
+          const pulse = Math.sin(t * 1.2 + cx * 0.004) * 0.1 + 0.9
+          const orbR = (isHov ? 95 : 75) * pulse
+
+          // Outer nebula — VIBRANT
+          const neb = ctx.createRadialGradient(cx, cy, 0, cx, cy, orbR * 2.2)
+          neb.addColorStop(0, `${c.color}88`)
+          neb.addColorStop(0.35, `${c.color}33`)
+          neb.addColorStop(0.7, `${c.color}11`)
+          neb.addColorStop(1, 'transparent')
+          ctx.fillStyle = neb
+          ctx.beginPath()
+          ctx.arc(cx, cy, orbR * 2.2, 0, Math.PI * 2)
+          ctx.fill()
+
+          // Core orb — bright and saturated
+          const orb = ctx.createRadialGradient(cx - orbR * 0.2, cy - orbR * 0.2, 0, cx, cy, orbR)
+          orb.addColorStop(0, '#ffffff')
+          orb.addColorStop(0.15, `${c.color}ff`)
+          orb.addColorStop(0.55, `${c.color}99`)
+          orb.addColorStop(1, `${c.color}22`)
+          ctx.fillStyle = orb
+          ctx.beginPath()
+          ctx.arc(cx, cy, orbR, 0, Math.PI * 2)
+          ctx.fill()
+
+          // Bright ring
+          ctx.strokeStyle = isHov ? '#ffffff' : `${c.color}dd`
+          ctx.lineWidth = (isHov ? 2.5 : 1.5) / k
+          ctx.shadowColor = c.color
+          ctx.shadowBlur = isHov ? 20 / k : 10 / k
+          ctx.beginPath()
+          ctx.arc(cx, cy, orbR, 0, Math.PI * 2)
+          ctx.stroke()
+          ctx.shadowBlur = 0
+
+          // Orbiting mini-stars
+          for (let i = 0; i < Math.min(count, 8); i++) {
+            const ang = (i / Math.min(count, 8)) * Math.PI * 2 + t * (isHov ? 0.5 : 0.3)
+            const sx = cx + Math.cos(ang) * orbR * 0.7
+            const sy = cy + Math.sin(ang) * orbR * 0.7
+            ctx.globalAlpha = 0.9
+            ctx.fillStyle = '#ffffff'
+            ctx.beginPath()
+            ctx.arc(sx, sy, 3 / k, 0, Math.PI * 2)
             ctx.fill()
           }
           ctx.globalAlpha = 1
 
-          // Cluster name
-          ctx.font = `${isHovered ? 'bold ' : ''}${16 / transform.k}px "Space Grotesk", sans-serif`
-          ctx.fillStyle = isHovered ? cluster.color : '#f5f0e6'
+          // Label
+          const fs = 16 / k
+          ctx.font = `700 ${fs}px "Space Grotesk", sans-serif`
           ctx.textAlign = 'center'
           ctx.textBaseline = 'middle'
-          ctx.fillText(cluster.tag, cx, cy)
+          // Glow text effect
+          ctx.shadowColor = c.color
+          ctx.shadowBlur = isHov ? 18 / k : 8 / k
+          ctx.fillStyle = '#ffffff'
+          ctx.fillText(c.name, cx, cy)
+          ctx.shadowBlur = 0
 
-          // Creator count
-          ctx.font = `${10 / transform.k}px "Space Grotesk", sans-serif`
-          ctx.fillStyle = '#888'
-          ctx.fillText(`${count} creator${count !== 1 ? 's' : ''}`, cx, cy + 20 / transform.k)
-        })
-      }
+          ctx.font = `500 ${11 / k}px "Space Grotesk", sans-serif`
+          ctx.fillStyle = isHov ? c.color : 'rgba(200,220,255,0.7)'
+          ctx.fillText(`${count} creator${count !== 1 ? 's' : ''}`, cx, cy + fs * 1.3)
 
-      // --- ZOOMED IN: draw individual stars ---
-      if (showStars) {
-        // Connection lines per cluster
-        clusters.forEach(cluster => {
-          const clusterStars = starPositions.filter(s => s.cluster_id === cluster.id)
-          if (clusterStars.length > 1) {
-            ctx.strokeStyle = cluster.color + '20'
-            ctx.lineWidth = 1 / transform.k
-            ctx.beginPath()
-            clusterStars.forEach((star, i) => {
-              if (i === 0) ctx.moveTo(star.x, star.y)
-              else ctx.lineTo(star.x, star.y)
-            })
-            ctx.stroke()
-          }
-        })
-
-        // Stars
-        starPositions.forEach(star => {
-          const isHovered = hoveredStar?.id === star.id && hoveredStar?.cluster_id === star.cluster_id
-          const cluster = clusters.find(c => c.id === star.cluster_id)
-          const color = cluster?.color ?? '#d4a574'
-
-          // Float animation
-          const floatX = Math.sin(time + star.baseX * 0.01) * 2
-          const floatY = Math.cos(time * 1.3 + star.baseY * 0.01) * 2
-          const x = star.x + floatX
-          const y = star.y + floatY
-
-          // Hover glow
-          if (isHovered) {
-            const glowGradient = ctx.createRadialGradient(x, y, 0, x, y, 30)
-            glowGradient.addColorStop(0, color + '80')
-            glowGradient.addColorStop(0.5, color + '30')
-            glowGradient.addColorStop(1, 'transparent')
-            ctx.fillStyle = glowGradient
-            ctx.beginPath()
-            ctx.arc(x, y, 30, 0, Math.PI * 2)
-            ctx.fill()
-          }
-
-          // Star core
-          const coreR = isHovered ? 12 : 8
-          const coreGradient = ctx.createRadialGradient(x, y, 0, x, y, coreR)
-          coreGradient.addColorStop(0, '#ffffff')
-          coreGradient.addColorStop(0.3, color)
-          coreGradient.addColorStop(1, color + '00')
-          ctx.fillStyle = coreGradient
-          ctx.beginPath()
-          ctx.arc(x, y, coreR, 0, Math.PI * 2)
-          ctx.fill()
-
-          // Avatar clip (when very zoomed in)
-          if (transform.k >= 2 && star.avatar_url) {
-            const img = new Image()
-            img.crossOrigin = 'anonymous'
-            img.src = star.avatar_url
-            const avatarR = isHovered ? 15 : 10
-            ctx.save()
-            ctx.beginPath()
-            ctx.arc(x, y, avatarR, 0, Math.PI * 2)
-            ctx.clip()
-            try {
-              ctx.drawImage(img, x - avatarR, y - avatarR, avatarR * 2, avatarR * 2)
-            } catch {
-              ctx.fillStyle = color
-              ctx.fill()
-            }
-            ctx.restore()
-            ctx.strokeStyle = isHovered ? '#d4a574' : color + '80'
-            ctx.lineWidth = isHovered ? 2 : 1
-            ctx.beginPath()
-            ctx.arc(x, y, avatarR, 0, Math.PI * 2)
-            ctx.stroke()
-          }
-
-          // Name label
-          if (isHovered || transform.k >= 3) {
-            ctx.font = `${isHovered ? 'bold ' : ''}${12 / transform.k}px "Space Grotesk", sans-serif`
-            ctx.fillStyle = isHovered ? '#d4a574' : '#f5f0e6'
-            ctx.textAlign = 'center'
-            ctx.textBaseline = 'top'
-            ctx.fillText(star.name, x, y + (transform.k >= 2 ? 18 : 12))
+          if (isHov) {
+            ctx.font = `400 ${9 / k}px "Space Grotesk", sans-serif`
+            ctx.fillStyle = 'rgba(200,220,255,0.5)'
+            ctx.fillText('click to zoom in', cx, cy + fs * 2.5)
           }
         })
       }
 
       ctx.restore()
-      animationRef.current = requestAnimationFrame(render)
+
+      rafRef.current = requestAnimationFrame(render)
     }
 
     render()
-    return () => { if (animationRef.current) cancelAnimationFrame(animationRef.current) }
-  }, [dimensions, transform, clusters, starPositions, hoveredStar, hoveredCluster])
+    return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current) }
+  }, [dimensions])
+
+  // ── Mouse move — uses refs, no stale closures ─────────────────────────────
+  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const rect = canvas.getBoundingClientRect()
+    const tr = transformRef.current
+    const mx = (e.clientX - rect.left - tr.x) / tr.k
+    const my = (e.clientY - rect.top - tr.y) / tr.k
+
+    if (tr.k >= ZOOM_THRESHOLD) {
+      const hitR2 = (22 / tr.k) ** 2
+      const hit = starPositionsRef.current.find(s =>
+        (s.x - mx) ** 2 + (s.y - my) ** 2 < hitR2
+      ) ?? null
+
+      hoveredStarRef.current = hit
+      hoveredConstRef.current = null
+
+      if (hit) {
+        const sx = hit.x * tr.k + tr.x
+        const sy = hit.y * tr.k + tr.y
+        setTooltip({ vtuber: hit.vtuber, sx, sy })
+        canvas.style.cursor = 'pointer'
+      } else {
+        setTooltip(null)
+        canvas.style.cursor = 'grab'
+      }
+    } else {
+      hoveredStarRef.current = null
+      const hit = constellationsRef.current.find(c =>
+        (c.position.x - mx) ** 2 + (c.position.y - my) ** 2 < 85 ** 2
+      ) ?? null
+      hoveredConstRef.current = hit
+      setTooltip(null)
+      canvas.style.cursor = hit ? 'pointer' : 'grab'
+    }
+  }, [])
+
+  const handleMouseLeave = useCallback(() => {
+    hoveredStarRef.current = null
+    hoveredConstRef.current = null
+    setTooltip(null)
+  }, [])
+
+  // ── Click — reads from refs, always fresh ─────────────────────────────────
+  const handleClick = useCallback(() => {
+    const star = hoveredStarRef.current
+    const c = hoveredConstRef.current
+    const canvas = canvasRef.current
+    const zb = zoomBehaviorRef.current
+
+    if (star) {
+      // Navigate to VTuber profile
+      router.push(`/vtuber/${star.vtuber.id}`)
+      return
+    }
+
+    if (c && canvas && zb) {
+      // Zoom into constellation
+      const t = zoomIdentity
+        .translate(dimensions.width / 2 - c.position.x * 2.5, dimensions.height / 2 - c.position.y * 2.5)
+        .scale(2.5)
+      select(canvas).call(zb.transform, t)
+    }
+  }, [router, dimensions.width, dimensions.height])
 
   return (
     <div ref={containerRef} className="relative w-full h-full min-h-[500px] bg-[#020408] overflow-hidden">
+      <video
+        autoPlay loop muted playsInline
+        className="absolute inset-0 w-full h-full object-cover pointer-events-none"
+        style={{ zIndex: 0, opacity: 0.15, mixBlendMode: 'screen' }}
+      >
+        <source src="/vhs-static.mp4" type="video/mp4" />
+      </video>
       <canvas
         ref={canvasRef}
         width={dimensions.width}
         height={dimensions.height}
-        className="w-full h-full cursor-grab active:cursor-grabbing"
+        className="w-full h-full"
+        style={{ touchAction: 'none', cursor: loading ? 'default' : 'grab', position: 'relative', zIndex: 1 }}
         onMouseMove={handleMouseMove}
+        onMouseLeave={handleMouseLeave}
         onClick={handleClick}
-        style={{ touchAction: 'none' }}
       />
 
-      {/* Zoom indicator */}
-      <div className="absolute bottom-4 left-4 flex items-center gap-2 px-3 py-2 rounded-lg bg-vault-deep/80 border border-border text-sm">
-        <span className="text-muted-foreground">Zoom:</span>
-        <span className="text-vault-cream font-medium">{Math.round(transform.k * 100)}%</span>
-        {transform.k < ZOOM_THRESHOLD && (
-          <span className="text-vault-gold text-xs">(Zoom in to see creators)</span>
-        )}
-      </div>
-
-      {/* Hovered star tooltip */}
-      {hoveredStar && transform.k >= ZOOM_THRESHOLD && (
-        <div
-          className="absolute pointer-events-none z-10 p-3 rounded-lg bg-vault-charcoal border border-vault-bronze/50 shadow-xl max-w-[200px]"
-          style={{
-            left: (hoveredStar.x * transform.k + transform.x) + 20,
-            top: (hoveredStar.y * transform.k + transform.y) - 10,
-          }}
-        >
-          <div className="font-semibold text-vault-cream text-sm">{hoveredStar.name}</div>
-          <div className="text-xs text-vault-gold mt-2">Click to view profile</div>
+      {/* Loading overlay — rendered on top of canvas so refs are always attached */}
+      {loading && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-[#020408]">
+          <div className="relative w-16 h-16">
+            <div className="absolute inset-0 rounded-full border border-cyan-400/20 animate-ping" />
+            <div className="absolute inset-0 rounded-full border border-cyan-400/40 animate-pulse" />
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="h-2 w-2 rounded-full bg-cyan-400 animate-pulse" />
+            </div>
+          </div>
+          <p className="text-sm text-cyan-400/60 animate-pulse tracking-widest uppercase text-xs">
+            Mapping niches…
+          </p>
         </div>
       )}
 
-      {/* Hovered cluster tooltip */}
-      {hoveredCluster && transform.k < ZOOM_THRESHOLD && (
-        <div
-          className="absolute pointer-events-none z-10 p-3 rounded-lg bg-vault-charcoal border border-vault-bronze/50 shadow-xl max-w-[220px]"
-          style={{
-            left: (hoveredCluster.position_x * transform.k + transform.x) + 65,
-            top: (hoveredCluster.position_y * transform.k + transform.y) - 40,
-          }}
-        >
-          <div className="font-semibold text-vault-cream text-sm">{hoveredCluster.tag}</div>
-          {hoveredCluster.description && (
-            <div className="text-xs text-muted-foreground mt-1">{hoveredCluster.description}</div>
+      {/* Zoom indicator */}
+      {!loading && (
+        <div className="absolute bottom-4 left-4 flex items-center gap-2 px-3 py-1.5 rounded-lg bg-black/70 border border-white/10 text-xs select-none">
+          <span className="text-white/40">zoom</span>
+          <span className="text-white font-medium tabular-nums">{zoomPct}%</span>
+          {zoomPct < ZOOM_THRESHOLD * 100 && (
+            <span className="text-cyan-400/60">· scroll in to see creators</span>
           )}
         </div>
       )}
 
       {/* Instructions */}
-      <div className="absolute top-4 right-4 px-3 py-2 rounded-lg bg-vault-deep/80 border border-border text-xs text-muted-foreground">
-        Scroll to zoom &bull; Drag to pan
-      </div>
+      {!loading && (
+        <div className="absolute top-4 right-4 px-3 py-1.5 rounded-lg bg-black/60 border border-white/10 text-xs text-white/30 select-none">
+          scroll to zoom · drag to pan · click to explore
+        </div>
+      )}
+
+      {/* VTuber tooltip — click target */}
+      {tooltip && (
+        <div
+          className="absolute z-20 pointer-events-none"
+          style={{
+            left: Math.min(tooltip.sx + 20, dimensions.width - 260),
+            top: Math.max(tooltip.sy - 16, 8),
+          }}
+        >
+          <div className="w-56 rounded-xl bg-black/95 border border-cyan-400/30 shadow-2xl shadow-cyan-900/40 overflow-hidden backdrop-blur-sm">
+            <div className="flex items-center gap-3 p-3 border-b border-white/5">
+              <img
+                src={tooltip.vtuber.avatarUrl}
+                alt={tooltip.vtuber.name}
+                className="h-10 w-10 rounded-full border border-cyan-400/40 flex-shrink-0"
+              />
+              <div className="min-w-0">
+                <p className="font-bold text-white text-sm truncate">{tooltip.vtuber.name}</p>
+                <p className="text-xs text-cyan-400/70 truncate">
+                  {constellationsRef.current.find(c => c.id === tooltip.vtuber.category)?.name ?? ''}
+                </p>
+              </div>
+            </div>
+            {tooltip.vtuber.bio && (
+              <p className="px-3 py-2 text-xs text-white/50 line-clamp-2 leading-relaxed">
+                {tooltip.vtuber.bio}
+              </p>
+            )}
+            <div className="px-3 pb-2.5 pt-0.5 text-xs text-cyan-400/80 flex items-center gap-1.5">
+              <span className="inline-block h-1.5 w-1.5 rounded-full bg-cyan-400 animate-pulse" />
+              Click to open profile
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   )
 }
