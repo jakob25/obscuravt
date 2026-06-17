@@ -9,18 +9,23 @@ const supabase = createClient(
 )
 
 interface Props {
-  params: { id: string }
+  params: Promise<{ id: string }>
 }
 
 export default async function VTuberProfilePage({ params }: Props) {
-  const { data: vtuber } = await supabase
+  const { id } = await params
+
+  const { data: vtuber, error } = await supabase
     .from('vtubers')
     .select('*')
-    .eq('id', params.id)
+    .eq('id', id)
     .eq('approved', true)
     .single()
 
-  if (!vtuber) notFound()
+  if (error || !vtuber) {
+    console.error('VTuber profile error:', error)
+    notFound()
+  }
 
   // Fetch canonical tag names for display
   const tags: string[] = vtuber.tags ?? []
@@ -72,7 +77,7 @@ export default async function VTuberProfilePage({ params }: Props) {
                   className="inline-flex items-center gap-1.5 mt-2 px-2.5 py-1 rounded-lg text-xs font-medium border"
                   style={{ borderColor: cluster.color + '50', backgroundColor: cluster.color + '18', color: cluster.color }}
                 >
-                  ✦ {cluster.tag}
+                  Constellation {cluster.tag}
                 </div>
               )}
             </div>
