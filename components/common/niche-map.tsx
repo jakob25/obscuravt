@@ -42,7 +42,7 @@ const MAX_ZOOM = 5
 export function NicheMap({ onVTuberSelect, onClusterSelect }: NicheMapProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
-  const [dimensions, setDimensions] = useState({ width: 800, height: 600 })
+  const [dimensions, setDimensions] = useState({ width: 900, height: 600 })
   const [transform, setTransform] = useState({ x: 0, y: 0, k: 1 })
   const [clusters, setClusters] = useState<NicheCluster[]>([])
   const [starPositions, setStarPositions] = useState<VTuberStar[]>([])
@@ -111,7 +111,7 @@ export function NicheMap({ onVTuberSelect, onClusterSelect }: NicheMapProps) {
     load()
   }, [])
 
-  // Handle resize — ResizeObserver matches star-map pattern
+  // Handle resize
   useEffect(() => {
     const el = containerRef.current
     if (!el) return
@@ -134,7 +134,7 @@ export function NicheMap({ onVTuberSelect, onClusterSelect }: NicheMapProps) {
       })
     canvas.call(zoomBehavior)
     return () => { canvas.on('.zoom', null) }
-  }, [dimensions])
+  }, [dimensions.width, dimensions.height])
 
   // Mouse hover
   const handleMouseMove = useCallback((event: React.MouseEvent<HTMLCanvasElement>) => {
@@ -377,7 +377,7 @@ export function NicheMap({ onVTuberSelect, onClusterSelect }: NicheMapProps) {
   }, [dimensions, transform, clusters, starPositions, hoveredStar, hoveredCluster])
 
   return (
-    <div ref={containerRef} className="relative w-full h-full min-h-[500px]">
+    <div ref={containerRef} className="relative w-full h-full min-h-[500px] bg-[#020408] overflow-hidden">
       <canvas
         ref={canvasRef}
         width={dimensions.width}
