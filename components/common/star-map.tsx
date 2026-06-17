@@ -113,12 +113,11 @@ export function StarMap() {
     const ctx = canvas.getContext('2d')
     if (!ctx) return
 
-    // Analog static state
-    let staticSeed = Math.random() * 1000
-    let waveTimer = 0
-    let waveActive = false
-    let waveY = 0
-    let waveNextAt = 3 + Math.random() * 5
+    // CCTV glitch state
+    let glitchTimer = 0
+    let glitchActive = false
+    let glitchIntensity = 0
+    let nextGlitch = 2 + Math.random() * 4
 
     const render = () => {
       timeRef.current += 0.016
@@ -144,60 +143,73 @@ export function StarMap() {
       ctx.fillStyle = vig
       ctx.fillRect(0, 0, width, height)
 
-      // ── Analog static ────────────────────────────────────────────────────────
-      staticSeed += 0.8
-
-      // Fine grain static — fills whole canvas every frame
-      ctx.save()
-      const imageData = ctx.createImageData(width, height)
-      const data = imageData.data
-      for (let i = 0; i < data.length; i += 4) {
-        const v = Math.random() * 255
-        data[i]     = v
-        data[i + 1] = v
-        data[i + 2] = v
-        data[i + 3] = Math.random() * 28 // max ~11% opacity — visible but subtle
+      // ── CCTV Glitch effects ───────────────────────────────────────────────────
+      glitchTimer += 0.016
+      if (glitchTimer > nextGlitch) {
+        glitchActive = true
+        glitchIntensity = 0.3 + Math.random() * 0.7
+        glitchTimer = 0
+        nextGlitch = 1.5 + Math.random() * 5
+        setTimeout(() => { glitchActive = false }, 80 + Math.random() * 120)
       }
-      ctx.putImageData(imageData, 0, 0)
-      ctx.restore()
 
-      // Scanlines
+      // Scanlines — always on, subtle
       ctx.save()
-      for (let y = 0; y < height; y += 2) {
-        ctx.globalAlpha = 0.10
+      for (let y = 0; y < height; y += 3) {
+        ctx.globalAlpha = 0.04
         ctx.fillStyle = '#000'
         ctx.fillRect(0, y, width, 1)
       }
       ctx.globalAlpha = 1
       ctx.restore()
 
-      // Analog color wave — drifts slowly down the screen
-      waveTimer += 0.016
-      if (!waveActive && waveTimer > waveNextAt) {
-        waveActive = true
-        waveY = -120
-        waveTimer = 0
-        waveNextAt = 4 + Math.random() * 6
+      // Static noise — always faint
+      ctx.save()
+      const noiseCount = 400
+      for (let i = 0; i < noiseCount; i++) {
+        const nx = Math.random() * width
+        const ny = Math.random() * height
+        const nb = Math.random()
+        ctx.globalAlpha = nb * 0.06
+        ctx.fillStyle = nb > 0.5 ? '#fff' : '#0af'
+        ctx.fillRect(nx, ny, 1, 1)
       }
-      if (waveActive) {
-        waveY += 1.8
+      ctx.globalAlpha = 1
+      ctx.restore()
+
+      // Active glitch: horizontal tear + color fringe
+      if (glitchActive) {
+        const tearCount = Math.floor(glitchIntensity * 5)
+        for (let i = 0; i < tearCount; i++) {
+          const gy = Math.random() * height
+          const gh = 1 + Math.random() * 4
+          const gx = (Math.random() - 0.5) * 30 * glitchIntensity
+          ctx.save()
+          ctx.globalAlpha = 0.15 + Math.random() * 0.2
+          // Copy a horizontal slice and shift it
+          try {
+            const slice = ctx.getImageData(0, Math.max(0, gy - gh), width, gh * 2)
+            ctx.putImageData(slice, gx, Math.max(0, gy - gh))
+          } catch (_) {}
+          ctx.restore()
+        }
+        // Color fringe flash
         ctx.save()
-        const bandCount = 3
-        for (let b = 0; b < bandCount; b++) {
-          const by = waveY + b * 38
-          const bh = 18 + b * 6
-          const grad = ctx.createLinearGradient(0, by, width, by + bh)
-          grad.addColorStop(0,   `hsla(${290 + b * 40}, 100%, 65%, 0)`)
-          grad.addColorStop(0.2, `hsla(${290 + b * 40}, 100%, 65%, 0.22)`)
-          grad.addColorStop(0.5, `hsla(${170 + b * 50}, 100%, 60%, 0.30)`)
-          grad.addColorStop(0.8, `hsla(${60  + b * 30}, 100%, 65%, 0.22)`)
-          grad.addColorStop(1,   `hsla(${60  + b * 30}, 100%, 65%, 0)`)
-          ctx.fillStyle = grad
-          ctx.fillRect(0, by, width, bh)
+        ctx.globalAlpha = 0.04 * glitchIntensity
+        ctx.fillStyle = `hsl(${Math.random() * 60 + 160}, 100%, 60%)`
+        ctx.fillRect(0, Math.random() * height, width, 2 + Math.random() * 8)
+        ctx.globalAlpha = 1
+        ctx.restore()
+
+        // Extra static burst
+        ctx.save()
+        for (let i = 0; i < 200 * glitchIntensity; i++) {
+          ctx.globalAlpha = Math.random() * 0.3
+          ctx.fillStyle = Math.random() > 0.5 ? '#0ff' : '#f0f'
+          ctx.fillRect(Math.random() * width, Math.random() * height, 1, 1)
         }
         ctx.globalAlpha = 1
         ctx.restore()
-        if (waveY > height + 120) waveActive = false
       }
 
       // ── Apply map transform ───────────────────────────────────────────────────
@@ -484,12 +496,19 @@ export function StarMap() {
 
   return (
     <div ref={containerRef} className="relative w-full h-full min-h-[500px] bg-[#020408] overflow-hidden">
+      <video
+        autoPlay loop muted playsInline
+        className="absolute inset-0 w-full h-full object-cover pointer-events-none"
+        style={{ zIndex: 0, opacity: 0.15, mixBlendMode: 'screen' }}
+      >
+        <source src="/vhs-static.mp4" type="video/mp4" />
+      </video>
       <canvas
         ref={canvasRef}
         width={dimensions.width}
         height={dimensions.height}
         className="w-full h-full"
-        style={{ touchAction: 'none', cursor: loading ? 'default' : 'grab' }}
+        style={{ touchAction: 'none', cursor: loading ? 'default' : 'grab', position: 'relative', zIndex: 1 }}
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
         onClick={handleClick}
