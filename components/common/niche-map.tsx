@@ -128,11 +128,8 @@ export function NicheMap({ onVTuberSelect, onClusterSelect }: NicheMapProps) {
   useEffect(() => {
     if (!canvasRef.current) return
     const canvas = select(canvasRef.current)
-    const { width, height } = dimensions
-    const padding = 200
     const zoomBehavior = zoom<HTMLCanvasElement, unknown>()
       .scaleExtent([MIN_ZOOM, MAX_ZOOM])
-      .translateExtent([[-padding, -padding], [1200 + padding, 800 + padding]])
       .on('zoom', (event: D3ZoomEvent<HTMLCanvasElement, unknown>) => {
         setTransform({ x: event.transform.x, y: event.transform.y, k: event.transform.k })
       })
@@ -381,7 +378,7 @@ export function NicheMap({ onVTuberSelect, onClusterSelect }: NicheMapProps) {
   }, [dimensions, transform, clusters, starPositions, hoveredStar, hoveredCluster])
 
   return (
-    <div ref={containerRef} className="relative w-full h-full min-h-[500px]">
+    <div ref={containerRef} className="relative w-full h-full min-h-[500px] bg-[#020408] overflow-hidden">
       <canvas
         ref={canvasRef}
         width={dimensions.width}
