@@ -5,8 +5,8 @@ import { supabase } from '@/lib/supabase'
 import type { VTuber, Constellation } from '@/lib/types'
 import { rowToVTuber } from '@/hooks/use-star-map-data'
 
-// Demo / fallback data for testing environment and when Supabase has no (or incomplete) niche_cluster rows.
-// This ensures the Niche Map ALWAYS renders stars (individual creators) when zoomed in.
+// Demo / fallback data for testing environment and when Supabase has NO niche_cluster rows at all.
+// This ensures the Niche Map can still render something useful during early development.
 const SAMPLE_NICHE_CONSTELLATIONS: Constellation[] = [
   { id: 'just_chatting', name: 'Just Chatting', description: 'IRL, zatsudan, talking streams', position: { x: -220, y: -140 }, color: '#eab308' },
   { id: 'gameplay', name: 'Gameplay', description: 'Specific games or variety gaming', position: { x: 180, y: -90 }, color: '#22c55e' },
@@ -34,7 +34,7 @@ interface DbNicheCluster {
   position_x: number | null
   position_y: number | null
   description: string | null
-  content_tag_ids: string[] | null   // ← from DB, no hardcoding
+  content_tag_ids: string[] | null
   sort_order: number
 }
 
@@ -73,7 +73,7 @@ export function useNicheMapData(): NicheMapData {
 
   useEffect(() => {
     async function load() {
-      let usedSamples = false
+      let useSamples = false
       try {
         const [vtRes, clusterRes] = await Promise.all([
           supabase.from('vtubers').select('*').eq('approved', true),
@@ -91,7 +91,7 @@ export function useNicheMapData(): NicheMapData {
 
         const dbClusters = (clusterRes.data ?? []) as DbNicheCluster[]
 
-        // Map VTubers, overriding category with niche cluster
+        // Map VTubers and assign them to a niche cluster (only keep those that matched)
         const mapped = (vtRes.data ?? [])
           .map((row) => {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -99,12 +99,13 @@ export function useNicheMapData(): NicheMapData {
             const nicheCluster = assignNicheCluster(vt.vibeTags, dbClusters)
             return { ...vt, category: nicheCluster ?? '' }
           })
-          .filter(v => v.category !== '') // drop VTubers with no niche match
+          .filter(v => v.category !== '')
 
-        // Build constellations from DB rows, only include ones with VTubers
-        const usedIds = new Set(mapped.map(v => v.category))
+        // NEW BEHAVIOR: Show ALL valid niche clusters from the DB (even empty ones).
+        // This gives you the full map skeleton/layout as soon as you define clusters with positions + colors.
+        // Stars/creators will only appear inside clusters they actually match via content_tag_ids.
         const consts: Constellation[] = dbClusters
-          .filter(c => usedIds.has(c.id) && c.color && c.position_x != null && c.position_y != null)
+          .filter(c => c.color && c.position_x != null && c.position_y != null)
           .map(c => ({
             id: c.id,
             name: c.tag,
@@ -113,22 +114,24 @@ export function useNicheMapData(): NicheMapData {
             color: c.color!,
           }))
 
-        if (consts.length > 0 && mapped.length > 0) {
+        if (consts.length > 0) {
+          // Real niche clusters exist in DB → use them (stars populate where matches exist)
           setVtubers(mapped)
           setConstellations(consts)
+          setError(null)
         } else {
-          // DB returned no usable niche data (common if positions or content_tag matches missing)
-          usedSamples = true
+          // No niche_cluster rows with color + positions yet → fall back to samples
+          useSamples = true
         }
       } catch (err) {
-        console.error('Niche map error (using demo data):', err)
-        usedSamples = true
+        console.error('Niche map error (falling back to demo data):', err)
+        useSamples = true
       }
 
-      if (usedSamples) {
+      if (useSamples) {
         setVtubers(SAMPLE_VTUBERS)
         setConstellations(SAMPLE_NICHE_CONSTELLATIONS)
-        setError(null) // demo data means no error state for the map
+        setError(null) // demo mode is not an error
       }
 
       setLoading(false)
