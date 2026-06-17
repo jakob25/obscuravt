@@ -41,6 +41,7 @@ const MAX_ZOOM = 5
 
 export function NicheMap({ onVTuberSelect, onClusterSelect }: NicheMapProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const staticFramesRef = useRef<HTMLCanvasElement[]>([])
   const containerRef = useRef<HTMLDivElement>(null)
   const [dimensions, setDimensions] = useState({ width: 800, height: 600 })
   const [transform, setTransform] = useState({ x: 0, y: 0, k: 1 })
@@ -51,6 +52,36 @@ export function NicheMap({ onVTuberSelect, onClusterSelect }: NicheMapProps) {
   const animationRef = useRef<number>(0)
 
   // Fetch clusters + vtubers, build star positions
+  useEffect(() => {
+    const W = 320, H = 240, FRAMES = 16
+    const frames: HTMLCanvasElement[] = []
+    for (let f = 0; f < FRAMES; f++) {
+      const off = document.createElement('canvas')
+      off.width = W; off.height = H
+      const oc = off.getContext('2d')!
+      const img = oc.createImageData(W, H)
+      const d = img.data
+      for (let i = 0; i < d.length; i += 4) {
+        const v = Math.random()
+        const b = v * v * 220
+        d[i]   = b * 0.45
+        d[i+1] = b * 0.55
+        d[i+2] = b * 1.4
+        d[i+3] = 18 + v * 45
+      }
+      if (Math.random() > 0.65) {
+        const by = Math.floor(Math.random() * H)
+        for (let x = 0; x < W; x++) {
+          const idx = (by * W + x) * 4
+          d[idx] = 160; d[idx+1] = 210; d[idx+2] = 255; d[idx+3] = 50 + Math.random() * 60
+        }
+      }
+      oc.putImageData(img, 0, 0)
+      frames.push(off)
+    }
+    staticFramesRef.current = frames
+  }, [])
+
   useEffect(() => {
     async function load() {
       const { data: tags, error } = await supabase
@@ -178,82 +209,34 @@ export function NicheMap({ onVTuberSelect, onClusterSelect }: NicheMapProps) {
     if (!ctx) return
 
     let time = 0
-    let glitchTimer = 0
-    let glitchActive = false
-    let glitchIntensity = 0
-    let nextGlitch = 1 + Math.random() * 2
 
     const render = () => {
       time += 0.016
-      const width = dimensions.width
-      const height = dimensions.height
-      ctx.clearRect(0, 0, width, height)
+      ctx.clearRect(0, 0, dimensions.width, dimensions.height)
 
-      // ── Background ───────────────────────────────────────────────────────────
-      ctx.fillStyle = '#020408'
-      ctx.fillRect(0, 0, width, height)
-
-      const vig = ctx.createRadialGradient(width / 2, height / 2, 0, width / 2, height / 2, Math.max(width, height) * 0.75)
-      vig.addColorStop(0, 'rgba(5,10,30,0)')
-      vig.addColorStop(1, 'rgba(0,0,8,0.85)')
-      ctx.fillStyle = vig
-      ctx.fillRect(0, 0, width, height)
-
-      // ── VHS / CCTV Glitch ────────────────────────────────────────────────────
-      glitchTimer += 0.016
-      if (glitchTimer > nextGlitch) {
-        glitchActive = true
-        glitchIntensity = 0.3 + Math.random() * 0.7
-        glitchTimer = 0
-        nextGlitch = 0.8 + Math.random() * 3
-        setTimeout(() => { glitchActive = false }, 80 + Math.random() * 120)
-      }
-
-      ctx.save()
-      for (let y = 0; y < height; y += 2) {
-        ctx.globalAlpha = 0.12
-        ctx.fillStyle = '#000'
-        ctx.fillRect(0, y, width, 1)
-      }
-      ctx.globalAlpha = 1
-      ctx.restore()
-
-
-
-      if (glitchActive) {
-        const tearCount = Math.floor(glitchIntensity * 5)
-        for (let i = 0; i < tearCount; i++) {
-          const gy = Math.random() * height
-          const gh = 1 + Math.random() * 4
-          const gx = (Math.random() - 0.5) * 30 * glitchIntensity
-          ctx.save()
-          ctx.globalAlpha = 0.35 + Math.random() * 0.3
-          try {
-            const slice = ctx.getImageData(0, Math.max(0, gy - gh), width, gh * 2)
-            ctx.putImageData(slice, gx, Math.max(0, gy - gh))
-          } catch (_) {}
-          ctx.restore()
-        }
+      // ── Analog static ─────────────────────────────────────────────────────────
+      const sFrames = staticFramesRef.current
+      if (sFrames.length > 0) {
+        const sIdx = Math.floor(time * 6) % sFrames.length
         ctx.save()
-        ctx.globalAlpha = 0.18 * glitchIntensity
-        ctx.fillStyle = `hsl(${Math.random() * 60 + 160}, 100%, 60%)`
-        ctx.fillRect(0, Math.random() * height, width, 2 + Math.random() * 8)
-        ctx.globalAlpha = 1
-        ctx.restore()
-        ctx.save()
-        for (let i = 0; i < 200 * glitchIntensity; i++) {
-          ctx.globalAlpha = Math.random() * 0.3
-          ctx.fillStyle = Math.random() > 0.5 ? '#0ff' : '#f0f'
-          ctx.fillRect(Math.random() * width, Math.random() * height, 1, 1)
-        }
+        ctx.globalAlpha = 0.22
+        ctx.globalCompositeOperation = 'screen'
+        ctx.drawImage(sFrames[sIdx], 0, 0, dimensions.width, dimensions.height)
+        ctx.globalCompositeOperation = 'source-over'
         ctx.globalAlpha = 1
         ctx.restore()
       }
 
-      // ── Apply map transform ───────────────────────────────────────────────────
       ctx.save()
       ctx.translate(transform.x, transform.y)
       ctx.scale(transform.k, transform.k)
+
+      // Background
+      const gradient = ctx.createRadialGradient(500, 400, 0, 500, 400, 800)
+      gradient.addColorStop(0, 'rgba(26, 26, 26, 1)')
+      gradient.addColorStop(1, 'rgba(18, 18, 20, 1)')
+      ctx.fillStyle = gradient
+      ctx.fillRect(-1000, -1000, 3000, 3000)
 
       // Background stars
       ctx.fillStyle = 'rgba(212, 165, 116, 0.2)'
