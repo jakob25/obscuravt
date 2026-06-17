@@ -301,7 +301,7 @@ export default function HomePage() {
               <span className="text-vault-gold">forgot to show you.</span>
             </h1>
             <p className="text-muted-foreground text-base leading-relaxed mb-2">
-              VTVault is a discovery hub built around vibes, not views. Find VTubers by personality,
+              ObscuraVT is a discovery hub built around vibes, not views. Find VTubers by personality,
               content niche, or community tag — not subscriber count. Every clip links back to the
               creator. Every search rewards the niche.
             </p>
@@ -346,7 +346,7 @@ export default function HomePage() {
       {/* Dashboard */}
       <div className="container mx-auto px-4 py-8">
         <div className="flex items-center justify-between mb-6">
-          <p className="text-xs text-muted-foreground">{vtubers.length} creators in the Vault</p>
+          <p className="text-xs text-muted-foreground">{vtubers.length} creators in the Archive</p>
           <DashboardCustomizer
             layout={layout}
             onAdd={addWidget}

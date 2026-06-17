@@ -19,8 +19,8 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'VTVault - Discover Your Next Oshi',
-  description: 'The ultimate discovery hub for VTubers and fans. Find your perfect match through vibe-based search, raw clips, community bets, and more.',
+  title: 'ObscuraVT - Discover Your Next Oshi',
+  description: 'ObscuraVT is the ultimate discovery hub for VTubers and fans. Find your perfect match through vibe-based search, raw clips, community bets, and more.',
   keywords: ['VTuber', 'discovery', 'clips', 'streaming', 'community', 'oshi', 'bets'],
   icons: {
     icon: [

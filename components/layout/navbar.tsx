@@ -56,12 +56,12 @@ export function Navbar() {
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2 group">
           <div className="relative flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-vault-gold to-vault-bronze">
-            <span className="font-bold text-vault-deep text-lg">V</span>
+            <span className="font-bold text-vault-deep text-lg">O</span>
             <div className="absolute inset-0 rounded-lg bg-vault-gold/20 opacity-0 group-hover:opacity-100 transition-opacity" />
           </div>
           <div className="flex flex-col">
             <span className="text-lg font-bold tracking-tight text-vault-cream">
-              VT<span className="text-gold-gradient">Vault</span>
+              Obscura<span className="text-gold-gradient">VT</span>
             </span>
             <span className="text-[10px] text-muted-foreground -mt-1 hidden sm:block">Find Your Oshi</span>
           </div>
