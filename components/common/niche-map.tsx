@@ -111,17 +111,16 @@ export function NicheMap({ onVTuberSelect, onClusterSelect }: NicheMapProps) {
     load()
   }, [])
 
-  // Handle resize
+  // Handle resize — ResizeObserver matches star-map pattern
   useEffect(() => {
-    const updateDimensions = () => {
-      if (containerRef.current) {
-        const rect = containerRef.current.getBoundingClientRect()
-        setDimensions({ width: rect.width, height: rect.height })
-      }
-    }
-    updateDimensions()
-    window.addEventListener('resize', updateDimensions)
-    return () => window.removeEventListener('resize', updateDimensions)
+    const el = containerRef.current
+    if (!el) return
+    const obs = new ResizeObserver(([entry]) => {
+      if (entry) setDimensions({ width: entry.contentRect.width, height: Math.max(entry.contentRect.height, 500) })
+    })
+    obs.observe(el)
+    setDimensions({ width: el.clientWidth, height: Math.max(el.clientHeight, 500) })
+    return () => obs.disconnect()
   }, [])
 
   // D3 zoom
@@ -378,7 +377,7 @@ export function NicheMap({ onVTuberSelect, onClusterSelect }: NicheMapProps) {
   }, [dimensions, transform, clusters, starPositions, hoveredStar, hoveredCluster])
 
   return (
-    <div ref={containerRef} className="relative w-full h-full min-h-[500px] bg-[#020408] overflow-hidden">
+    <div ref={containerRef} className="relative w-full h-full min-h-[500px]">
       <canvas
         ref={canvasRef}
         width={dimensions.width}
