@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation'
 import { createClient } from '@supabase/supabase-js'
 import Link from 'next/link'
-import { ExternalLink, Twitch, Youtube, ArrowLeft, Tag } from 'lucide-react'
+import { ExternalLink, Twitch, Youtube, ArrowLeft, Tag, Edit, UserCheck } from 'lucide-react'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -27,10 +27,10 @@ export default async function VTuberProfilePage({ params }: Props) {
     notFound()
   }
 
-  // Use custom avatar if available, otherwise show initial
   const hasCustomAvatar = !!vtuber.avatar_url
+  const isClaimed = !!vtuber.claimed_by
 
-  // Fetch canonical tag names for display
+  // Fetch canonical tag names
   const tags: string[] = vtuber.tags ?? []
   const { data: canonicalTags } = await supabase
     .from('canonical_tags')
@@ -77,7 +77,16 @@ export default async function VTuberProfilePage({ params }: Props) {
             )}
 
             <div className="flex-1 min-w-0">
-              <h1 className="text-2xl font-bold text-vault-cream">{vtuber.name}</h1>
+              <div className="flex items-center gap-3">
+                <h1 className="text-2xl font-bold text-vault-cream">{vtuber.name}</h1>
+                {isClaimed && (
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-green-500/10 text-green-400 text-xs font-medium border border-green-500/30">
+                    <UserCheck className="h-3.5 w-3.5" />
+                    Claimed
+                  </div>
+                )}
+              </div>
+
               {vtuber.handle && (
                 <p className="text-sm text-muted-foreground mt-0.5">{vtuber.handle}</p>
               )}
@@ -113,6 +122,22 @@ export default async function VTuberProfilePage({ params }: Props) {
                  <ExternalLink className="h-4 w-4" />}
                 {isTwitch ? 'Twitch' : isYoutube ? 'YouTube' : vtuber.platform ?? 'Channel'}
               </a>
+            </div>
+          )}
+
+          {/* Claim Button */}
+          {!isClaimed && (
+            <div className="mt-6 pt-6 border-t border-white/10">
+              <Link
+                href={`/claim/${vtuber.id}`}
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-vault-gold text-vault-deep rounded-lg font-semibold hover:bg-[#e8bc5a] transition-colors"
+              >
+                <UserCheck className="h-4 w-4" />
+                Claim this profile
+              </Link>
+              <p className="text-xs text-white/50 mt-2">
+                Are you this VTuber? Request to claim ownership.
+              </p>
             </div>
           )}
         </div>
