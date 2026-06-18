@@ -65,8 +65,8 @@ export default function LoginPage() {
         }
         .vl-title {
           font-family: 'Bebas Neue', sans-serif;
-          font-size: clamp(42px, 10vw, 68px);
-          letter-spacing: 0.22em;
+          font-size: clamp(38px, 9vw, 64px);
+          letter-spacing: 0.14em;
           color: #d4a843;
           margin-bottom: 4px;
           line-height: 1;
@@ -197,7 +197,7 @@ export default function LoginPage() {
 
       <div className="vl-page">
         <div className="vl-card">
-          <div className="vl-title">VTVAULT</div>
+          <div className="vl-title">ObscuraVT</div>
           <div className="vl-honor">Created in honor of Spindra Popaly</div>
 
           <div className="vl-lock">
