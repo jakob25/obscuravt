@@ -16,11 +16,11 @@ const supabase = createClient(
 
 interface VTuberSubmitFormProps {
   onSuccess?: () => void
-  onClose?: () => void
+  onCancel?: () => void
 }
 
-export function VTuberSubmitForm({ onSuccess, onClose }: VTuberSubmitFormProps) {
-  const { user, username } = useAuth()
+export function VTuberSubmitForm({ onSuccess, onCancel }: VTuberSubmitFormProps) {
+  const { user } = useAuth()
   const [formData, setFormData] = useState({
     name: '',
     handle: '',
@@ -79,7 +79,7 @@ export function VTuberSubmitForm({ onSuccess, onClose }: VTuberSubmitFormProps) 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!username) {
+    if (!user) {
       setError('You must be signed in to submit')
       return
     }
@@ -135,7 +135,6 @@ export function VTuberSubmitForm({ onSuccess, onClose }: VTuberSubmitFormProps) 
       setSuccess(true)
       setTimeout(() => {
         onSuccess?.()
-        onClose?.()
         // Reset form
         setFormData({ name: '', handle: '', platform: 'Twitch', link: '', bio: '' })
         setSelectedConstellation('')
@@ -310,10 +309,17 @@ export function VTuberSubmitForm({ onSuccess, onClose }: VTuberSubmitFormProps) 
 
       {error && <p className="text-sm text-red-400">{error}</p>}
 
-      <Button type="submit" className="w-full" disabled={submitting || uploading}>
-        {uploading ? 'Uploading image...' : submitting ? 'Submitting...' : 'Submit for Review'}
-        {(submitting || uploading) && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
-      </Button>
+      <div className="flex gap-3 pt-2 border-t border-border">
+        {onCancel && (
+          <Button type="button" variant="outline" onClick={onCancel} className="border-border text-vault-cream">
+            Cancel
+          </Button>
+        )}
+        <Button type="submit" className="flex-1" disabled={submitting || uploading}>
+          {uploading ? 'Uploading image...' : submitting ? 'Submitting...' : 'Submit for Review'}
+          {(submitting || uploading) && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
+        </Button>
+      </div>
 
       <p className="text-xs text-center text-muted-foreground">
         Submissions are reviewed before appearing on the maps.

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { StarMap } from '@/components/common/star-map'
 import { NicheMap } from '@/components/common/niche-map'
@@ -29,7 +29,7 @@ function FirstTimerBanner() {
   )
 }
 
-export default function DiscoverPage() {
+function DiscoverPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
 
@@ -90,5 +90,20 @@ export default function DiscoverPage() {
 
       <FirstTimerBanner />
     </div>
+  )
+}
+
+export default function DiscoverPage() {
+  return (
+    <Suspense
+      fallback={
+        <div
+          className="relative w-full overflow-hidden bg-vault-deep"
+          style={{ height: 'calc(100vh - 64px)' }}
+        />
+      }
+    >
+      <DiscoverPageContent />
+    </Suspense>
   )
 }
