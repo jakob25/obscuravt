@@ -19,10 +19,15 @@ export function rowToVTuber(row: Record<string, unknown>): VTuber {
     else if (p.includes('youtube')) externalLinks.push({ platform: 'youtube', url: row.link as string })
     else externalLinks.push({ platform: 'website', url: row.link as string })
   }
+
+  // Use uploaded avatar if available, otherwise fall back to Dicebear
+  const avatarUrl = (row.avatar_url as string) ||
+    `https://api.dicebear.com/7.x/bottts-neutral/svg?seed=${encodeURIComponent(row.id as string)}&backgroundColor=d4a574`
+
   return {
     id: row.id as string,
     name: row.name as string,
-    avatarUrl: `https://api.dicebear.com/7.x/bottts-neutral/svg?seed=${encodeURIComponent(row.id as string)}&backgroundColor=d4a574`,
+    avatarUrl,
     vibeTags: tags.filter((t) => !t.startsWith('clust_')),
     category: clusterTag,
     externalLinks,
@@ -32,50 +37,6 @@ export function rowToVTuber(row: Record<string, unknown>): VTuber {
     bio: (row.bio as string) ?? '',
     scraps: 0,
   }
-}
-
-// Place stars around a constellation center without overlapping
-export function placeStars(
-  members: VTuber[],
-  cx: number,
-  cy: number,
-  starRadius: number = 12
-): Array<{ vtuber: VTuber; x: number; y: number }> {
-  const placed: Array<{ vtuber: VTuber; x: number; y: number }> = []
-  const minDist = starRadius * 2.8 // minimum gap between star centers
-
-  for (const vtuber of members) {
-    let bestX = cx
-    let bestY = cy
-    let found = false
-
-    // Try rings of increasing radius until we find a non-overlapping spot
-    for (let ring = 1; ring <= 8 && !found; ring++) {
-      const ringRadius = 55 + ring * 35
-      const spotsInRing = Math.max(6, Math.floor((2 * Math.PI * ringRadius) / (minDist * 1.1)))
-
-      for (let i = 0; i < spotsInRing && !found; i++) {
-        const angle = (i / spotsInRing) * Math.PI * 2 + ring * 0.5
-        const tx = cx + Math.cos(angle) * ringRadius
-        const ty = cy + Math.sin(angle) * ringRadius
-
-        // Check distance to all already-placed stars
-        const overlaps = placed.some(
-          (p) => Math.hypot(p.x - tx, p.y - ty) < minDist
-        )
-
-        if (!overlaps) {
-          bestX = tx
-          bestY = ty
-          found = true
-        }
-      }
-    }
-
-    placed.push({ vtuber, x: bestX, y: bestY })
-  }
-
-  return placed
 }
 
 export function getVTubersByConstellationLive(vtubers: VTuber[], constellationId: string): VTuber[] {
