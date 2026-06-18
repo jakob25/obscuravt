@@ -27,6 +27,9 @@ export default async function VTuberProfilePage({ params }: Props) {
     notFound()
   }
 
+  // Use custom avatar if available, otherwise show initial
+  const hasCustomAvatar = !!vtuber.avatar_url
+
   // Fetch canonical tag names for display
   const tags: string[] = vtuber.tags ?? []
   const { data: canonicalTags } = await supabase
@@ -57,13 +60,21 @@ export default async function VTuberProfilePage({ params }: Props) {
         {/* Header card */}
         <div className="vault-card rounded-2xl p-6 mb-6">
           <div className="flex items-start gap-4">
-            {/* Avatar placeholder */}
-            <div
-              className="h-16 w-16 rounded-xl flex-shrink-0 flex items-center justify-center text-2xl font-bold text-vault-deep"
-              style={{ background: cluster?.color ?? '#d4a574' }}
-            >
-              {vtuber.name.charAt(0)}
-            </div>
+            {/* Avatar */}
+            {hasCustomAvatar ? (
+              <img
+                src={vtuber.avatar_url}
+                alt={vtuber.name}
+                className="h-16 w-16 rounded-xl object-cover flex-shrink-0 border border-white/10"
+              />
+            ) : (
+              <div
+                className="h-16 w-16 rounded-xl flex-shrink-0 flex items-center justify-center text-2xl font-bold text-vault-deep"
+                style={{ background: cluster?.color ?? '#d4a574' }}
+              >
+                {vtuber.name.charAt(0)}
+              </div>
+            )}
 
             <div className="flex-1 min-w-0">
               <h1 className="text-2xl font-bold text-vault-cream">{vtuber.name}</h1>
