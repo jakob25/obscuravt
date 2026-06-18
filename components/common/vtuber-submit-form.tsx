@@ -1,240 +1,323 @@
 'use client'
 
 import { useState } from 'react'
+import { useAuth } from '@/lib/auth-context'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { useAuth } from '@/lib/auth-context'
-import { useVibeTags } from '@/hooks/use-data'
-import { useStarMapData } from '@/hooks/use-star-map-data'
-import { Plus, X, AlertCircle, CheckCircle, Loader2 } from 'lucide-react'
+import { Textarea } from '@/components/ui/textarea'
+import { Label } from '@/components/ui/label'
+import { createClient } from '@supabase/supabase-js'
+import { Upload, X, Loader2 } from 'lucide-react'
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+)
 
 interface VTuberSubmitFormProps {
   onSuccess?: () => void
-  onCancel?: () => void
+  onClose?: () => void
 }
 
-export function VTuberSubmitForm({ onSuccess, onCancel }: VTuberSubmitFormProps) {
-  const { user } = useAuth()
-  const { vibeTags } = useVibeTags()
-  const { constellations } = useStarMapData()
-
-  const [name, setName] = useState('')
-  const [handle, setHandle] = useState('')
-  const [platform, setPlatform] = useState('')
-  const [link, setLink] = useState('')
-  const [bio, setBio] = useState('')
-  const [constellation, setConstellation] = useState('')
-  const [selectedTags, setSelectedTags] = useState<string[]>([])
+export function VTuberSubmitForm({ onSuccess, onClose }: VTuberSubmitFormProps) {
+  const { user, username } = useAuth()
+  const [formData, setFormData] = useState({
+    name: '',
+    handle: '',
+    platform: 'Twitch',
+    link: '',
+    bio: '',
+  })
+  const [selectedConstellation, setSelectedConstellation] = useState('')
+  const [selectedVibeTags, setSelectedVibeTags] = useState<string[]>([])
+  const [avatarFile, setAvatarFile] = useState<File | null>(null)
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
+  const [uploading, setUploading] = useState(false)
   const [submitting, setSubmitting] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [done, setDone] = useState(false)
+  const [error, setError] = useState('')
+  const [success, setSuccess] = useState(false)
 
-  const toggleTag = (id: string) => {
-    setSelectedTags(prev =>
-      prev.includes(id) ? prev.filter(t => t !== id) : prev.length < 8 ? [...prev, id] : prev
-    )
+  const constellations = ['clust_chaos', 'clust_cyber', 'clust_fantasy', 'clust_slice_of_life', 'clust_music']
+  const vibeTagOptions = ['wholesome', 'chaotic', 'unhinged', 'cozy', 'competitive', 'artistic', 'meme', 'chill']
+
+  const handleInputChange = (field: string, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }))
   }
 
-  const isValid = name.trim().length >= 2
+  const handleAvatarSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!user) { setError('You must be signed in.'); return }
-    if (!isValid) return
-
-    setSubmitting(true)
-    setError(null)
-
-    const tags = constellation ? [constellation, ...selectedTags] : selectedTags
-
-    const res = await fetch('/api/vtubers', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        name: name.trim(),
-        handle: handle.trim(),
-        platform: platform.trim(),
-        link: link.trim(),
-        bio: bio.trim(),
-        tags,
-        submitted_by: user.username,
-      }),
-    })
-
-    const data = await res.json()
-    if (!res.ok) {
-      setError(data.error ?? 'Something went wrong.')
-      setSubmitting(false)
+    if (!file.type.startsWith('image/')) {
+      setError('Please upload an image file')
+      return
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setError('Image must be smaller than 5MB')
       return
     }
 
-    setDone(true)
-    setSubmitting(false)
-    setTimeout(() => onSuccess?.(), 1500)
+    setAvatarFile(file)
+    const reader = new FileReader()
+    reader.onload = (ev) => setAvatarPreview(ev.target?.result as string)
+    reader.readAsDataURL(file)
+    setError('')
   }
 
-  if (done) {
+  const removeAvatar = () => {
+    setAvatarFile(null)
+    setAvatarPreview(null)
+  }
+
+  const toggleVibeTag = (tag: string) => {
+    setSelectedVibeTags(prev =>
+      prev.includes(tag)
+        ? prev.filter(t => t !== tag)
+        : [...prev, tag].slice(0, 8)
+    )
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!username) {
+      setError('You must be signed in to submit')
+      return
+    }
+    if (!formData.name.trim() || formData.name.trim().length < 2) {
+      setError('Name must be at least 2 characters')
+      return
+    }
+
+    setSubmitting(true)
+    setError('')
+
+    try {
+      let avatarUrl: string | null = null
+
+      // Upload avatar if selected
+      if (avatarFile) {
+        setUploading(true)
+        const fileExt = avatarFile.name.split('.').pop()
+        const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`
+
+        const { error: uploadError } = await supabase.storage
+          .from('vtuber-avatars')
+          .upload(fileName, avatarFile, { upsert: false })
+
+        if (uploadError) throw uploadError
+
+        const { data: urlData } = supabase.storage
+          .from('vtuber-avatars')
+          .getPublicUrl(fileName)
+
+        avatarUrl = urlData.publicUrl
+        setUploading(false)
+      }
+
+      // Combine tags
+      const allTags = [...(selectedConstellation ? [selectedConstellation] : []), ...selectedVibeTags]
+
+      const res = await fetch('/api/vtubers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...formData,
+          tags: allTags,
+          avatar_url: avatarUrl,
+        }),
+      })
+
+      if (!res.ok) {
+        const data = await res.json()
+        throw new Error(data.error || 'Submission failed')
+      }
+
+      setSuccess(true)
+      setTimeout(() => {
+        onSuccess?.()
+        onClose?.()
+        // Reset form
+        setFormData({ name: '', handle: '', platform: 'Twitch', link: '', bio: '' })
+        setSelectedConstellation('')
+        setSelectedVibeTags([])
+        setAvatarFile(null)
+        setAvatarPreview(null)
+        setSuccess(false)
+      }, 1500)
+    } catch (err: any) {
+      setError(err.message || 'Something went wrong')
+    } finally {
+      setSubmitting(false)
+      setUploading(false)
+    }
+  }
+
+  if (success) {
     return (
-      <div className="flex flex-col items-center gap-3 py-8 text-center">
-        <CheckCircle className="h-10 w-10 text-vault-gold" />
-        <p className="font-semibold text-vault-cream">Submitted for review!</p>
-        <p className="text-sm text-muted-foreground">They'll appear on the Star Map once approved.</p>
+      <div className="text-center py-8">
+        <div className="text-6xl mb-4">🎉</div>
+        <h3 className="text-xl font-semibold text-vault-cream mb-2">Submitted for review!</h3>
+        <p className="text-muted-foreground">Your VTuber will appear on the maps once approved.</p>
       </div>
     )
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-5">
-      {!user && (
-        <div className="flex items-center gap-2 p-3 rounded-lg bg-vault-gold/10 border border-vault-gold/30 text-sm text-vault-gold">
-          <AlertCircle className="h-4 w-4 flex-shrink-0" />
-          You need to be signed in to submit a VTuber.
-        </div>
-      )}
-
-      <div className="p-3 rounded-lg bg-muted/20 border border-border text-xs text-muted-foreground">
-        Submissions are reviewed before appearing on the Star Map. Fill in as much as you know.
-      </div>
-
-      {/* Name */}
+    <form onSubmit={handleSubmit} className="space-y-6">
+      {/* Avatar Upload */}
       <div>
-        <label className="block text-sm font-medium text-vault-cream mb-1.5">
-          Name / Streamer Name <span className="text-red-400">*</span>
-        </label>
-        <Input
-          placeholder="e.g. Bermuda Muda"
-          value={name}
-          onChange={e => setName(e.target.value)}
-          className="bg-muted/30 border-border text-vault-cream placeholder:text-muted-foreground"
-        />
+        <Label className="text-sm font-medium">Profile Picture (optional)</Label>
+        <div className="mt-2 flex items-center gap-4">
+          {avatarPreview ? (
+            <div className="relative">
+              <img src={avatarPreview} alt="Preview" className="h-20 w-20 rounded-xl object-cover border" />
+              <button
+                type="button"
+                onClick={removeAvatar}
+                className="absolute -top-2 -right-2 bg-black rounded-full p-1"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          ) : (
+            <label className="flex h-20 w-20 cursor-pointer items-center justify-center rounded-xl border border-dashed hover:bg-muted/50">
+              <div className="text-center">
+                <Upload className="mx-auto h-6 w-6 text-muted-foreground" />
+                <span className="text-[10px] text-muted-foreground mt-1 block">Upload</span>
+              </label>
+            </div>
+          )}
+
+          <div>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleAvatarSelect}
+              className="hidden"
+              id="avatar-upload"
+            />
+            <label htmlFor="avatar-upload">
+              <Button type="button" variant="outline" size="sm" asChild>
+                <span>Choose Image</span>
+              </Button>
+            </label>
+            <p className="text-xs text-muted-foreground mt-1">PNG, JPG up to 5MB</p>
+          </div>
+        </div>
       </div>
 
-      {/* Handle + Platform */}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-vault-cream mb-1.5">Handle</label>
+          <Label htmlFor="name">Name *</Label>
           <Input
-            placeholder="@handle"
-            value={handle}
-            onChange={e => setHandle(e.target.value)}
-            className="bg-muted/30 border-border text-vault-cream placeholder:text-muted-foreground"
+            id="name"
+            value={formData.name}
+            onChange={(e) => handleInputChange('name', e.target.value)}
+            placeholder="VTuber name"
+            required
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-vault-cream mb-1.5">Platform</label>
-          <select
-            value={platform}
-            onChange={e => setPlatform(e.target.value)}
-            className="w-full px-3 py-2 rounded-md bg-muted/30 border border-border text-vault-cream text-sm"
-          >
-            <option value="">Select...</option>
-            <option value="Twitch">Twitch</option>
-            <option value="YouTube">YouTube</option>
-            <option value="Twitch/YouTube">Twitch + YouTube</option>
-            <option value="Other">Other</option>
-          </select>
+          <Label htmlFor="handle">Handle</Label>
+          <Input
+            id="handle"
+            value={formData.handle}
+            onChange={(e) => handleInputChange('handle', e.target.value)}
+            placeholder="@username"
+          />
         </div>
       </div>
 
-      {/* Link */}
       <div>
-        <label className="block text-sm font-medium text-vault-cream mb-1.5">Channel Link</label>
-        <Input
-          type="url"
-          placeholder="https://twitch.tv/..."
-          value={link}
-          onChange={e => setLink(e.target.value)}
-          className="bg-muted/30 border-border text-vault-cream placeholder:text-muted-foreground"
-        />
-      </div>
-
-      {/* Bio */}
-      <div>
-        <label className="block text-sm font-medium text-vault-cream mb-1.5">
-          Bio / Description <span className="text-muted-foreground font-normal">(optional but very helpful)</span>
-        </label>
-        <textarea
-          placeholder="Describe their content, vibe, and personality..."
-          value={bio}
-          onChange={e => setBio(e.target.value)}
-          rows={3}
-          maxLength={300}
-          className="w-full px-3 py-2 rounded-md bg-muted/30 border border-border text-vault-cream text-sm placeholder:text-muted-foreground resize-none"
-        />
-        <p className="mt-1 text-xs text-muted-foreground text-right">{bio.length}/300</p>
-      </div>
-
-      {/* Constellation */}
-      <div>
-        <label className="block text-sm font-medium text-vault-cream mb-1.5">
-          Constellation <span className="text-muted-foreground font-normal">(which group do they fit?)</span>
-        </label>
-        <div className="flex flex-wrap gap-2">
-          {constellations.map(c => (
-            <button
-              key={c.id}
-              type="button"
-              onClick={() => setConstellation(prev => prev === c.id ? '' : c.id)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
-                constellation === c.id
-                  ? 'border-current'
-                  : 'border-border text-muted-foreground hover:text-vault-cream hover:border-vault-bronze/50'
-              }`}
-              style={constellation === c.id ? { borderColor: c.color, color: c.color, backgroundColor: `${c.color}18` } : {}}
-            >
-              <div className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: constellation === c.id ? c.color : '#666' }} />
-              {c.name}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Tags */}
-      <div>
-        <label className="block text-sm font-medium text-vault-cream mb-1.5">
-          Vibe Tags <span className="text-muted-foreground font-normal">(up to 8)</span>
-        </label>
-        <div className="flex flex-wrap gap-2 max-h-36 overflow-y-auto">
-          {vibeTags.map(tag => (
-            <button
-              key={tag.id}
-              type="button"
-              onClick={() => toggleTag(tag.id)}
-              className={`px-2.5 py-1 rounded-full text-xs font-medium border transition-colors ${
-                selectedTags.includes(tag.id)
-                  ? 'bg-vault-gold/20 border-vault-gold text-vault-gold'
-                  : 'bg-muted/20 border-border text-muted-foreground hover:border-vault-bronze/50'
-              }`}
-            >
-              {tag.name}
-            </button>
-          ))}
-        </div>
-        <p className="mt-1 text-xs text-muted-foreground">{selectedTags.length}/8 selected</p>
-      </div>
-
-      {error && (
-        <div className="flex items-center gap-2 p-3 rounded-lg bg-destructive/10 border border-destructive/30 text-sm text-destructive">
-          <AlertCircle className="h-4 w-4 flex-shrink-0" />
-          {error}
-        </div>
-      )}
-
-      <div className="flex gap-3 pt-2 border-t border-border">
-        {onCancel && (
-          <Button type="button" variant="outline" onClick={onCancel} className="border-border text-vault-cream">
-            Cancel
-          </Button>
-        )}
-        <Button
-          type="submit"
-          disabled={!isValid || submitting || !user}
-          className="flex-1 bg-vault-gold hover:bg-vault-amber text-vault-deep font-semibold disabled:opacity-50"
+        <Label>Platform</Label>
+        <select
+          value={formData.platform}
+          onChange={(e) => handleInputChange('platform', e.target.value)}
+          className="w-full rounded-md border bg-background px-3 py-2 text-sm"
         >
-          {submitting ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Plus className="h-4 w-4 mr-2" />}
-          Submit VTuber
-        </Button>
+          <option value="Twitch">Twitch</option>
+          <option value="YouTube">YouTube</option>
+          <option value="Twitch/YouTube">Twitch + YouTube</option>
+          <option value="Other">Other</option>
+        </select>
       </div>
+
+      <div>
+        <Label htmlFor="link">Channel Link</Label>
+        <Input
+          id="link"
+          type="url"
+          value={formData.link}
+          onChange={(e) => handleInputChange('link', e.target.value)}
+          placeholder="https://twitch.tv/..."
+        />
+      </div>
+
+      <div>
+        <Label htmlFor="bio">Bio / Description</Label>
+        <Textarea
+          id="bio"
+          value={formData.bio}
+          onChange={(e) => handleInputChange('bio', e.target.value)}
+          placeholder="Short description..."
+          maxLength={300}
+          rows={3}
+        />
+      </div>
+
+      {/* Constellation Selection */}
+      <div>
+        <Label>Constellation (Vibe Group)</Label>
+        <div className="flex flex-wrap gap-2 mt-2">
+          {constellations.map((c) => (
+            <button
+              key={c}
+              type="button"
+              onClick={() => setSelectedConstellation(c)}
+              className={`px-3 py-1.5 text-xs rounded-lg border transition-all ${
+                selectedConstellation === c
+                  ? 'bg-vault-gold/20 border-vault-gold text-vault-gold'
+                  : 'border-white/20 hover:bg-white/5'
+              }`}
+            >
+              {c.replace('clust_', '')}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Vibe Tags */}
+      <div>
+        <Label>Vibe Tags (max 8)</Label>
+        <div className="flex flex-wrap gap-2 mt-2">
+          {vibeTagOptions.map((tag) => (
+            <button
+              key={tag}
+              type="button"
+              onClick={() => toggleVibeTag(tag)}
+              className={`px-3 py-1 text-xs rounded-full border transition-all ${
+                selectedVibeTags.includes(tag)
+                  ? 'bg-vault-gold text-vault-deep border-vault-gold'
+                  : 'border-white/20 hover:bg-white/5'
+              }`}
+            >
+              {tag}
+            </button>
+          ))}
+        </div>
+        <p className="text-xs text-muted-foreground mt-1">{selectedVibeTags.length}/8 selected</p>
+      </div>
+
+      {error && <p className="text-sm text-red-400">{error}</p>}
+
+      <Button type="submit" className="w-full" disabled={submitting || uploading}>
+        {uploading ? 'Uploading image...' : submitting ? 'Submitting...' : 'Submit for Review'}
+        {(submitting || uploading) && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
+      </Button>
+
+      <p className="text-xs text-center text-muted-foreground">
+        Submissions are reviewed before appearing on the maps.
+      </p>
     </form>
   )
 }
