@@ -1,24 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { createClient } from '@supabase/supabase-js'
+import { randomUUID } from 'crypto'
 import { requireAuth } from '@/lib/session'
 import { rateLimits } from '@/lib/rate-limit'
-import { supabaseAdmin } from '@/lib/supabase'
-import { randomUUID } from 'crypto'
 
-export async function GET() {
-  // DISCOVERABILITY POLICY:
-  // A VTuber appears on the star map only when admin sets approved=true.
-  // The creator's own discoverable toggle (in profiles table) hides from search/browse
-  // but does NOT affect approved status.
-  // Upvotes/endorsements are ONLY used for the weekly digest — never for filtering here.
-  const { data, error } = await supabaseAdmin
-    .from('vtubers')
-    .select('*')
-    .eq('approved', true)
-    .order('name')
-
-  if (error) return NextResponse.json({ error: 'Failed to fetch VTubers.' }, { status: 500 })
-  return NextResponse.json(data)
-}
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+)
 
 export async function POST(req: NextRequest) {
   const rl = await rateLimits.write(req)
@@ -28,7 +17,7 @@ export async function POST(req: NextRequest) {
   if (session instanceof NextResponse) return session
 
   const body = await req.json()
-  const { name, handle, platform, link, bio, tags } = body
+  const { name, handle, platform, link, bio, tags, avatar_url } = body
   const submitted_by = session.username
 
   if (!name?.trim())
@@ -66,7 +55,8 @@ export async function POST(req: NextRequest) {
     link: link?.trim() ?? '',
     bio: bio?.trim() ?? '',
     tags: tags ?? [],
-    approved: false, // pending review
+    avatar_url: avatar_url ?? null,   // NEW: support uploaded avatar
+    approved: false,
     nominated_by: submitted_by,
     spotlight: false,
   })
