@@ -184,8 +184,8 @@ export function VTuberSubmitForm({ onSuccess, onClose }: VTuberSubmitFormProps) 
               <div className="text-center">
                 <Upload className="mx-auto h-6 w-6 text-muted-foreground" />
                 <span className="text-[10px] text-muted-foreground mt-1 block">Upload</span>
-              </label>
-            </div>
+              </div>
+            </label>
           )}
 
           <div>
@@ -197,8 +197,8 @@ export function VTuberSubmitForm({ onSuccess, onClose }: VTuberSubmitFormProps) 
               id="avatar-upload"
             />
             <label htmlFor="avatar-upload">
-              <Button type="button" variant="outline" size="sm" asChild>
-                <span>Choose Image</span>
+              <Button type="button" variant="outline" size="sm">
+                Choose Image
               </Button>
             </label>
             <p className="text-xs text-muted-foreground mt-1">PNG, JPG up to 5MB</p>
