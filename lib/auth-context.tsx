@@ -1,88 +1,122 @@
 'use client'
 
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
+import { useState, useEffect, createContext, useContext, ReactNode } from 'react'
 
 interface AuthUser {
   username: string
   coins: number
   role: string | null
+  accountType: string | null
 }
 
 interface AuthContextType {
   user: AuthUser | null
+  username: string | null
   loading: boolean
   login: (username: string, password: string) => Promise<{ ok: boolean; error?: string }>
-  register: (username: string, password: string) => Promise<{ ok: boolean; error?: string }>
+  register: (username: string, password: string, accountType: string) => Promise<{ ok: boolean; error?: string }>
   logout: () => Promise<void>
-  refreshUser: () => Promise<void>
 }
 
-const AuthContext = createContext<AuthContextType | null>(null)
+const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null)
   const [loading, setLoading] = useState(true)
 
-  // On mount, restore session from httpOnly cookie via /api/auth/me
+  // Restore session on mount
   useEffect(() => {
     fetch('/api/auth/me', { credentials: 'include' })
-      .then(r => r.ok ? r.json() : null)
+      .then(res => res.ok ? res.json() : null)
       .then(data => {
-        if (data) setUser({ username: data.username, coins: data.coins, role: data.role })
+        if (data) {
+          setUser({
+            username: data.username,
+            coins: data.coins || 0,
+            role: data.role,
+            accountType: data.account_type,
+          })
+        }
       })
-      .catch(() => {})
       .finally(() => setLoading(false))
   }, [])
 
-  const refreshUser = async () => {
-    if (!user) return
-    const res = await fetch('/api/auth/me', { credentials: 'include' })
-    if (res.ok) {
+  const login = async (username: string, password: string) => {
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ username, password }),
+      })
+
       const data = await res.json()
-      if (data) setUser({ username: data.username, coins: data.coins, role: data.role })
+
+      if (!res.ok) {
+        return { ok: false, error: data.error || 'Login failed' }
+      }
+
+      setUser({
+        username: data.username,
+        coins: data.coins || 0,
+        role: data.role,
+        accountType: data.account_type,
+      })
+
+      return { ok: true }
+    } catch (err) {
+      return { ok: false, error: 'Network error' }
     }
   }
 
-  const login = async (username: string, password: string) => {
-    const res = await fetch('/api/auth/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',  // ← include cookies
-      body: JSON.stringify({ username, password }),
-    })
-    const data = await res.json()
-    if (!res.ok) return { ok: false, error: data.error }
-    setUser({ username: data.username, coins: data.coins, role: data.role })
-    return { ok: true }
-  }
+  const register = async (username: string, password: string, accountType: string) => {
+    try {
+      const res = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ username, password, account_type: accountType }),
+      })
 
-  const register = async (username: string, password: string) => {
-    const res = await fetch('/api/auth/register', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({ username, password }),
-    })
-    const data = await res.json()
-    if (!res.ok) return { ok: false, error: data.error }
-    // After register, fetch user data
-    return login(username, password)
+      const data = await res.json()
+
+      if (!res.ok) {
+        return { ok: false, error: data.error || 'Registration failed' }
+      }
+
+      // Auto-login after successful registration
+      return login(username, password)
+    } catch (err) {
+      return { ok: false, error: 'Network error' }
+    }
   }
 
   const logout = async () => {
-    await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' })
+    await fetch('/api/auth/logout', {
+      method: 'POST',
+      credentials: 'include',
+    })
     setUser(null)
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, refreshUser }}>
+    <AuthContext.Provider value={{
+      user,
+      username: user?.username || null,
+      loading,
+      login,
+      register,
+      logout,
+    }}>
       {children}
     </AuthContext.Provider>
   )
 }
 
 export function useAuth() {
-  const ctx = useContext(AuthContext)
-  if (!ctx) throw new Error('useAuth must be used within AuthProvider')
-  return ctx
+  const context = useContext(AuthContext)
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider')
+  }
+  return context
 }
