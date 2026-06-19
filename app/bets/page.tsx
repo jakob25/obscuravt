@@ -3,14 +3,29 @@
 import { useState, useCallback } from 'react'
 import { useBets } from '@/hooks/use-data'
 import { useAuth } from '@/lib/auth-context'
-import { Trophy, Clock, TrendingUp, CheckCircle, AlertCircle, Loader2, ChevronDown, ChevronUp, Vote } from 'lucide-react'
+import { Trophy, Clock, Loader2 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 
 export default function BetsPage() {
-  const { bets, loading, placeBet } = useBets()
+  const { bets, loading } = useBets()
   const { user } = useAuth()
   const [selectedOption, setSelectedOption] = useState<Record<string, string | number>>({})
   const [betting, setBetting] = useState<Record<string, boolean>>({})
+
+  const placeBet = useCallback(async (betId: string, optionId: string | number) => {
+    if (!user) return
+
+    const res = await fetch('/api/bets/place', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ betId, optionId }),
+    })
+
+    if (!res.ok) {
+      const data = await res.json()
+      alert(data.error || 'Failed to place bet')
+    }
+  }, [user])
 
   const handleBet = useCallback(async (betId: string) => {
     if (!user || !selectedOption[betId]) return
