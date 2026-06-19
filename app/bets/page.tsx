@@ -1,3 +1,5 @@
+'use client'
+
 import { useState, useCallback } from 'react'
 import { useBets } from '@/hooks/use-data'
 import { useAuth } from '@/lib/auth-context'
@@ -17,7 +19,6 @@ export default function BetsPage() {
 
     try {
       await placeBet(betId, selectedOption[betId])
-      // Refresh will happen via the hook
     } catch (error) {
       console.error('Bet placement failed:', error)
     } finally {
@@ -58,9 +59,7 @@ export default function BetsPage() {
                 <div className="flex justify-between items-start mb-4">
                   <div>
                     <h3 className="text-xl font-semibold mb-1">{bet.title}</h3>
-                    {bet.description && (
-                      <p className="text-white/70 text-sm">{bet.description}</p>
-                    )}
+                    {bet.description && <p className="text-white/70 text-sm">{bet.description}</p>}
                   </div>
                   <Badge variant={isOpen ? 'default' : 'secondary'}>
                     {isOpen ? 'Open' : 'Closed'}
@@ -77,41 +76,28 @@ export default function BetsPage() {
                 )}
 
                 <div className="space-y-3 mb-4">
-                  {bet.options.map((option) => {
+                  {bet.options.map((option, index) => {
                     const isSelected = userSelection === option.id
-                    const percentage = option.totalScraps > 0 
-                      ? Math.round((option.totalScraps / bet.options.reduce((sum, o) => sum + o.totalScraps, 0)) * 100) 
-                      : 0
+                    const total = bet.options.reduce((sum, o) => sum + (o.totalScraps || 0), 0)
+                    const percentage = total > 0 ? Math.round(((option.totalScraps || 0) / total) * 100) : 0
 
                     return (
                       <button
-                        key={option.id}
+                        key={index}
                         onClick={() => isOpen && setSelectedOption(prev => ({ ...prev, [bet.id]: option.id }))}
                         disabled={!isOpen}
-                        className={`w-full p-4 rounded-xl border text-left transition-all ${
+                        className={`w-full p-4 rounded-xl border text-left transition-all flex justify-between items-center ${
                           isSelected 
                             ? 'border-vault-gold bg-vault-gold/10' 
                             : 'border-white/10 hover:border-white/30'
-                        } ${!isOpen ? 'opacity-60' : ''}`}
+                        } ${!isOpen ? 'opacity-60 cursor-not-allowed' : ''}`}
                       >
-                        <div className="flex justify-between items-center">
-                          <span className="font-medium">{option.label}</span>
-                          <div className="text-right">
-                            <div className="font-mono text-sm">{option.totalScraps} scraps</div>
-                            {option.odds && (
-                              <div className="text-xs text-white/50">{option.odds.toFixed(2)}x</div>
-                            )}
-                          </div>
+                        <span className="font-medium">{option.label}</span>
+                        <div className="text-right text-sm">
+                          <div>{option.totalScraps || 0} scraps</div>
+                          {option.odds && <div className="text-xs text-white/50">{option.odds.toFixed(2)}x</div>}
                         </div>
-                        {option.totalScraps > 0 && (
-                          <div className="mt-2 h-1.5 bg-white/10 rounded-full overflow-hidden">
-                            <div 
-                              className="h-full bg-vault-gold transition-all" 
-                              style={{ width: `${percentage}%` }} 
-                            />
-                          </div>
-                        )}
-                      </div>
+                      </button>
                     )
                   })}
                 </div>
@@ -122,15 +108,7 @@ export default function BetsPage() {
                     disabled={!userSelection || isBetting}
                     className="w-full py-3 bg-vault-gold text-vault-deep rounded-xl font-semibold disabled:opacity-50 flex items-center justify-center gap-2 hover:bg-[#e8bc5a] transition-colors"
                   >
-                    {isBetting ? (
-                      <>
-                        <Loader2 className="h-4 w-4 animate-spin" /> Placing bet...
-                      </>
-                    ) : (
-                      <>
-                        <Vote className="h-4 w-4" /> Place Bet
-                      </>
-                    )}
+                    {isBetting ? 'Placing bet...' : 'Place Bet'}
                   </button>
                 )}
               </div>
