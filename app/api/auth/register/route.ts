@@ -7,7 +7,7 @@ export async function POST(req: NextRequest) {
   const rl = await rateLimits.auth(req)
   if (!rl.ok) return rl.response!
 
-  const { username, password } = await req.json()
+  const { username, password, account_type } = await req.json()
 
   if (!username || !password) {
     return NextResponse.json({ error: 'Username and password are required.' }, { status: 400 })
@@ -15,6 +15,11 @@ export async function POST(req: NextRequest) {
 
   if (password.length < 6) {
     return NextResponse.json({ error: 'Password must be at least 6 characters.' }, { status: 400 })
+  }
+
+  const validTypes = ['vtuber', 'fan', 'clipper']
+  if (!account_type || !validTypes.includes(account_type)) {
+    return NextResponse.json({ error: 'Invalid account type.' }, { status: 400 })
   }
 
   // Check if user already exists
@@ -28,17 +33,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Username already taken.' }, { status: 409 })
   }
 
-  // Hash password
   const password_hash = await bcrypt.hash(password, 10)
 
-  // Insert new user (default coins and role)
   const { error } = await supabaseAdmin
     .from('users')
     .insert({
       username,
       password_hash,
-      coins: 100, // starting coins
+      coins: 100,
       role: 'user',
+      account_type,
     })
 
   if (error) {
