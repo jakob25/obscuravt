@@ -17,9 +17,10 @@ const supabase = createClient(
 interface VTuberSubmitFormProps {
   onSuccess?: () => void
   onClose?: () => void
+  onCancel?: () => void
 }
 
-export function VTuberSubmitForm({ onSuccess, onClose }: VTuberSubmitFormProps) {
+export function VTuberSubmitForm({ onSuccess, onClose, onCancel }: VTuberSubmitFormProps) {
   const { user, username } = useAuth()
   const [formData, setFormData] = useState({
     name: '',
@@ -75,6 +76,11 @@ export function VTuberSubmitForm({ onSuccess, onClose }: VTuberSubmitFormProps) 
         ? prev.filter(t => t !== tag)
         : [...prev, tag].slice(0, 8)
     )
+  }
+
+  const handleClose = () => {
+    if (onClose) onClose()
+    if (onCancel) onCancel()
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -133,7 +139,7 @@ export function VTuberSubmitForm({ onSuccess, onClose }: VTuberSubmitFormProps) 
       setSuccess(true)
       setTimeout(() => {
         onSuccess?.()
-        onClose?.()
+        handleClose()
         setFormData({ name: '', handle: '', platform: 'Twitch', link: '', bio: '' })
         setSelectedConstellation('')
         setSelectedVibeTags([])
@@ -182,9 +188,6 @@ export function VTuberSubmitForm({ onSuccess, onClose }: VTuberSubmitFormProps) 
                 <span className="text-[10px] text-muted-foreground mt-1 block">Upload</span>
               </div>
             </label>
-          )}
-
-          <div>
             <input
               type="file"
               accept="image/*"
@@ -192,6 +195,9 @@ export function VTuberSubmitForm({ onSuccess, onClose }: VTuberSubmitFormProps) 
               className="hidden"
               id="avatar-upload"
             />
+          </div>
+
+          <div>
             <label htmlFor="avatar-upload">
               <Button type="button" variant="outline" size="sm">
                 Choose Image
@@ -304,14 +310,15 @@ export function VTuberSubmitForm({ onSuccess, onClose }: VTuberSubmitFormProps) 
 
       {error && <p className="text-sm text-red-400">{error}</p>}
 
-      <Button type="submit" className="w-full" disabled={submitting || uploading}>
-        {uploading ? 'Uploading image...' : submitting ? 'Submitting...' : 'Submit for Review'}
-        {(submitting || uploading) && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
-      </Button>
-
-      <p className="text-xs text-center text-muted-foreground">
-        Submissions are reviewed before appearing on the maps.
-      </p>
+      <div className="flex gap-3">
+        <Button type="button" variant="outline" onClick={handleClose} className="flex-1">
+          Cancel
+        </Button>
+        <Button type="submit" className="flex-1" disabled={submitting || uploading}>
+          {uploading ? 'Uploading image...' : submitting ? 'Submitting...' : 'Submit for Review'}
+          {(submitting || uploading) && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
+        </Button>
+      </div>
     </form>
   )
 }
