@@ -1,12 +1,19 @@
-import { SignJWT, jwtVerify } from 'jose'
 import { NextRequest, NextResponse } from 'next/server'
-import { supabaseAdmin } from '@/lib/supabase'
+import { createClient } from '@supabase/supabase-js'
+import { SignJWT, jwtVerify } from 'jose'
+
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+)
 
 const SECRET = new TextEncoder().encode(
-  process.env.SESSION_SECRET ?? 'vtvault-dev-secret-change-in-production-min-32-chars'
+  process.env.SESSION_SECRET || 'your-secret-key-change-in-production'
 )
-const COOKIE_NAME = 'vtvault_session'
-const MAX_AGE = 60 * 60 * 24 * 30 // 30 days
+
+const ADMIN_USERNAMES = (process.env.ADMIN_USERNAMES || 'jakob25,admin')
+  .split(',')
+  .map(name => name.trim())
 
 export interface SessionPayload {
   username: string
@@ -15,88 +22,97 @@ export interface SessionPayload {
   exp: number
 }
 
-// ── Sign a new session token ──────────────────────────────────────────────────
-export async function signSession(username: string, role: string | null): Promise<string> {
+export interface UserSession {
+  username: string
+  coins: number
+  role: string | null
+  account_type: string | null
+}
+
+// Create JWT session token
+export async function signSession(username: string, role: string | null = null): Promise<string> {
   return new SignJWT({ username, role })
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
-    .setExpirationTime(`${MAX_AGE}s`)
+    .setExpirationTime('30d')
     .sign(SECRET)
 }
 
-// ── Verify and decode a session token ────────────────────────────────────────
+// Verify JWT token
 export async function verifySession(token: string): Promise<SessionPayload | null> {
   try {
     const { payload } = await jwtVerify(token, SECRET)
-    return payload as unknown as SessionPayload
+    return payload as SessionPayload
   } catch {
     return null
   }
 }
 
-// ── Get session from request cookie ──────────────────────────────────────────
+// Get session from cookie
 export async function getSession(req: NextRequest): Promise<SessionPayload | null> {
-  const token = req.cookies.get(COOKIE_NAME)?.value
+  const token = req.cookies.get('vtvault_session')?.value
   if (!token) return null
   return verifySession(token)
 }
 
-// ── Require auth — returns session or 401 response ───────────────────────────
+// Require authentication
 export async function requireAuth(req: NextRequest): Promise<SessionPayload | NextResponse> {
   const session = await getSession(req)
   if (!session) {
-    return NextResponse.json({ error: 'Authentication required.' }, { status: 401 })
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
   return session
 }
 
-// ── Require admin role ────────────────────────────────────────────────────────
-const ADMIN_USERNAMES = (process.env.ADMIN_USERNAMES ?? 'jakob25,admin').split(',').map(s => s.trim())
-
+// Require admin access
 export async function requireAdmin(req: NextRequest): Promise<SessionPayload | NextResponse> {
   const session = await getSession(req)
-  if (!session) return NextResponse.json({ error: 'Authentication required.' }, { status: 401 })
+  if (!session) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
   if (!ADMIN_USERNAMES.includes(session.username)) {
-    return NextResponse.json({ error: 'Forbidden.' }, { status: 403 })
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
   return session
 }
 
-// ── Set session cookie on a response ─────────────────────────────────────────
-export function setSessionCookie(res: NextResponse, token: string): NextResponse {
-  res.cookies.set(COOKIE_NAME, token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    maxAge: MAX_AGE,
-    path: '/',
-  })
-  return res
-}
-
-// ── Clear session cookie ──────────────────────────────────────────────────────
-export function clearSessionCookie(res: NextResponse): NextResponse {
-  res.cookies.set(COOKIE_NAME, '', {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    maxAge: 0,
-    path: '/',
-  })
-  return res
-}
-
-// ── /api/auth/me handler — called on app load to restore session ──────────────
-export async function getSessionUser(req: NextRequest) {
+// Get full user data from database
+export async function getSessionUser(req: NextRequest): Promise<UserSession | null> {
   const session = await getSession(req)
   if (!session) return null
 
-  // Re-fetch fresh data from DB on session restore
   const { data: user } = await supabaseAdmin
     .from('users')
-    .select('username, coins, role')
+    .select('username, coins, role, account_type')
     .eq('username', session.username)
     .single()
 
-  return user ?? null
+  if (!user) return null
+
+  return {
+    username: user.username,
+    coins: user.coins || 0,
+    role: user.role,
+    account_type: user.account_type,
+  }
+}
+
+// Set session cookie
+export function setSessionCookie(res: NextResponse, token: string) {
+  res.cookies.set('vtvault_session', token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    maxAge: 60 * 60 * 24 * 30, // 30 days
+    path: '/',
+  })
+}
+
+// Clear session cookie
+export function clearSessionCookie(res: NextResponse) {
+  res.cookies.set('vtvault_session', '', {
+    httpOnly: true,
+    maxAge: 0,
+    path: '/',
+  })
 }
