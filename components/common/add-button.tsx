@@ -71,7 +71,7 @@ export function AddButton() {
           {activeTab === 'clip' && (
             <ClipSubmitForm 
               onSuccess={() => setOpen(false)} 
-              onClose={() => setOpen(false)} 
+              onCancel={() => setOpen(false)} 
             />
           )}
 
