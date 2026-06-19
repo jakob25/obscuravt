@@ -1,224 +1,170 @@
 'use client'
 
 import { useState } from 'react'
+import { useAuth } from '@/lib/auth-context'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { useVibeTags, useVTubers } from '@/hooks/use-data'
-import { useAuth } from '@/lib/auth-context'
-import { validateClipUrl, extractVideoId, parseTimestamp } from '@/lib/embed-utils'
-import { Plus, AlertCircle, CheckCircle, Link as LinkIcon, Loader2 } from 'lucide-react'
+import { Textarea } from '@/components/ui/textarea'
+import { Label } from '@/components/ui/label'
+import { createClient } from '@supabase/supabase-js'
+import { Upload, X, Loader2 } from 'lucide-react'
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+)
 
 interface ClipSubmitFormProps {
   prefillVtuberId?: string
   onSuccess?: () => void
+  onClose?: () => void
   onCancel?: () => void
 }
-export function ClipSubmitForm({ prefillVtuberId, onSuccess, onCancel }: ClipSubmitFormProps) {
-  const { vibeTags } = useVibeTags()
-  const { vtubers } = useVTubers()
-  const { user } = useAuth()
 
-  const [url, setUrl] = useState('')
-  const [urlError, setUrlError] = useState<string | null>(null)
-  const [urlValid, setUrlValid] = useState(false)
-  const [extractedInfo, setExtractedInfo] = useState<{ platform: string; videoId: string } | null>(null)
+export function ClipSubmitForm({ prefillVtuberId, onSuccess, onClose, onCancel }: ClipSubmitFormProps) {
+  const { user, username } = useAuth()
   const [title, setTitle] = useState('')
-  const [selectedVTuber, setSelectedVTuber] = useState(prefillVtuberId ?? '')
-  const [selectedTags, setSelectedTags] = useState<string[]>([])
-  const [clipType, setClipType] = useState<'raw' | 'edited'>('raw')
+  const [platform, setPlatform] = useState<'twitch' | 'youtube'>('twitch')
+  const [videoId, setVideoId] = useState('')
+  const [selectedVibeTags, setSelectedVibeTags] = useState<string[]>([])
   const [submitting, setSubmitting] = useState(false)
-  const [submitError, setSubmitError] = useState<string | null>(null)
-  const [done, setDone] = useState(false)
+  const [error, setError] = useState('')
+  const [success, setSuccess] = useState(false)
 
-  const handleUrlChange = (value: string) => {
-    setUrl(value)
-    setUrlError(null)
-    setUrlValid(false)
-    setExtractedInfo(null)
-    if (!value) return
-    const validation = validateClipUrl(value)
-    if (!validation.valid) {
-      setUrlError(validation.error || 'Invalid URL')
-    } else {
-      const info = extractVideoId(value)
-      if (info) { setExtractedInfo(info); setUrlValid(true) }
-    }
+  const vibeTagOptions = ['wholesome', 'chaotic', 'unhinged', 'cozy', 'competitive', 'artistic', 'meme', 'chill']
+
+  const handleClose = () => {
+    if (onClose) onClose()
+    if (onCancel) onCancel()
   }
 
-  const toggleTag = (tagId: string) => {
-    setSelectedTags(prev =>
-      prev.includes(tagId) ? prev.filter(t => t !== tagId) : prev.length < 5 ? [...prev, tagId] : prev
+  const toggleVibeTag = (tag: string) => {
+    setSelectedVibeTags(prev =>
+      prev.includes(tag)
+        ? prev.filter(t => t !== tag)
+        : [...prev, tag].slice(0, 5)
     )
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!user) { setSubmitError('You must be signed in to submit a clip.'); return }
-    if (!urlValid || !extractedInfo || !title || !selectedVTuber) return
-
-    setSubmitting(true)
-    setSubmitError(null)
-
-    const res = await fetch('/api/clips', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        profile_id: selectedVTuber,
-        username: user.username,
-        title,
-        url,
-        type: clipType,
-      }),
-    })
-
-    const data = await res.json()
-    if (!res.ok) {
-      setSubmitError(data.error ?? 'Something went wrong.')
-      setSubmitting(false)
+    if (!username || !title || !videoId) {
+      setError('Please fill in all required fields')
       return
     }
 
-    setDone(true)
-    setSubmitting(false)
-    setTimeout(() => onSuccess?.(), 1200)
+    setSubmitting(true)
+    setError('')
+
+    try {
+      const res = await fetch('/api/clips', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title,
+          platform,
+          video_id: videoId,
+          vibe_tags: selectedVibeTags,
+          submitted_by: username,
+          prefill_vtuber_id: prefillVtuberId,
+        }),
+      })
+
+      if (!res.ok) {
+        const data = await res.json()
+        throw new Error(data.error || 'Failed to submit clip')
+      }
+
+      setSuccess(true)
+      setTimeout(() => {
+        onSuccess?.()
+        handleClose()
+        setTitle('')
+        setVideoId('')
+        setSelectedVibeTags([])
+        setSuccess(false)
+      }, 1200)
+    } catch (err: any) {
+      setError(err.message || 'Something went wrong')
+    } finally {
+      setSubmitting(false)
+    }
   }
 
-  const isValid = urlValid && !!title && !!selectedVTuber
-
-  if (done) {
+  if (success) {
     return (
-      <div className="flex flex-col items-center gap-3 py-8 text-center">
-        <CheckCircle className="h-10 w-10 text-vault-gold" />
-        <p className="font-semibold text-vault-cream">Clip submitted!</p>
-        <p className="text-sm text-muted-foreground">Thanks for contributing to the Vault.</p>
+      <div className="text-center py-8">
+        <div className="text-6xl mb-4">🎉</div>
+        <h3 className="text-xl font-semibold text-vault-cream mb-2">Clip submitted!</h3>
+        <p className="text-muted-foreground">Thank you for contributing.</p>
       </div>
     )
   }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
-      {!user && (
-        <div className="flex items-center gap-2 p-3 rounded-lg bg-vault-gold/10 border border-vault-gold/30 text-sm text-vault-gold">
-          <AlertCircle className="h-4 w-4 flex-shrink-0" />
-          You need to be signed in to submit clips.
-        </div>
-      )}
-
-      {/* URL */}
       <div>
-        <label className="block text-sm font-medium text-vault-cream mb-1.5">Video URL</label>
-        <div className="relative">
-          <Input
-            type="url"
-            placeholder="https://youtube.com/watch?v=... or https://twitch.tv/..."
-            value={url}
-            onChange={e => handleUrlChange(e.target.value)}
-            className={`bg-muted/30 border-border text-vault-cream placeholder:text-muted-foreground pr-10 ${urlError ? 'border-destructive' : ''} ${urlValid ? 'border-vault-gold' : ''}`}
-          />
-          <div className="absolute right-3 top-1/2 -translate-y-1/2">
-            {urlError && <AlertCircle className="h-4 w-4 text-destructive" />}
-            {urlValid && <CheckCircle className="h-4 w-4 text-vault-gold" />}
-          </div>
-        </div>
-        {urlError && <p className="mt-1 text-xs text-destructive">{urlError}</p>}
-        {extractedInfo && (
-          <p className="mt-1 text-xs text-vault-gold flex items-center gap-1">
-            <LinkIcon className="h-3 w-3" /> Detected: {extractedInfo.platform}
-          </p>
-        )}
-      </div>
-
-      {/* Title */}
-      <div>
-        <label className="block text-sm font-medium text-vault-cream mb-1.5">Clip Title</label>
+        <Label>Title *</Label>
         <Input
-          placeholder="Give this moment a memorable title..."
           value={title}
-          onChange={e => setTitle(e.target.value)}
-          className="bg-muted/30 border-border text-vault-cream placeholder:text-muted-foreground"
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="Clip title or description"
+          required
         />
       </div>
 
-      {/* VTuber */}
-      <div>
-        <label className="block text-sm font-medium text-vault-cream mb-1.5">VTuber</label>
-        <select
-          value={selectedVTuber}
-          onChange={e => setSelectedVTuber(e.target.value)}
-          className="w-full px-3 py-2 rounded-md bg-muted/30 border border-border text-vault-cream text-sm"
-        >
-          <option value="">Select a VTuber...</option>
-          {vtubers.map(v => <option key={v.id} value={v.id}>{v.name}</option>)}
-        </select>
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label>Platform</Label>
+          <select
+            value={platform}
+            onChange={(e) => setPlatform(e.target.value as 'twitch' | 'youtube')}
+            className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+          >
+            <option value="twitch">Twitch</option>
+            <option value="youtube">YouTube</option>
+          </select>
+        </div>
+        <div>
+          <Label>Video ID / URL *</Label>
+          <Input
+            value={videoId}
+            onChange={(e) => setVideoId(e.target.value)}
+            placeholder="Video ID or full URL"
+            required
+          />
+        </div>
       </div>
 
-      {/* Type */}
       <div>
-        <label className="block text-sm font-medium text-vault-cream mb-1.5">Clip Type</label>
-        <div className="flex gap-3">
-          {(['raw', 'edited'] as const).map(t => (
+        <Label>Vibe Tags (max 5)</Label>
+        <div className="flex flex-wrap gap-2 mt-2">
+          {vibeTagOptions.map((tag) => (
             <button
-              key={t}
+              key={tag}
               type="button"
-              onClick={() => setClipType(t)}
-              className={`flex-1 p-3 rounded-lg border text-left transition-colors ${
-                clipType === t
-                  ? 'bg-vault-gold/10 border-vault-gold text-vault-gold'
-                  : 'bg-muted/20 border-border text-muted-foreground hover:border-vault-bronze/50'
+              onClick={() => toggleVibeTag(tag)}
+              className={`px-3 py-1 text-xs rounded-full border transition-all ${
+                selectedVibeTags.includes(tag)
+                  ? 'bg-vault-gold text-vault-deep border-vault-gold'
+                  : 'border-white/20 hover:bg-white/5'
               }`}
             >
-              <div className="font-medium text-sm">{t === 'raw' ? 'Raw Highlight' : 'Edited Clip'}</div>
-              <div className="text-xs opacity-70 mt-0.5">
-                {t === 'raw' ? 'Unedited, straight from stream' : 'Has been edited or compiled'}
-              </div>
+              {tag}
             </button>
           ))}
         </div>
       </div>
 
-      {/* Tags */}
-      <div>
-        <label className="block text-sm font-medium text-vault-cream mb-1.5">
-          Vibe Tags <span className="text-muted-foreground font-normal">(up to 5)</span>
-        </label>
-        <div className="flex flex-wrap gap-2">
-          {vibeTags.slice(0, 20).map(tag => (
-            <button
-              key={tag.id}
-              type="button"
-              onClick={() => toggleTag(tag.id)}
-              className={`px-2.5 py-1 rounded-full text-xs font-medium border transition-colors ${
-                selectedTags.includes(tag.id)
-                  ? 'bg-vault-gold/20 border-vault-gold text-vault-gold'
-                  : 'bg-muted/20 border-border text-muted-foreground hover:border-vault-bronze/50'
-              }`}
-            >
-              {tag.name}
-            </button>
-          ))}
-        </div>
-      </div>
+      {error && <p className="text-sm text-red-400">{error}</p>}
 
-      {submitError && (
-        <div className="flex items-center gap-2 p-3 rounded-lg bg-destructive/10 border border-destructive/30 text-sm text-destructive">
-          <AlertCircle className="h-4 w-4 flex-shrink-0" />
-          {submitError}
-        </div>
-      )}
-
-      <div className="flex gap-3 pt-2 border-t border-border">
-        {onCancel && (
-          <Button type="button" variant="outline" onClick={onCancel} className="border-border text-vault-cream">
-            Cancel
-          </Button>
-        )}
-        <Button
-          type="submit"
-          disabled={!isValid || submitting || !user}
-          className="flex-1 bg-vault-gold hover:bg-vault-amber text-vault-deep font-semibold disabled:opacity-50"
-        >
-          {submitting ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Plus className="h-4 w-4 mr-2" />}
-          Submit Clip
+      <div className="flex gap-3">
+        <Button type="button" variant="outline" onClick={handleClose} className="flex-1">
+          Cancel
+        </Button>
+        <Button type="submit" className="flex-1" disabled={submitting}>
+          {submitting ? 'Submitting...' : 'Submit Clip'}
+          {submitting && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
         </Button>
       </div>
     </form>
