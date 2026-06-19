@@ -125,9 +125,9 @@ export default async function VTuberProfilePage({ params }: Props) {
             </div>
           )}
 
-          {/* Claim Button */}
-          {!isClaimed && (
-            <div className="mt-6 pt-6 border-t border-white/10">
+          {/* Action Buttons */}
+          <div className="mt-6 pt-6 border-t border-white/10 flex flex-wrap gap-3">
+            {!isClaimed && (
               <Link
                 href={`/claim/${vtuber.id}`}
                 className="inline-flex items-center gap-2 px-5 py-2.5 bg-vault-gold text-vault-deep rounded-lg font-semibold hover:bg-[#e8bc5a] transition-colors"
@@ -135,11 +135,13 @@ export default async function VTuberProfilePage({ params }: Props) {
                 <UserCheck className="h-4 w-4" />
                 Claim this profile
               </Link>
-              <p className="text-xs text-white/50 mt-2">
-                Are you this VTuber? Request to claim ownership.
-              </p>
+            )}
+
+            {/* Edit button will be shown client-side if user owns it */}
+            <div id="edit-button-container" data-vtuber-id={vtuber.id} data-claimed-by={vtuber.claimed_by || ''}>
+              {/* This will be enhanced with client component later */}
             </div>
-          )}
+          </div>
         </div>
 
         {/* Vibe tags */}
