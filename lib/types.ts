@@ -8,17 +8,20 @@ export interface ExternalLink {
 export interface VTuber {
   id: string;
   name: string;
-  avatarUrl: string;
-  vibeTags: string[];
-  category: string;
-  externalLinks: ExternalLink[];
-  timezone: string;
-  interests: string[];
-  interestedInMaking: string[];
-  isWorkerVTuber?: boolean;
-  bio?: string;
   handle?: string;
-  scraps: number;
+  avatarUrl?: string;
+  bio?: string;
+  category?: string;
+  vibeTags?: string[];
+  externalLinks?: ExternalLink[];
+  timezone?: string;
+  interests?: string[];
+  interestedInMaking?: string[];
+  isWorkerVTuber?: boolean;
+  scraps?: number;
+  approved?: boolean;
+  platform?: string;
+  link?: string;
 }
 
 export interface Constellation {
@@ -42,11 +45,11 @@ export interface Clip {
   title: string;
   platform: string;
   videoId: string;
-  vibeTags: string[];
-  type: string;
-  submittedBy: string;
-  votes: { up: number; down: number };
-  createdAt: string;
+  vibeTags?: string[];
+  type?: string;
+  submittedBy?: string;
+  votes?: { up: number; down: number };
+  createdAt?: string;
 }
 
 export interface BetOption {
@@ -62,7 +65,21 @@ export interface Bet {
   description?: string;
   vtuberId?: string;
   options: BetOption[];
-  status: 'open' | 'closed';
+  status: 'open' | 'closed' | string;
   endsAt?: string;
   createdAt?: string;
+}
+
+export interface DbBet {
+  id: string;
+  title: string;
+  description?: string;
+  options: string[];
+  status: string;
+  created_at: string;
+}
+
+export interface DbBetEntry {
+  option: string;
+  amount: number;
 }
