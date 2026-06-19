@@ -16,6 +16,7 @@ interface AuthContextType {
   login: (username: string, password: string) => Promise<{ ok: boolean; error?: string }>
   register: (username: string, password: string, accountType: string) => Promise<{ ok: boolean; error?: string }>
   logout: () => Promise<void>
+  refreshUser: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -40,6 +41,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       })
       .finally(() => setLoading(false))
   }, [])
+
+  const refreshUser = async () => {
+    const res = await fetch('/api/auth/me', { credentials: 'include' })
+    if (res.ok) {
+      const data = await res.json()
+      if (data) {
+        setUser({
+          username: data.username,
+          coins: data.coins || 0,
+          role: data.role,
+          accountType: data.account_type,
+        })
+      }
+    }
+  }
 
   const login = async (username: string, password: string) => {
     try {
@@ -107,7 +123,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       login,
       register,
       logout,
-    }}>
+      refreshUser,
+    }}}>
       {children}
     </AuthContext.Provider>
   )
