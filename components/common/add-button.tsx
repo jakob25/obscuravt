@@ -78,7 +78,7 @@ export function AddButton() {
           {activeTab === 'bet' && (
             <BetSubmitForm 
               onSuccess={() => setOpen(false)} 
-              onClose={() => setOpen(false)} 
+              onCancel={() => setOpen(false)} 
             />
           )}
         </DialogContent>
