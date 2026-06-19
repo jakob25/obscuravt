@@ -62,24 +62,15 @@ export function AddButton() {
           </div>
 
           {activeTab === 'vtuber' && (
-            <VTuberSubmitForm 
-              onSuccess={() => setOpen(false)} 
-              onClose={() => setOpen(false)} 
-            />
+            <VTuberSubmitForm onSuccess={() => setOpen(false)} onClose={() => setOpen(false)} />
           )}
 
           {activeTab === 'clip' && (
-            <ClipSubmitForm 
-              onSuccess={() => setOpen(false)} 
-              onCancel={() => setOpen(false)} 
-            />
+            <ClipSubmitForm onSuccess={() => setOpen(false)} onClose={() => setOpen(false)} />
           )}
 
           {activeTab === 'bet' && (
-            <BetSubmitForm 
-              onSuccess={() => setOpen(false)} 
-              onCancel={() => setOpen(false)} 
-            />
+            <BetSubmitForm onSuccess={() => setOpen(false)} onClose={() => setOpen(false)} />
           )}
         </DialogContent>
       </Dialog>
