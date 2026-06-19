@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { AuthProvider } from '@/lib/auth-context'
-import { Navbar } from '@/components/common/navbar'
+import { Navbar } from '@/components/layout/navbar'
 import { AddButton } from '@/components/common/add-button'
 import { TestingBanner } from '@/components/common/testing-banner'
 
