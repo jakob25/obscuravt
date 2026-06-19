@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation'
 import { createClient } from '@supabase/supabase-js'
 import Link from 'next/link'
 import { ExternalLink, Twitch, Youtube, ArrowLeft, Tag, Edit, UserCheck } from 'lucide-react'
+import { EditProfileButton } from '@/components/common/edit-profile-button'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -137,10 +138,10 @@ export default async function VTuberProfilePage({ params }: Props) {
               </Link>
             )}
 
-            {/* Edit button will be shown client-side if user owns it */}
-            <div id="edit-button-container" data-vtuber-id={vtuber.id} data-claimed-by={vtuber.claimed_by || ''}>
-              {/* This will be enhanced with client component later */}
-            </div>
+            <EditProfileButton 
+              vtuberId={vtuber.id} 
+              claimedBy={vtuber.claimed_by} 
+            />
           </div>
         </div>
 
