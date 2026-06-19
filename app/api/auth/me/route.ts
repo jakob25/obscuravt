@@ -4,5 +4,11 @@ import { getSessionUser } from '@/lib/session'
 export async function GET(req: NextRequest) {
   const user = await getSessionUser(req)
   if (!user) return NextResponse.json(null, { status: 401 })
-  return NextResponse.json(user)
+
+  return NextResponse.json({
+    username: user.username,
+    coins: user.coins,
+    role: user.role,
+    account_type: user.account_type,
+  })
 }
