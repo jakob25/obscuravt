@@ -167,27 +167,30 @@ export function VTuberSubmitForm({ onSuccess, onClose, onCancel }: VTuberSubmitF
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      {/* Avatar Upload */}
       <div>
         <Label className="text-sm font-medium">Profile Picture (optional)</Label>
-        <div className="mt-2 flex items-center gap-4">
-          {avatarPreview ? (
-            <div className="relative">
-              <img src={avatarPreview} alt="Preview" className="h-20 w-20 rounded-xl object-cover border" />
-              <button
-                type="button"
-                onClick={removeAvatar}
-                className="absolute -top-2 -right-2 bg-black rounded-full p-1"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-          ) : (
-            <label className="flex h-20 w-20 cursor-pointer items-center justify-center rounded-xl border border-dashed hover:bg-muted/50">
-              <div className="text-center">
-                <Upload className="mx-auto h-6 w-6 text-muted-foreground" />
-                <span className="text-[10px] text-muted-foreground mt-1 block">Upload</span>
+        <div className="mt-3 flex items-start gap-4">
+          <div>
+            {avatarPreview ? (
+              <div className="relative">
+                <img src={avatarPreview} alt="Preview" className="h-20 w-20 rounded-xl object-cover border" />
+                <button
+                  type="button"
+                  onClick={removeAvatar}
+                  className="absolute -top-2 -right-2 bg-black rounded-full p-1"
+                >
+                  <X className="h-4 w-4" />
+                </button>
               </div>
-            </label>
+            ) : (
+              <div className="h-20 w-20 rounded-xl border border-dashed flex items-center justify-center text-muted-foreground">
+                <Upload className="h-6 w-6" />
+              </div>
+            )}
+          </div>
+
+          <div>
             <input
               type="file"
               accept="image/*"
@@ -195,15 +198,12 @@ export function VTuberSubmitForm({ onSuccess, onClose, onCancel }: VTuberSubmitF
               className="hidden"
               id="avatar-upload"
             />
-          </div>
-
-          <div>
             <label htmlFor="avatar-upload">
-              <Button type="button" variant="outline" size="sm">
-                Choose Image
+              <Button type="button" variant="outline" size="sm" asChild>
+                <span>Choose Image</span>
               </Button>
             </label>
-            <p className="text-xs text-muted-foreground mt-1">PNG, JPG up to 5MB</p>
+            <p className="text-xs text-muted-foreground mt-1.5">PNG or JPG up to 5MB</p>
           </div>
         </div>
       </div>
@@ -256,7 +256,7 @@ export function VTuberSubmitForm({ onSuccess, onClose, onCancel }: VTuberSubmitF
       </div>
 
       <div>
-        <Label htmlFor="bio">Bio / Description</Label>
+        <Label htmlFor="bio">Bio</Label>
         <Textarea
           id="bio"
           value={formData.bio}
@@ -267,47 +267,6 @@ export function VTuberSubmitForm({ onSuccess, onClose, onCancel }: VTuberSubmitF
         />
       </div>
 
-      <div>
-        <Label>Constellation (Vibe Group)</Label>
-        <div className="flex flex-wrap gap-2 mt-2">
-          {constellations.map((c) => (
-            <button
-              key={c}
-              type="button"
-              onClick={() => setSelectedConstellation(c)}
-              className={`px-3 py-1.5 text-xs rounded-lg border transition-all ${
-                selectedConstellation === c
-                  ? 'bg-vault-gold/20 border-vault-gold text-vault-gold'
-                  : 'border-white/20 hover:bg-white/5'
-              }`}
-            >
-              {c.replace('clust_', '')}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div>
-        <Label>Vibe Tags (max 8)</Label>
-        <div className="flex flex-wrap gap-2 mt-2">
-          {vibeTagOptions.map((tag) => (
-            <button
-              key={tag}
-              type="button"
-              onClick={() => toggleVibeTag(tag)}
-              className={`px-3 py-1 text-xs rounded-full border transition-all ${
-                selectedVibeTags.includes(tag)
-                  ? 'bg-vault-gold text-vault-deep border-vault-gold'
-                  : 'border-white/20 hover:bg-white/5'
-              }`}
-            >
-              {tag}
-            </button>
-          ))}
-        </div>
-        <p className="text-xs text-muted-foreground mt-1">{selectedVibeTags.length}/8 selected</p>
-      </div>
-
       {error && <p className="text-sm text-red-400">{error}</p>}
 
       <div className="flex gap-3">
@@ -315,7 +274,7 @@ export function VTuberSubmitForm({ onSuccess, onClose, onCancel }: VTuberSubmitF
           Cancel
         </Button>
         <Button type="submit" className="flex-1" disabled={submitting || uploading}>
-          {uploading ? 'Uploading image...' : submitting ? 'Submitting...' : 'Submit for Review'}
+          {uploading ? 'Uploading...' : submitting ? 'Submitting...' : 'Submit for Review'}
           {(submitting || uploading) && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
         </Button>
       </div>
