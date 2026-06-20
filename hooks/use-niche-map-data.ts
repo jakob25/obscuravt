@@ -23,7 +23,7 @@ interface UseNicheMapDataReturn {
   error: string | null
 }
 
-// Helper to get VTubers belonging to a specific niche cluster
+// Helper function used by niche-map.tsx
 export function getVTubersByNicheCluster(vtubers: VTuber[], clusterId: string): VTuber[] {
   return vtubers.filter(v => v.category === clusterId)
 }
