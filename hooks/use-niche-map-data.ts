@@ -18,17 +18,16 @@ interface NicheCluster {
 
 interface UseNicheMapDataReturn {
   vtubers: VTuber[]
-  clusters: NicheCluster[]
+  constellations: NicheCluster[]   // renamed for compatibility with niche-map.tsx
+  clusters: NicheCluster[]          // keep for internal use if needed
   loading: boolean
   error: string | null
 }
 
-// Helper function used by niche-map.tsx
 export function getVTubersByNicheCluster(vtubers: VTuber[], clusterId: string): VTuber[] {
   return vtubers.filter(v => v.category === clusterId)
 }
 
-// Simple clustering logic based on vibe tags
 function assignNicheCluster(vibeTags: string[], clusters: NicheCluster[]): string {
   if (!vibeTags.length) return clusters[0]?.id || 'default'
   
@@ -113,5 +112,11 @@ export function useNicheMapData(): UseNicheMapDataReturn {
     loadData()
   }, [])
 
-  return { vtubers, clusters, loading, error }
+  return { 
+    vtubers, 
+    constellations: clusters,   // alias for niche-map.tsx compatibility
+    clusters, 
+    loading, 
+    error 
+  }
 }
