@@ -2,9 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import { createClient } from '@supabase/supabase-js'
-import type { VTuber, Clip, Bet } from '@/lib/types'
+import type { VTuber, Clip, Bet, VibeTag } from '@/lib/types'
 
-// Temporary DbVTuber until full type migration
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -56,12 +55,28 @@ export function useVTubers() {
   return { vtubers, loading }
 }
 
+export function useVibeTags() {
+  const [vibeTags, setVibeTags] = useState<VibeTag[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    supabase
+      .from('vibe_tags')
+      .select('*')
+      .then(({ data }: { data: VibeTag[] | null }) => {
+        setVibeTags(data ?? [])
+        setLoading(false)
+      })
+  }, [])
+
+  return { vibeTags, loading }
+}
+
 export function useClips() {
   const [clips, setClips] = useState<Clip[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Placeholder - will be replaced with real implementation
     setLoading(false)
   }, [])
 
@@ -73,7 +88,6 @@ export function useBets() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Placeholder - will be replaced with real implementation
     setLoading(false)
   }, [])
 
@@ -89,7 +103,6 @@ export function useVTuberById(id: string) {
       setLoading(false)
       return
     }
-    
     supabase
       .from('vtubers')
       .select('*')
