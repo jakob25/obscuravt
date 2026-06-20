@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import './globals.css'
 import { AuthProvider } from '@/lib/auth-context'
 import { Navbar } from '@/components/common/Navbar'
 import { AddButton } from '@/components/common/add-button'
