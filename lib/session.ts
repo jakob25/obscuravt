@@ -42,7 +42,7 @@ export async function signSession(username: string, role: string | null = null):
 export async function verifySession(token: string): Promise<SessionPayload | null> {
   try {
     const { payload } = await jwtVerify(token, SECRET)
-    return payload as SessionPayload
+    return payload as unknown as SessionPayload
   } catch {
     return null
   }
