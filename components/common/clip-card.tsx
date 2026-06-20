@@ -11,7 +11,7 @@ interface ClipCardProps {
 
 export function ClipCard({ clip, onPlay }: ClipCardProps) {
   const [isPlaying, setIsPlaying] = useState(false)
-  const [upvotes, setUpvotes] = useState(clip.votes?.up ?? 0)
+  const [upvotes, setUpvotes] = useState<number>(clip.votes?.up ?? 0)
   const [voted, setVoted] = useState(false)
   const [voting, setVoting] = useState(false)
   const { vtuber } = useVTuberById(clip.vtuberId)
