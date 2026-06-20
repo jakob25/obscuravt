@@ -1,3 +1,5 @@
+@import "tailwindcss";
+
 :root {
   --vault-deep: #0d0d14;
   --vault-dark: #12121e;
