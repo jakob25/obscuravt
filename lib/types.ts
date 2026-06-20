@@ -35,7 +35,7 @@ export interface Constellation {
 export interface VibeTag {
   id: string;
   name: string;
-  category: string;
+  category: 'personality' | 'content' | 'theme';
   color: string;
 }
 
