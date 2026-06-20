@@ -1,10 +1,12 @@
-// VTVault Core Types
+// VTVault Core Types - Centralized type definitions
 
+// Basic link type
 export interface ExternalLink {
   platform: 'youtube' | 'twitch' | 'twitter' | 'discord' | 'website';
   url: string;
 }
 
+// Main VTuber type (used across the app)
 export interface VTuber {
   id: string;
   name: string;
@@ -24,6 +26,7 @@ export interface VTuber {
   link?: string;
 }
 
+// Constellation for star/niche maps
 export interface Constellation {
   id: string;
   name: string;
@@ -32,6 +35,7 @@ export interface Constellation {
   color: string;
 }
 
+// Vibe tag with strict category
 export interface VibeTag {
   id: string;
   name: string;
@@ -39,6 +43,7 @@ export interface VibeTag {
   color: string;
 }
 
+// Clip type
 export interface Clip {
   id: string;
   vtuberId: string;
@@ -52,6 +57,7 @@ export interface Clip {
   createdAt?: string;
 }
 
+// Bet option (used in betting system)
 export interface BetOption {
   id: string | number;
   label: string;
@@ -59,6 +65,7 @@ export interface BetOption {
   totalScraps: number;
 }
 
+// Bet type
 export interface Bet {
   id: string;
   title: string;
@@ -70,6 +77,7 @@ export interface Bet {
   createdAt?: string;
 }
 
+// Database-level bet (raw from Supabase)
 export interface DbBet {
   id: string;
   title: string;
@@ -79,7 +87,16 @@ export interface DbBet {
   created_at: string;
 }
 
+// Database-level bet entry
 export interface DbBetEntry {
   option: string;
   amount: number;
+}
+
+// Niche cluster (used in niche map)
+export interface NicheCluster {
+  id: string;
+  name: string;
+  color: string;
+  position: { x: number; y: number };
 }
