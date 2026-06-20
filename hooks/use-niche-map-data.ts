@@ -23,11 +23,15 @@ interface UseNicheMapDataReturn {
   error: string | null
 }
 
+// Helper to get VTubers belonging to a specific niche cluster
+export function getVTubersByNicheCluster(vtubers: VTuber[], clusterId: string): VTuber[] {
+  return vtubers.filter(v => v.category === clusterId)
+}
+
 // Simple clustering logic based on vibe tags
 function assignNicheCluster(vibeTags: string[], clusters: NicheCluster[]): string {
   if (!vibeTags.length) return clusters[0]?.id || 'default'
   
-  // Find cluster that best matches the tags
   let bestCluster = clusters[0]
   let bestScore = 0
 
@@ -57,7 +61,6 @@ export function useNicheMapData(): UseNicheMapDataReturn {
       try {
         setLoading(true)
         
-        // Fetch VTubers
         const { data: vtuberData, error: vtError } = await supabase
           .from('vtubers')
           .select('*')
@@ -65,7 +68,6 @@ export function useNicheMapData(): UseNicheMapDataReturn {
 
         if (vtError) throw vtError
 
-        // Fetch clusters (from canonical_tags where category = 'cluster')
         const { data: clusterData, error: clusterError } = await supabase
           .from('canonical_tags')
           .select('id, tag, color, position_x, position_y')
@@ -81,7 +83,6 @@ export function useNicheMapData(): UseNicheMapDataReturn {
           position: { x: c.position_x || 0.5, y: c.position_y || 0.5 }
         }))
 
-        // Map VTubers with niche cluster assignment
         const mappedVtubers = (vtuberData || []).map((vt: any) => {
           const nicheCluster = assignNicheCluster(vt.vibeTags ?? [], dbClusters)
           
