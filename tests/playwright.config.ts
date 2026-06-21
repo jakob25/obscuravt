@@ -1,2 +1,2 @@
-// TODO: Original content from root playwright.config.ts
-// Moved to tests/ folder
+// Playwright config - moved from root
+// TODO: Paste original content here if needed
