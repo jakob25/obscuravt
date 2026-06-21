@@ -1,0 +1,2 @@
+-- TODO: Move original content from root supabase-schema.sql here
+-- File moved for better project organization.
