@@ -1,2 +1,3 @@
-// TODO: Move original content from root nominator_page here
-// Converted to proper Next.js App Router page
+export default function NominatorPage() {
+  return <div>Nominator page (to be implemented)</div>;
+}
