@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { Suspense, useState, useEffect, useCallback } from 'react'
 import { useAuth } from '@/lib/auth-context'
 import { normalizeRole } from '@/lib/roles'
 import { Calendar, Plus, Trash2 } from 'lucide-react'
@@ -18,7 +18,7 @@ interface ScheduleSlot {
 
 const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
 
-export default function SchedulePage() {
+function SchedulePageContent() {
   const { user } = useAuth()
   const searchParams = useSearchParams()
   const vtuberId = searchParams.get('vtuber') ?? ''
@@ -169,5 +169,13 @@ export default function SchedulePage() {
         </div>
       )}
     </div>
+  )
+}
+
+export default function SchedulePage() {
+  return (
+    <Suspense fallback={<div className="container mx-auto px-4 py-8 max-w-xl text-sm text-muted-foreground animate-pulse">Loading schedule…</div>}>
+      <SchedulePageContent />
+    </Suspense>
   )
 }

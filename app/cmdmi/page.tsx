@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { Suspense, useState, useEffect, useCallback } from 'react'
 import { useAuth } from '@/lib/auth-context'
 import { normalizeRole } from '@/lib/roles'
 import { Lightbulb, ThumbsUp, Target, Coins, Plus } from 'lucide-react'
@@ -25,7 +25,7 @@ interface Idea {
   goal: Goal | null
 }
 
-export default function CmdmiPage() {
+function CmdmiPageContent() {
   const { user, refreshUser } = useAuth()
   const searchParams = useSearchParams()
   const profileId = searchParams.get('profile') ?? ''
@@ -254,5 +254,13 @@ export default function CmdmiPage() {
         </div>
       )}
     </div>
+  )
+}
+
+export default function CmdmiPage() {
+  return (
+    <Suspense fallback={<div className="container mx-auto px-4 py-8 max-w-2xl text-sm text-muted-foreground animate-pulse">Loading…</div>}>
+      <CmdmiPageContent />
+    </Suspense>
   )
 }

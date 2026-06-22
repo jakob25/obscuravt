@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { Suspense, useState, useEffect, useCallback } from 'react'
 import { useAuth } from '@/lib/auth-context'
 import { Palette, Plus, Flag, ExternalLink } from 'lucide-react'
 import Link from 'next/link'
@@ -15,7 +15,7 @@ interface ArtPiece {
   created_at: string
 }
 
-export default function FanArtPage() {
+function FanArtPageContent() {
   const { user } = useAuth()
   const searchParams = useSearchParams()
   const vtuberId = searchParams.get('vtuber') ?? ''
@@ -168,5 +168,13 @@ export default function FanArtPage() {
         </div>
       )}
     </div>
+  )
+}
+
+export default function FanArtPage() {
+  return (
+    <Suspense fallback={<div className="container mx-auto px-4 py-8 max-w-3xl text-sm text-muted-foreground animate-pulse">Loading gallery…</div>}>
+      <FanArtPageContent />
+    </Suspense>
   )
 }
