@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '@/lib/auth-context'
-import { supabase } from '@/lib/supabase'
 import { CheckCircle, XCircle, SkipForward, Zap, Trophy } from 'lucide-react'
 import Link from 'next/link'
 
@@ -28,7 +27,7 @@ interface QueueItem {
 
 const SCRAPS_PER_VOTE = 10
 
-export default function TagValidatorPage() {
+export function TagValidatorClient() {
   const { user } = useAuth()
   const [queue, setQueue] = useState<QueueItem[]>([])
   const [current, setCurrent] = useState<QueueItem | null>(null)
@@ -37,86 +36,65 @@ export default function TagValidatorPage() {
   const [sessionScore, setSessionScore] = useState(0)
   const [sessionVotes, setSessionVotes] = useState(0)
   const [feedback, setFeedback] = useState<'yes' | 'no' | 'skip' | null>(null)
+  const [error, setError] = useState('')
 
   const buildQueue = useCallback(async () => {
-    // Fetch all approved vtubers
-    const { data: vtubers } = await supabase
-      .from('vtubers')
-      .select('id, name, bio, tags')
-      .eq('approved', true)
+    if (!user) return
+    setLoading(true)
+    setError('')
 
-    // Fetch all canonical tags that could be applied (vibe + content categories)
-    const { data: canonicalTags } = await supabase
-      .from('canonical_tags')
-      .select('id, tag, category, color, description')
-      .in('category', ['vibe', 'content', 'cluster'])
-
-    if (!vtubers || !canonicalTags) return
-
-    // Fetch tags this user has already voted on
-    const { data: alreadyVoted } = user
-      ? await supabase
-          .from('vtuber_tag_votes')
-          .select('vtuber_id, tag')
-          .eq('username', user.username)
-      : { data: [] }
-
-    const voted = new Set((alreadyVoted ?? []).map(r => `${r.vtuber_id}:${r.tag}`))
-
-    // Build queue: pair each vtuber with tags they DON'T have yet and haven't been voted on
-    const items: QueueItem[] = []
-    for (const vtuber of vtubers) {
-      const currentTags = vtuber.tags ?? []
-      for (const tag of canonicalTags) {
-        const key = `${vtuber.id}:${tag.id}`
-        if (!voted.has(key)) {
-          items.push({ vtuber, tag })
-        }
+    try {
+      const res = await fetch('/api/tag-validator')
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        throw new Error(data.error || 'Failed to load queue')
       }
+      const data = await res.json()
+      const items: QueueItem[] = data.queue ?? []
+      setQueue(items)
+      setCurrent(items[0] ?? null)
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to load queue')
+      setQueue([])
+      setCurrent(null)
+    } finally {
+      setLoading(false)
     }
-
-    // Shuffle
-    for (let i = items.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [items[i], items[j]] = [items[j], items[i]]
-    }
-
-    setQueue(items.slice(0, 50)) // cap at 50 per session
-    setCurrent(items[0] ?? null)
-    setLoading(false)
   }, [user])
 
   useEffect(() => {
     buildQueue()
   }, [buildQueue])
 
-  const vote = async (vote: 1 | -1 | 0) => {
+  const vote = async (voteValue: 1 | -1 | 0) => {
     if (!current || voting) return
     setVoting(true)
-    setFeedback(vote === 1 ? 'yes' : vote === -1 ? 'no' : 'skip')
+    setFeedback(voteValue === 1 ? 'yes' : voteValue === -1 ? 'no' : 'skip')
 
-    if (vote !== 0 && user) {
-      // Write vote to DB
-      await supabase.from('vtuber_tag_votes').insert({
-        id: crypto.randomUUID(),
-        vtuber_id: current.vtuber.id,
-        tag: current.tag.id,
-        tag_type: current.tag.category,
-        vote,
-        profile_id: user.username,
-        username: user.username,
-        voted_at: new Date().toISOString(),
-      })
+    if (voteValue !== 0 && user) {
+      try {
+        const res = await fetch('/api/tag-validator', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            vtuberId: current.vtuber.id,
+            tagId: current.tag.id,
+            vote: voteValue,
+          }),
+        })
 
-      // Award scraps
-      await supabase.rpc('add_scraps', { username: user.username, amount: SCRAPS_PER_VOTE })
-        .catch(() => {}) // non-fatal if RPC doesn't exist yet
-
-      setSessionScore(s => s + SCRAPS_PER_VOTE)
-      setSessionVotes(v => v + 1)
+        if (res.ok) {
+          const data = await res.json()
+          if (data.scrapsAwarded > 0) {
+            setSessionScore(s => s + data.scrapsAwarded)
+          }
+          setSessionVotes(v => v + 1)
+        }
+      } catch {
+        // Non-fatal — still advance queue
+      }
     }
 
-    // Advance queue after brief feedback flash
     setTimeout(() => {
       setFeedback(null)
       setQueue(q => {
@@ -153,6 +131,22 @@ export default function TagValidatorPage() {
     )
   }
 
+  if (error) {
+    return (
+      <div className="min-h-[70vh] flex items-center justify-center p-4">
+        <div className="vault-card rounded-2xl p-8 max-w-sm w-full text-center">
+          <p className="text-sm text-red-400 mb-4">{error}</p>
+          <button
+            onClick={buildQueue}
+            className="inline-flex items-center justify-center w-full h-10 rounded-lg bg-vault-gold text-vault-deep font-semibold text-sm"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    )
+  }
+
   if (!current) {
     return (
       <div className="min-h-[70vh] flex items-center justify-center p-4">
@@ -178,26 +172,21 @@ export default function TagValidatorPage() {
 
   return (
     <div className="min-h-[70vh] flex flex-col items-center justify-center p-4 gap-6">
-
-      {/* Session stats */}
       <div className="flex items-center gap-4 text-xs text-muted-foreground">
         <span>{queue.length} left in queue</span>
         <span className="text-vault-gold font-medium">+{sessionScore} scraps this session</span>
       </div>
 
-      {/* Card */}
       <div className={`vault-card rounded-2xl p-6 w-full max-w-md transition-all duration-200 ${
         feedback === 'yes' ? 'border-green-500/60 bg-green-500/5' :
         feedback === 'no' ? 'border-red-500/60 bg-red-500/5' : ''
       }`}>
-        {/* VTuber info */}
         <div className="mb-6">
           <p className="text-xs text-muted-foreground mb-1">VTuber</p>
           <h2 className="text-xl font-bold text-vault-cream">{current.vtuber.name}</h2>
           {current.vtuber.bio && (
             <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{current.vtuber.bio}</p>
           )}
-          {/* Current tags */}
           {(current.vtuber.tags ?? []).length > 0 && (
             <div className="flex flex-wrap gap-1 mt-3">
               {current.vtuber.tags.slice(0, 6).map(t => (
@@ -209,10 +198,8 @@ export default function TagValidatorPage() {
           )}
         </div>
 
-        {/* Divider */}
         <div className="border-t border-border my-4" />
 
-        {/* Tag being evaluated */}
         <div className="mb-6">
           <p className="text-xs text-muted-foreground mb-2">Does this tag fit?</p>
           <div
@@ -226,7 +213,6 @@ export default function TagValidatorPage() {
           )}
         </div>
 
-        {/* Vote buttons */}
         <div className="flex gap-3">
           <button
             onClick={() => vote(-1)}
@@ -256,7 +242,7 @@ export default function TagValidatorPage() {
       </div>
 
       <p className="text-xs text-muted-foreground text-center">
-        {SCRAPS_PER_VOTE} scraps per vote · Skip costs nothing · Your votes apply automatically
+        {SCRAPS_PER_VOTE} scraps per yes vote · Skip costs nothing · Your votes shape the Archive
       </p>
     </div>
   )

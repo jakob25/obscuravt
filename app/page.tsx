@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import {
@@ -18,6 +19,7 @@ import { LogIn } from 'lucide-react'
 import { MyClipsWidget } from '@/components/dashboard/my-clips-widget'
 import { normalizeRole, ROLE_ALLOWED_WIDGETS, ROLE_DEFAULT_WIDGETS, type AppRole } from '@/lib/roles'
 import { ALL_WIDGETS } from '@/components/common/dashboard-customizer'
+import type { WeeklyDigest } from '@/lib/types'
 
 // ── Individual widget components ──────────────────────────────────────
 
@@ -200,6 +202,17 @@ function FeaturedVTubersWidget() {
 }
 
 function WeeklyDigestWidget() {
+  const [digest, setDigest] = useState<WeeklyDigest | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    fetch('/api/weekly')
+      .then(r => r.json())
+      .then(setDigest)
+      .catch(() => setDigest(null))
+      .finally(() => setLoading(false))
+  }, [])
+
   return (
     <section className="vault-card rounded-xl p-5">
       <div className="flex items-center justify-between mb-3">
@@ -208,7 +221,38 @@ function WeeklyDigestWidget() {
         </h2>
         <Link href="/weekly" className="text-xs text-vault-gold hover:text-vault-amber">View full →</Link>
       </div>
-      <p className="text-sm text-muted-foreground">This week's top clips, bets, and endorsed creators.</p>
+      {loading ? (
+        <p className="text-sm text-muted-foreground animate-pulse">Loading this week…</p>
+      ) : !digest ? (
+        <p className="text-sm text-muted-foreground">Could not load weekly digest.</p>
+      ) : (
+        <div className="space-y-2 text-sm">
+          {digest.topClips[0] && (
+            <p className="text-vault-cream line-clamp-1">
+              <TrendingUp className="h-3 w-3 text-vault-gold inline mr-1" />
+              {digest.topClips[0].title}
+              <span className="text-muted-foreground ml-1">· {digest.topClips[0].upvotes} upvotes</span>
+            </p>
+          )}
+          {digest.topBet && (
+            <p className="text-vault-cream line-clamp-1">
+              <Trophy className="h-3 w-3 text-vault-gold inline mr-1" />
+              {digest.topBet.title}
+              <span className="text-muted-foreground ml-1">· {digest.topBet.entries} entries</span>
+            </p>
+          )}
+          {digest.topVtuber && (
+            <p className="text-vault-cream line-clamp-1">
+              <Sparkles className="h-3 w-3 text-vault-gold inline mr-1" />
+              {digest.topVtuber.name}
+              <span className="text-muted-foreground ml-1">· spotlight creator</span>
+            </p>
+          )}
+          {!digest.topClips[0] && !digest.topBet && !digest.topVtuber && (
+            <p className="text-muted-foreground">Quiet week so far — be the first to contribute.</p>
+          )}
+        </div>
+      )}
     </section>
   )
 }
