@@ -2,7 +2,10 @@
 
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import { Compass, Film, Trophy, ArrowRight, TrendingUp, Clock, Sparkles, Heart, Search } from 'lucide-react'
+import {
+  Compass, Film, Trophy, ArrowRight, TrendingUp, Clock, Sparkles, Heart, Search,
+  Gift, Tag, Gamepad2, Calendar, Zap, BarChart3, MessageSquare, Bell, Globe, Wrench, RefreshCw,
+} from 'lucide-react'
 import { useVTubers, useClips, useBets } from '@/hooks/use-data'
 import { useStarMapData } from '@/hooks/use-star-map-data'
 import { VibeTagList } from '@/components/common/vibe-tag'
@@ -123,7 +126,7 @@ function DailyLoopWidget() {
     <section className="vault-card rounded-xl p-5 bg-gradient-to-r from-vault-gold/8 to-vault-amber/5 border-vault-gold/20">
       <div className="flex items-center justify-between mb-3">
         <h2 className="font-bold text-vault-cream flex items-center gap-2">
-          <span className="text-lg">🔄</span> Daily Loop
+          <RefreshCw className="h-4 w-4 text-vault-gold" /> Daily Loop
         </h2>
         {!user && (
           <Link href="/login" className="text-xs text-vault-gold hover:underline">Sign in to track</Link>
@@ -131,14 +134,14 @@ function DailyLoopWidget() {
       </div>
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
-          { icon: '🎁', label: 'Daily Bonus', desc: '+250 scraps', href: '/my-profile' },
-          { icon: '🏷️', label: 'Tag Validator', desc: 'Earn scraps', href: '/tag-validator' },
-          { icon: '🎮', label: 'Silhouette', desc: 'Guess the VTuber', href: '/silhouette' },
-          { icon: '🏆', label: 'Active Bets', desc: 'Place or vote', href: '/bets' },
-        ].map(({ icon, label, desc, href }) => (
+          { Icon: Gift, label: 'Daily Bonus', desc: '+250 scraps', href: '/my-profile' },
+          { Icon: Tag, label: 'Tag Validator', desc: 'Earn scraps', href: '/tag-validator' },
+          { Icon: Gamepad2, label: 'Silhouette', desc: 'Guess the VTuber', href: '/silhouette' },
+          { Icon: Trophy, label: 'Active Bets', desc: 'Place or vote', href: '/bets' },
+        ].map(({ Icon, label, desc, href }) => (
           <Link key={label} href={href}
             className="flex flex-col items-center p-3 rounded-xl bg-muted/20 border border-border hover:border-vault-gold/30 transition-all text-center group">
-            <span className="text-2xl mb-1.5">{icon}</span>
+            <Icon className="h-6 w-6 mb-1.5 text-vault-gold" />
             <p className="text-xs font-medium text-vault-cream group-hover:text-vault-gold transition-colors">{label}</p>
             <p className="text-[10px] text-muted-foreground">{desc}</p>
           </Link>
@@ -200,7 +203,9 @@ function WeeklyDigestWidget() {
   return (
     <section className="vault-card rounded-xl p-5">
       <div className="flex items-center justify-between mb-3">
-        <h2 className="font-bold text-vault-cream flex items-center gap-2">📅 Weekly Digest</h2>
+        <h2 className="font-bold text-vault-cream flex items-center gap-2">
+          <Calendar className="h-4 w-4 text-vault-gold" /> Weekly Digest
+        </h2>
         <Link href="/weekly" className="text-xs text-vault-gold hover:text-vault-amber">View full →</Link>
       </div>
       <p className="text-sm text-muted-foreground">This week's top clips, bets, and endorsed creators.</p>
@@ -227,7 +232,7 @@ function TagValidatorWidget() {
   return (
     <section className="vault-card rounded-xl p-5">
       <div className="flex items-center gap-2 mb-2">
-        <span className="text-lg">⚡</span>
+        <Zap className="h-4 w-4 text-vault-gold" />
         <h2 className="font-bold text-vault-cream">Tag Validator</h2>
       </div>
       <p className="text-sm text-muted-foreground mb-4">Confirm or challenge vibe tags. Earn Vault Scraps every 10.</p>
@@ -242,7 +247,9 @@ function LeaderboardWidget() {
   return (
     <section className="vault-card rounded-xl p-5">
       <div className="flex items-center justify-between mb-3">
-        <h2 className="font-bold text-vault-cream flex items-center gap-2">📊 Leaderboard</h2>
+        <h2 className="font-bold text-vault-cream flex items-center gap-2">
+          <BarChart3 className="h-4 w-4 text-vault-gold" /> Leaderboard
+        </h2>
         <Link href="/leaderboard" className="text-xs text-vault-gold hover:text-vault-amber">Full board →</Link>
       </div>
       <p className="text-sm text-muted-foreground">See who's topping the Vault Scraps charts this week.</p>
@@ -254,7 +261,9 @@ function ForumsWidget() {
   return (
     <section className="vault-card rounded-xl p-5">
       <div className="flex items-center justify-between mb-3">
-        <h2 className="font-bold text-vault-cream flex items-center gap-2">💬 Forums</h2>
+        <h2 className="font-bold text-vault-cream flex items-center gap-2">
+          <MessageSquare className="h-4 w-4 text-vault-gold" /> Forums
+        </h2>
         <Link href="/forums" className="text-xs text-vault-gold hover:text-vault-amber">Browse →</Link>
       </div>
       <p className="text-sm text-muted-foreground">Per-constellation discussion boards. 280 chars.</p>
@@ -266,7 +275,9 @@ function NotificationsWidget() {
   return (
     <section className="vault-card rounded-xl p-5">
       <div className="flex items-center justify-between mb-3">
-        <h2 className="font-bold text-vault-cream flex items-center gap-2">🔔 Notifications</h2>
+        <h2 className="font-bold text-vault-cream flex items-center gap-2">
+          <Bell className="h-4 w-4 text-vault-gold" /> Notifications
+        </h2>
         <Link href="/notifications" className="text-xs text-vault-gold hover:text-vault-amber">See all →</Link>
       </div>
       <p className="text-sm text-muted-foreground">Bet results, achievements, and CMDMI updates.</p>
@@ -334,14 +345,14 @@ function LandingHero() {
           {/* Value prop pills */}
           <div className="flex flex-wrap gap-2">
             {[
-              { icon: '🔧', text: 'Vibe-based discovery' },
-              { icon: '🎬', text: 'Raw clips with timestamps' },
-              { icon: '🏆', text: 'Community predictions' },
-              { icon: '⚡', text: 'Daily habit loop' },
-              { icon: '🌎', text: 'Drives views to creators' },
-            ].map(({ icon, text }) => (
+              { Icon: Wrench, text: 'Vibe-based discovery' },
+              { Icon: Film, text: 'Raw clips with timestamps' },
+              { Icon: Trophy, text: 'Community predictions' },
+              { Icon: Zap, text: 'Daily habit loop' },
+              { Icon: Globe, text: 'Drives views to creators' },
+            ].map(({ Icon, text }) => (
               <span key={text} className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-muted/30 border border-border text-xs text-muted-foreground">
-                <span>{icon}</span>{text}
+                <Icon className="h-3 w-3 text-vault-gold" />{text}
               </span>
             ))}
           </div>

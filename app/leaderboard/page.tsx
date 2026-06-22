@@ -25,7 +25,7 @@ export default function LeaderboardPage() {
     }).catch(() => setLoading(false))
   }, [])
 
-  const medals = ['🥇', '🥈', '🥉']
+  const medals = ['I', 'II', 'III']
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-3xl">
@@ -52,7 +52,7 @@ export default function LeaderboardPage() {
             {loading ? <Skeleton /> : rich.map((row, i) => (
               <div key={row.username} className="flex items-center justify-between px-5 py-3.5 border-b border-border last:border-0 hover:bg-vault-bronze/5 transition-colors">
                 <div className="flex items-center gap-3">
-                  <span className="text-lg w-8 text-center">{medals[i] ?? `${i + 1}.`}</span>
+                  <span className={`text-sm w-8 text-center font-mono ${i < 3 ? 'text-vault-gold font-bold' : 'text-muted-foreground'}`}>{medals[i] ?? `${i + 1}.`}</span>
                   <div>
                     <p className="font-semibold text-vault-cream">{row.username}</p>
                     <p className="text-xs text-muted-foreground">{row.bets_correct}/{row.bets_placed} correct</p>
@@ -72,7 +72,7 @@ export default function LeaderboardPage() {
             {loading ? <Skeleton /> : accurate.map((row, i) => (
               <div key={row.username} className="flex items-center justify-between px-5 py-3.5 border-b border-border last:border-0 hover:bg-vault-bronze/5 transition-colors">
                 <div className="flex items-center gap-3">
-                  <span className="text-lg w-8 text-center">{medals[i] ?? `${i + 1}.`}</span>
+                  <span className={`text-sm w-8 text-center font-mono ${i < 3 ? 'text-vault-gold font-bold' : 'text-muted-foreground'}`}>{medals[i] ?? `${i + 1}.`}</span>
                   <div>
                     <p className="font-semibold text-vault-cream">{row.username}</p>
                     <p className="text-xs text-muted-foreground">{row.bets_placed} bets placed</p>
@@ -92,7 +92,7 @@ export default function LeaderboardPage() {
             {loading ? <Skeleton /> : losers.map((row, i) => (
               <div key={row.username} className="flex items-center justify-between px-5 py-3.5 border-b border-border last:border-0 hover:bg-vault-bronze/5 transition-colors">
                 <div className="flex items-center gap-3">
-                  <span className="text-lg w-8 text-center">{i === 0 ? '💀' : `${i + 1}.`}</span>
+                  <span className={`text-sm w-8 text-center font-mono ${i === 0 ? 'text-red-400 font-bold' : 'text-muted-foreground'}`}>{i === 0 ? '†' : `${i + 1}.`}</span>
                   <div>
                     <p className="font-semibold text-vault-cream">{row.username}</p>
                     <p className="text-xs text-muted-foreground">Biggest single loss: {row.biggest_loss.toLocaleString()}</p>

@@ -21,9 +21,9 @@ interface OwnedItem {
 }
 
 const TYPE_LABELS: Record<string, string> = {
-  title: '🏷️ Title',
-  badge: '🔰 Badge',
-  frame: '🖼️ Frame',
+  title: 'Title',
+  badge: 'Badge',
+  frame: 'Frame',
 }
 
 export default function ShopPage() {

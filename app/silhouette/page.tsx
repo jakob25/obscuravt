@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useVTubers } from '@/hooks/use-data'
 import { useStarMapData } from '@/hooks/use-star-map-data'
 import type { VTuber } from '@/lib/types'
-import { Eye, RotateCcw, ArrowRight, Check, X } from 'lucide-react'
+import { Eye, RotateCcw, ArrowRight, Check, X, User, Trophy, Target } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
 
@@ -64,7 +64,7 @@ export default function SilhouettePage() {
     return (
       <div className="min-h-[60vh] flex items-center justify-center">
         <div className="text-center">
-          <div className="text-4xl mb-3 animate-pulse">👤</div>
+          <User className="h-10 w-10 text-vault-gold mx-auto mb-3 animate-pulse" />
           <p className="text-muted-foreground animate-pulse">Loading VTubers…</p>
         </div>
       </div>
@@ -89,7 +89,15 @@ export default function SilhouettePage() {
       <div className="container mx-auto max-w-lg px-4 py-8">
         {gameOver ? (
           <div className="text-center space-y-6">
-            <div className="text-5xl">{score >= 8 ? '🏆' : score >= 5 ? '👍' : '😅'}</div>
+            <div className="flex justify-center">
+              {score >= 8 ? (
+                <Trophy className="h-12 w-12 text-vault-gold" />
+              ) : score >= 5 ? (
+                <Target className="h-12 w-12 text-vault-amber" />
+              ) : (
+                <Eye className="h-12 w-12 text-muted-foreground" />
+              )}
+            </div>
             <div>
               <h2 className="text-2xl font-bold text-vault-cream mb-2">
                 {score}/{MAX_ROUNDS} correct

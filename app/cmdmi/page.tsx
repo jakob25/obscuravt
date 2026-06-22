@@ -112,7 +112,7 @@ function CmdmiPageContent() {
     if (res.ok) {
       await refreshUser()
       setPledgeAmount(p => ({ ...p, [goalId]: '' }))
-      if (data.goal_met) alert('🎉 Goal met! This stream is happening.')
+      if (data.goal_met) alert('Goal met — this stream is happening.')
     }
     await load()
     setBusyId(null)
@@ -214,7 +214,7 @@ function CmdmiPageContent() {
                     <Coins className="h-3 w-3 text-vault-gold" />
                     {idea.goal.funded_amount} / {idea.goal.goal_amount} scraps
                   </span>
-                  {idea.goal.status === 'funded' && <span className="text-xs text-green-400 font-medium">Goal met! 🎉</span>}
+                  {idea.goal.status === 'funded' && <span className="text-xs text-green-400 font-medium">Goal met</span>}
                 </div>
                 <div className="h-1.5 rounded-full bg-muted/40 overflow-hidden mb-3">
                   <div

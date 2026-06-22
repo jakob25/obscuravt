@@ -48,7 +48,7 @@ async function resolveBet(betId: string) {
       // Notify winners
       await notify(
         e.username,
-        '🎉 You won a bet!',
+        'Bet won',
         `"${bet.title}" resolved. You wagered on "${winner}" and won ${share.toLocaleString()} V-Coins!`,
         'bet_won',
         betId
@@ -66,7 +66,7 @@ async function resolveBet(betId: string) {
       // Notify losers
       await notify(
         e.username,
-        '💸 Bet resolved',
+        'Bet resolved',
         `"${bet.title}" resolved. The winner was "${winner}". Better luck next time!`,
         'bet_lost',
         betId
@@ -103,7 +103,7 @@ async function checkAchievements(usernames: string[]) {
         earned_at: new Date().toISOString(),
       })
       await supabaseAdmin.from('users').update({ coins: (user.coins ?? 0) + coins }).eq('username', username)
-      await notify(username, `🏆 Achievement unlocked: ${name}!`, `You earned the ${name} badge and ${coins.toLocaleString()} V-Coins.`, 'achievement', id)
+      await notify(username, `Achievement unlocked: ${name}`, `You earned the ${name} badge and ${coins.toLocaleString()} V-Coins.`, 'achievement', id)
     }
   }
 }

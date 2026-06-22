@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useVTubers } from '@/hooks/use-data'
 import { useStarMapData } from '@/hooks/use-star-map-data'
 import type { VTuber } from '@/lib/types'
-import { ArrowRight, ArrowLeft, Star, RotateCcw } from 'lucide-react'
+import { ArrowRight, ArrowLeft, Star, RotateCcw, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
 
@@ -15,7 +15,7 @@ import Link from 'next/link'
 interface Question {
   id: string
   text: string
-  options: { label: string; emoji: string; tags: string[] }[]
+  options: { label: string; symbol: string; tags: string[] }[]
 }
 
 const QUESTIONS: Question[] = [
@@ -23,50 +23,50 @@ const QUESTIONS: Question[] = [
     id: 'energy',
     text: 'What kind of stream energy do you vibe with most?',
     options: [
-      { label: 'Chaotic and unpredictable', emoji: '💥', tags: ['clust_chaos', 'vibe_chaotic', 'vibe_gremlin'] },
-      { label: 'Chill and cozy', emoji: '🛋️', tags: ['clust_comfy', 'vibe_comfy', 'vibe_chill'] },
-      { label: 'High energy hype', emoji: '🔥', tags: ['clust_variety', 'vibe_hype'] },
-      { label: 'Deep lore and emotional', emoji: '🌙', tags: ['clust_menhara', 'vibe_menhara', 'vibe_lore'] },
+      { label: 'Chaotic and unpredictable', symbol: '✦', tags: ['clust_chaos', 'vibe_chaotic', 'vibe_gremlin'] },
+      { label: 'Chill and cozy', symbol: '◇', tags: ['clust_comfy', 'vibe_comfy', 'vibe_chill'] },
+      { label: 'High energy hype', symbol: '▲', tags: ['clust_variety', 'vibe_hype'] },
+      { label: 'Deep lore and emotional', symbol: '◐', tags: ['clust_menhara', 'vibe_menhara', 'vibe_lore'] },
     ],
   },
   {
     id: 'content',
     text: 'What content do you watch most?',
     options: [
-      { label: 'Gaming', emoji: '🎮', tags: ['cont_gaming', 'cont_rpg', 'clust_gaming'] },
-      { label: 'Just chatting / zatsudans', emoji: '🗣️', tags: ['vibe_zatsudan', 'cont_chatting', 'clust_variety'] },
-      { label: 'Music and karaoke', emoji: '🎵', tags: ['clust_vsinger', 'cont_karaoke', 'vibe_original_music'] },
-      { label: 'Art streams', emoji: '🎨', tags: ['cont_drawing', 'clust_creative'] },
+      { label: 'Gaming', symbol: '◈', tags: ['cont_gaming', 'cont_rpg', 'clust_gaming'] },
+      { label: 'Just chatting / zatsudans', symbol: '◎', tags: ['vibe_zatsudan', 'cont_chatting', 'clust_variety'] },
+      { label: 'Music and karaoke', symbol: '♪', tags: ['clust_vsinger', 'cont_karaoke', 'vibe_original_music'] },
+      { label: 'Art streams', symbol: '◆', tags: ['cont_drawing', 'clust_creative'] },
     ],
   },
   {
     id: 'vibe',
     text: 'What draws you to a VTuber?',
     options: [
-      { label: 'They feel like a genuine friend', emoji: '💛', tags: ['vibe_comfy', 'vibe_wholesome', 'clust_comfy'] },
-      { label: 'Unhinged and unpredictable', emoji: '🌀', tags: ['vibe_gremlin', 'vibe_chaotic', 'clust_chaos'] },
-      { label: 'Unique and niche taste', emoji: '🔭', tags: ['clust_denpa', 'vibe_denpa', 'clust_experimental'] },
-      { label: 'Deep lore and worldbuilding', emoji: '📖', tags: ['vibe_lore', 'clust_menhara', 'vibe_chuuni'] },
+      { label: 'They feel like a genuine friend', symbol: '♦', tags: ['vibe_comfy', 'vibe_wholesome', 'clust_comfy'] },
+      { label: 'Unhinged and unpredictable', symbol: '↻', tags: ['vibe_gremlin', 'vibe_chaotic', 'clust_chaos'] },
+      { label: 'Unique and niche taste', symbol: '⊕', tags: ['clust_denpa', 'vibe_denpa', 'clust_experimental'] },
+      { label: 'Deep lore and worldbuilding', symbol: '⊞', tags: ['vibe_lore', 'clust_menhara', 'vibe_chuuni'] },
     ],
   },
   {
     id: 'aesthetic',
     text: 'Pick a vibe:',
     options: [
-      { label: 'Dark, glitchy, internet-poisoned', emoji: '🕳️', tags: ['clust_denpa', 'vibe_denpa', 'cont_horror'] },
-      { label: 'Warm, soft, cottagecore', emoji: '🌾', tags: ['clust_comfy', 'vibe_comfy', 'vibe_asmr'] },
-      { label: 'Loud, loud, LOUDER', emoji: '📢', tags: ['clust_chaos', 'vibe_hype', 'vibe_gremlin'] },
-      { label: 'Creative and expressive', emoji: '✨', tags: ['clust_vsinger', 'cont_drawing', 'clust_creative'] },
+      { label: 'Dark, glitchy, internet-poisoned', symbol: '†', tags: ['clust_denpa', 'vibe_denpa', 'cont_horror'] },
+      { label: 'Warm, soft, cottagecore', symbol: '○', tags: ['clust_comfy', 'vibe_comfy', 'vibe_asmr'] },
+      { label: 'Loud, loud, LOUDER', symbol: '!!', tags: ['clust_chaos', 'vibe_hype', 'vibe_gremlin'] },
+      { label: 'Creative and expressive', symbol: '✧', tags: ['clust_vsinger', 'cont_drawing', 'clust_creative'] },
     ],
   },
   {
     id: 'stream_time',
     text: 'When do you usually watch streams?',
     options: [
-      { label: 'Late night, can\'t sleep', emoji: '🌙', tags: ['vibe_chill', 'vibe_asmr', 'clust_comfy'] },
-      { label: 'Background noise while working', emoji: '💼', tags: ['vibe_zatsudan', 'vibe_comfy'] },
-      { label: 'All day, I\'m a menace', emoji: '🔥', tags: ['vibe_chaotic', 'vibe_hype', 'clust_chaos'] },
-      { label: 'Specifically for events and premieres', emoji: '🎉', tags: ['clust_vsinger', 'vibe_hype'] },
+      { label: 'Late night, can\'t sleep', symbol: '◐', tags: ['vibe_chill', 'vibe_asmr', 'clust_comfy'] },
+      { label: 'Background noise while working', symbol: '▤', tags: ['vibe_zatsudan', 'vibe_comfy'] },
+      { label: 'All day, I\'m a menace', symbol: '▲', tags: ['vibe_chaotic', 'vibe_hype', 'clust_chaos'] },
+      { label: 'Specifically for events and premieres', symbol: '★', tags: ['clust_vsinger', 'vibe_hype'] },
     ],
   },
 ]
@@ -166,7 +166,7 @@ export default function FindMyOshiPage() {
           {/* Intro */}
           {isIntro && (
             <div className="text-center space-y-6">
-              <div className="text-6xl mb-4">🪄</div>
+              <Star className="h-14 w-14 text-vault-gold mx-auto mb-4" />
               <div>
                 <h2 className="text-2xl font-bold text-vault-cream mb-3">Who is your Oshi?</h2>
                 <p className="text-muted-foreground leading-relaxed max-w-md mx-auto">
@@ -200,7 +200,7 @@ export default function FindMyOshiPage() {
                           : 'vault-card border-border text-muted-foreground hover:border-vault-bronze/50 hover:text-vault-cream'
                       }`}
                     >
-                      <div className="text-2xl mb-2">{opt.emoji}</div>
+                      <div className="text-2xl mb-2 font-mono text-vault-gold">{opt.symbol}</div>
                       <div className={`text-sm font-medium leading-snug ${isChosen ? 'text-vault-cream' : ''}`}>
                         {opt.label}
                       </div>
@@ -233,7 +233,7 @@ export default function FindMyOshiPage() {
           {isDone && (
             <div>
               <div className="text-center mb-8">
-                <div className="text-4xl mb-3">✨</div>
+                <Sparkles className="h-10 w-10 text-vault-gold mx-auto mb-3" />
                 <h2 className="text-2xl font-bold text-vault-cream mb-2">Your matches</h2>
                 <p className="text-sm text-muted-foreground">
                   Based on your answers, these VTubers match your vibe the most.

@@ -22,22 +22,22 @@ export interface Widget {
   label: string
   description: string
   defaultSize: 'full' | 'half'
-  emoji: string
+  symbol: string
 }
 
 export const ALL_WIDGETS: Widget[] = [
-  { id: 'trending_clips',        label: 'Trending Clips',         description: 'Top upvoted clips this week',      defaultSize: 'full',  emoji: '🎬' },
-  { id: 'active_bets',           label: 'Active Bets',            description: 'Open bets you can place on',       defaultSize: 'half',  emoji: '🏆' },
-  { id: 'constellations',        label: 'Constellations',          description: 'Quick links to all clusters',      defaultSize: 'full',  emoji: '✨' },
-  { id: 'featured_vtubers',      label: 'Featured Creators',      description: 'VTubers from the Vault',           defaultSize: 'full',  emoji: '⭐' },
-  { id: 'weekly_digest',         label: 'Weekly Digest',          description: 'This week\'s highlights',          defaultSize: 'half',  emoji: '📅' },
-  { id: 'find_my_oshi',          label: 'Find My Oshi',           description: 'Quick quiz shortcut',              defaultSize: 'half',  emoji: '💛' },
-  { id: 'tag_validator',         label: 'Tag Validator',          description: 'Earn scraps by validating tags',   defaultSize: 'half',  emoji: '⚡' },
-  { id: 'leaderboard',           label: 'Leaderboard',            description: 'Top earners this week',            defaultSize: 'half',  emoji: '📊' },
-  { id: 'forums',                label: 'Forums',                 description: 'Latest constellation posts',       defaultSize: 'half',  emoji: '💬' },
-  { id: 'recent_notifications',  label: 'Notifications',          description: 'Your recent alerts',              defaultSize: 'half',  emoji: '🔔' },
-  { id: 'daily_loop',             label: 'Daily Loop',             description: 'Daily bonus, tag validator, silhouette, bets', defaultSize: 'full', emoji: '🔄' },
-  { id: 'my_clips',               label: 'Your Clips',             description: 'Clip metrics for your submissions',          defaultSize: 'half', emoji: '📎' },
+  { id: 'trending_clips',        label: 'Trending Clips',         description: 'Top upvoted clips this week',      defaultSize: 'full',  symbol: '◈' },
+  { id: 'active_bets',           label: 'Active Bets',            description: 'Open bets you can place on',       defaultSize: 'half',  symbol: '★' },
+  { id: 'constellations',        label: 'Constellations',          description: 'Quick links to all clusters',      defaultSize: 'full',  symbol: '✦' },
+  { id: 'featured_vtubers',      label: 'Featured Creators',      description: 'VTubers from the Vault',           defaultSize: 'full',  symbol: '◆' },
+  { id: 'weekly_digest',         label: 'Weekly Digest',          description: 'This week\'s highlights',          defaultSize: 'half',  symbol: '⊞' },
+  { id: 'find_my_oshi',          label: 'Find My Oshi',           description: 'Quick quiz shortcut',              defaultSize: 'half',  symbol: '♦' },
+  { id: 'tag_validator',         label: 'Tag Validator',          description: 'Earn scraps by validating tags',   defaultSize: 'half',  symbol: '⚡' },
+  { id: 'leaderboard',           label: 'Leaderboard',            description: 'Top earners this week',            defaultSize: 'half',  symbol: '▲' },
+  { id: 'forums',                label: 'Forums',                 description: 'Latest constellation posts',       defaultSize: 'half',  symbol: '◇' },
+  { id: 'recent_notifications',  label: 'Notifications',          description: 'Your recent alerts',              defaultSize: 'half',  symbol: '◉' },
+  { id: 'daily_loop',             label: 'Daily Loop',             description: 'Daily bonus, tag validator, silhouette, bets', defaultSize: 'full', symbol: '↻' },
+  { id: 'my_clips',               label: 'Your Clips',             description: 'Clip metrics for your submissions',          defaultSize: 'half', symbol: '⊕' },
 ]
 
 const DEFAULT_LAYOUT: WidgetId[] = [
@@ -158,7 +158,7 @@ export function DashboardCustomizer({ layout, onAdd, onRemove, onMove, onReset, 
                       className="flex items-center gap-3 p-3 rounded-xl bg-muted/20 border border-border cursor-grab active:cursor-grabbing hover:border-vault-bronze/40 transition-colors"
                     >
                       <GripVertical className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                      <span className="text-lg flex-shrink-0">{w.emoji}</span>
+                      <span className="text-lg flex-shrink-0 text-vault-gold font-mono">{w.symbol}</span>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-vault-cream">{w.label}</p>
                         <p className="text-xs text-muted-foreground truncate">{w.description}</p>
@@ -182,7 +182,7 @@ export function DashboardCustomizer({ layout, onAdd, onRemove, onMove, onReset, 
                     {hidden.map(w => (
                       <div key={w.id}
                         className="flex items-center gap-3 p-3 rounded-xl bg-muted/10 border border-border/50 opacity-60 hover:opacity-100 hover:border-vault-bronze/40 transition-all">
-                        <span className="text-lg flex-shrink-0">{w.emoji}</span>
+                        <span className="text-lg flex-shrink-0 text-vault-gold font-mono">{w.symbol}</span>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium text-vault-cream">{w.label}</p>
                           <p className="text-xs text-muted-foreground truncate">{w.description}</p>

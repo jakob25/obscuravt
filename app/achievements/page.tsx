@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Medal } from 'lucide-react'
+import { Medal, Trophy } from 'lucide-react'
 import { useAuth } from '@/lib/auth-context'
 import { GlitchHeading } from '@/components/vault/glitch-heading'
 
@@ -53,7 +53,11 @@ export default function AchievementsPage() {
           return (
             <div key={a.id} className={`vault-card rounded-xl p-4 transition-all ${earned ? 'border-vault-gold/40' : 'opacity-60'}`}>
               <div className="flex items-start gap-3">
-                <span className="text-3xl">{a.icon ?? '🏆'}</span>
+                {a.icon && a.icon.length <= 2 && !/[\u{1F300}-\u{1FAFF}]/u.test(a.icon) ? (
+                  <span className="text-2xl font-mono text-vault-gold shrink-0">{a.icon}</span>
+                ) : (
+                  <Trophy className="h-8 w-8 text-vault-gold shrink-0" />
+                )}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
                     <h3 className="font-semibold text-vault-cream">{a.name}</h3>
