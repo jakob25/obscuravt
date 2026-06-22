@@ -9,7 +9,9 @@ import { VibeTagList } from '@/components/common/vibe-tag'
 import { ClipCard } from '@/components/common/clip-card'
 import { Progress } from '@/components/ui/progress'
 import { useAuth } from '@/lib/auth-context'
-import { useDashboardLayout, DashboardCustomizer, ALL_WIDGETS, type WidgetId } from '@/components/common/dashboard-customizer'
+import { useDashboardLayout, DashboardCustomizer, type WidgetId } from '@/components/common/dashboard-customizer'
+import { GlitchHeading } from '@/components/vault/glitch-heading'
+import { LogIn } from 'lucide-react'
 
 // ── Individual widget components ──────────────────────────────────────
 
@@ -285,21 +287,18 @@ const WIDGET_COMPONENTS: Record<WidgetId, React.ComponentType> = {
 
 // ── Main page ──────────────────────────────────────────────
 
-export default function HomePage() {
-  const { vtubers } = useVTubers()
-  const { layout, addWidget, removeWidget, moveWidget, reset } = useDashboardLayout()
-
+function LandingHero() {
   return (
-    <div className="min-h-screen">
-      {/* Hero */}
-      <section className="relative border-b border-border overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-vault-gold/8 via-transparent to-[#e056a0]/5 pointer-events-none" />
-        <div className="container mx-auto px-4 py-10">
-          <div className="max-w-2xl mb-6">
-            <h1 className="text-3xl md:text-4xl font-bold text-vault-cream mb-3 leading-tight">
-              The creators the algorithm{' '}
-              <span className="text-vault-gold">forgot to show you.</span>
-            </h1>
+    <section className="relative border-b border-border overflow-hidden">
+      <div className="absolute inset-0 bg-gradient-to-br from-vault-gold/8 via-transparent to-[#e056a0]/5 pointer-events-none" />
+      <div className="absolute inset-0 opacity-[0.03] pointer-events-none"
+        style={{ backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(212,168,67,0.4) 2px, rgba(212,168,67,0.4) 4px)' }} />
+      <div className="container mx-auto px-4 py-10 md:py-16">
+        <div className="max-w-2xl mb-6">
+          <GlitchHeading as="h1" className="text-3xl md:text-4xl font-bold text-vault-cream mb-3 leading-tight">
+            The creators the algorithm{' '}
+            <span className="text-vault-gold">forgot to show you.</span>
+          </GlitchHeading>
             <p className="text-muted-foreground text-base leading-relaxed mb-2">
               ObscuraVT is a discovery hub built around vibes, not views. Find VTubers by personality,
               content niche, or community tag — not subscriber count. Every clip links back to the
@@ -310,8 +309,10 @@ export default function HomePage() {
             </p>
           </div>
 
-          {/* Primary CTAs */}
           <div className="flex flex-wrap items-center gap-3 mb-6">
+            <Button asChild className="bg-vault-gold hover:bg-vault-amber text-vault-deep font-semibold">
+              <Link href="/login"><LogIn className="mr-2 h-4 w-4" />Sign In to Enter the Vault</Link>
+            </Button>
             <Button asChild className="bg-vault-gold hover:bg-vault-amber text-vault-deep font-semibold">
               <Link href="/discover"><Compass className="mr-2 h-4 w-4" />Explore Star Map</Link>
             </Button>
@@ -340,38 +341,78 @@ export default function HomePage() {
               </span>
             ))}
           </div>
+      </div>
+    </section>
+  )
+}
+
+function UserDashboard() {
+  const { vtubers } = useVTubers()
+  const { user } = useAuth()
+  const { layout, addWidget, removeWidget, moveWidget, reset } = useDashboardLayout()
+
+  return (
+    <div className="container mx-auto px-4 py-8">
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <GlitchHeading as="h1" className="text-xl font-bold text-vault-cream">
+            Welcome back, {user?.username}
+          </GlitchHeading>
+          <p className="text-xs text-muted-foreground mt-0.5">{vtubers.length} creators in the Archive</p>
+        </div>
+        <DashboardCustomizer
+          layout={layout}
+          onAdd={addWidget}
+          onRemove={removeWidget}
+          onMove={moveWidget}
+          onReset={reset}
+        />
+      </div>
+
+      {layout.length === 0 ? (
+        <div className="vault-card rounded-xl p-12 text-center">
+          <p className="text-muted-foreground mb-4">Your dashboard is empty.</p>
+          <Button onClick={reset} className="bg-vault-gold hover:bg-vault-amber text-vault-deep font-semibold">
+            Restore defaults
+          </Button>
+        </div>
+      ) : (
+        <div className="space-y-8">
+          {layout.map(widgetId => {
+            const W = WIDGET_COMPONENTS[widgetId]
+            return W ? <W key={widgetId} /> : null
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
+
+export default function HomePage() {
+  const { user, loading } = useAuth()
+
+  if (loading) {
+    return <div className="min-h-screen" />
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen">
+        <LandingHero />
+      </div>
+    )
+  }
+
+  return (
+    <div className="min-h-screen">
+      <section className="border-b border-border bg-vault-deep/50">
+        <div className="container mx-auto px-4 py-4">
+          <p className="text-sm text-muted-foreground">
+            Your vault dashboard — customise widgets below.
+          </p>
         </div>
       </section>
-
-      {/* Dashboard */}
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex items-center justify-between mb-6">
-          <p className="text-xs text-muted-foreground">{vtubers.length} creators in the Archive</p>
-          <DashboardCustomizer
-            layout={layout}
-            onAdd={addWidget}
-            onRemove={removeWidget}
-            onMove={moveWidget}
-            onReset={reset}
-          />
-        </div>
-
-        {layout.length === 0 ? (
-          <div className="vault-card rounded-xl p-12 text-center">
-            <p className="text-muted-foreground mb-4">Your dashboard is empty.</p>
-            <Button onClick={reset} className="bg-vault-gold hover:bg-vault-amber text-vault-deep font-semibold">
-              Restore defaults
-            </Button>
-          </div>
-        ) : (
-          <div className="space-y-8">
-            {layout.map(widgetId => {
-              const W = WIDGET_COMPONENTS[widgetId]
-              return W ? <W key={widgetId} /> : null
-            })}
-          </div>
-        )}
-      </div>
+      <UserDashboard />
     </div>
   )
 }

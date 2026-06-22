@@ -6,7 +6,8 @@ const SECRET = new TextEncoder().encode(
   process.env.SESSION_SECRET ?? 'vtvault-dev-secret-change-in-production-min-32-chars'
 )
 const COOKIE_NAME = 'vtvault_session'
-const MAX_AGE = 60 * 60 * 24 * 30 // 30 days
+// JWT lifetime for an active browser session (cookie itself is session-only — cleared on browser close)
+const MAX_AGE = 60 * 60 * 24 // 24 hours
 
 export interface SessionPayload {
   username: string
@@ -64,11 +65,11 @@ export async function requireAdmin(req: NextRequest): Promise<SessionPayload | N
 
 // ── Set session cookie on a response ─────────────────────────────────────────
 export function setSessionCookie(res: NextResponse, token: string): NextResponse {
+  // Session cookie: no maxAge/expires — cleared when the browser closes
   res.cookies.set(COOKIE_NAME, token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
-    maxAge: MAX_AGE,
     path: '/',
   })
   return res
