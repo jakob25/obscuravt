@@ -5,6 +5,33 @@ import { getSessionUser } from '@/lib/session'
 
 export async function GET(req: NextRequest) {
   const vtuberId = req.nextUrl.searchParams.get('vtuberId')
+  const slug = req.nextUrl.searchParams.get('slug')
+
+  if (slug) {
+    const { data, error } = await supabaseAdmin
+      .from('memes')
+      .select('id,vtuber_id,submitted_by,image_url,caption,upvotes,share_slug,created_at')
+      .eq('share_slug', slug)
+      .single()
+
+    if (error) {
+      if (error.code === '42P01') return NextResponse.json({ error: 'Memes not available yet.' }, { status: 503 })
+      if (error.code === 'PGRST116') return NextResponse.json({ error: 'Meme not found.' }, { status: 404 })
+      return NextResponse.json({ error: error.message }, { status: 500 })
+    }
+
+    let vtuberName: string | null = null
+    if (data.vtuber_id) {
+      const { data: vtuber } = await supabaseAdmin
+        .from('vtubers')
+        .select('name')
+        .eq('id', data.vtuber_id)
+        .single()
+      vtuberName = vtuber?.name ?? null
+    }
+
+    return NextResponse.json({ meme: { ...data, vtuber_name: vtuberName } })
+  }
 
   let query = supabaseAdmin
     .from('memes')

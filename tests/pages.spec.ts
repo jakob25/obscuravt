@@ -15,6 +15,8 @@ const PUBLIC_PAGES = [
   { path: '/weekly',        title: /weekly/i },
   { path: '/forums',        title: /forum/i },
   { path: '/tag-validator', title: /tag/i },
+  { path: '/nominator',     title: /nominator|nominate/i },
+  { path: '/corpo',         title: /corpo|collective/i },
   { path: '/silhouette',    title: /vtuber|silhouette|who/i },
   { path: '/login',         title: /login|sign/i },
 ]

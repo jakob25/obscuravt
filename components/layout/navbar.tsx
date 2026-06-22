@@ -8,7 +8,7 @@ import {
   Menu, X, Compass, Film, Trophy, User, Medal,
   LogIn, TrendingUp, Shield, Search, Heart,
   Bell, ShoppingBag, Calendar, Zap, Eye, MessageSquare, LayoutDashboard,
-  Users, BookOpen,
+  Users, BookOpen, Star,
 } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/lib/auth-context'
@@ -27,6 +27,7 @@ const navItems = [
 const moreItems = [
   { href: '/weekly',        label: 'Weekly Digest',  icon: Calendar       },
   { href: '/collab',        label: 'Collab',         icon: Users          },
+  { href: '/nominator',     label: 'Nominator',      icon: Star           },
   { href: '/resources',     label: 'Resources',      icon: BookOpen       },
   { href: '/tag-validator', label: 'Tag Validator',  icon: Zap            },
   { href: '/silhouette',    label: 'Who Is This?',   icon: Eye            },

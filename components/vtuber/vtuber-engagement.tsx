@@ -7,7 +7,7 @@ import { useAuth } from '@/lib/auth-context'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { VaultFrame } from '@/components/vault/vault-frame'
 import {
-  Image, MessageCircle, Mic2, CalendarClock, Palette, Lightbulb, ThumbsUp, Plus,
+  Image, MessageCircle, Mic2, CalendarClock, Palette, Lightbulb, ThumbsUp, Plus, Share2,
 } from 'lucide-react'
 
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
@@ -18,7 +18,7 @@ interface Props {
   claimedBy: string | null
 }
 
-interface Meme { id: string; image_url: string; caption: string; upvotes: number; submitted_by: string }
+interface Meme { id: string; image_url: string; caption: string; upvotes: number; submitted_by: string; share_slug: string }
 interface QaSession { id: string; title: string; status: string }
 interface QaQuestion { id: string; question: string; asked_by: string; upvotes: number; answered: boolean }
 interface KaraokeReq { id: string; song_title: string; artist: string; status: string; upvotes: number; requested_by: string }
@@ -205,12 +205,21 @@ export function VTuberEngagement({ vtuberId, vtuberName, claimedBy }: Props) {
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             {memes.map(m => (
               <div key={m.id} className="rounded-lg overflow-hidden border border-border/60 bg-muted/20">
-                <img src={m.image_url} alt={m.caption || 'meme'} className="w-full aspect-square object-cover" />
-                <div className="p-2 flex justify-between items-center">
+                <Link href={`/meme/${m.share_slug}`}>
+                  <img src={m.image_url} alt={m.caption || 'meme'} className="w-full aspect-square object-cover hover:opacity-90 transition-opacity" />
+                </Link>
+                <div className="p-2 flex justify-between items-center gap-1">
                   <span className="text-[10px] text-muted-foreground truncate">@{m.submitted_by}</span>
-                  <button type="button" onClick={async () => { await fetch('/api/memes', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify({ memeId: m.id }) }); loadMemes() }} className="text-xs text-vault-gold flex items-center gap-0.5">
-                    <ThumbsUp className="h-3 w-3" />{m.upvotes}
-                  </button>
+                  <div className="flex items-center gap-2 shrink-0">
+                    {m.share_slug && (
+                      <Link href={`/meme/${m.share_slug}`} className="text-[10px] text-muted-foreground hover:text-vault-gold flex items-center gap-0.5">
+                        <Share2 className="h-3 w-3" />
+                      </Link>
+                    )}
+                    <button type="button" onClick={async () => { await fetch('/api/memes', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify({ memeId: m.id }) }); loadMemes() }} className="text-xs text-vault-gold flex items-center gap-0.5">
+                      <ThumbsUp className="h-3 w-3" />{m.upvotes}
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}

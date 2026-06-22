@@ -1,6 +1,6 @@
 'use client'
 
-import { Gamepad2, ExternalLink, BookOpen } from 'lucide-react'
+import { Gamepad2, ExternalLink, BookOpen, Monitor, CheckSquare } from 'lucide-react'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { GlitchHeading } from '@/components/vault/glitch-heading'
 
@@ -10,6 +10,26 @@ interface GameResource {
   link: string
   tags: string[]
 }
+
+const STREAM_TOOLS: GameResource[] = [
+  { name: 'OBS Studio', description: 'Free, open-source broadcaster — the standard for VTuber streaming.', link: 'https://obsproject.com/', tags: ['free', 'essential', 'capture'] },
+  { name: 'VTube Studio', description: 'Face-tracked Live2D avatar control with props, hotkeys, and plugin ecosystem.', link: 'https://denchisoft.com/', tags: ['Live2D', 'tracking', 'props'] },
+  { name: 'VSeeFace', description: 'Free VRM avatar tracking alternative — great for 3D models and indie budgets.', link: 'https://www.vseeface.icu/', tags: ['VRM', '3D', 'free'] },
+  { name: 'Warudo', description: 'Node-based overlay engine for reactive alerts, widgets, and stream effects.', link: 'https://warudo.app/', tags: ['overlays', 'alerts', 'widgets'] },
+  { name: 'StreamElements / Streamlabs', description: 'Alerts, overlays, tipping, and bot commands in one dashboard.', link: 'https://streamelements.com/', tags: ['alerts', 'monetization', 'bots'] },
+  { name: 'Lalal.ai Voice Clean', description: 'AI noise suppression for cleaner mic audio without a pricey interface.', link: 'https://www.lalal.ai/', tags: ['audio', 'noise gate'] },
+]
+
+const DEBUT_CHECKLIST: string[] = [
+  'Pick your model format (Live2D, 3D/VRM, PNGtuber) and rigging artist',
+  'Set up OBS scenes: gameplay, chatting, BRB, starting soon',
+  'Test tracking + mic levels on a private stream before going live',
+  'Write a 2–3 sentence bio and pick 3–5 vibe tags for the Star Map',
+  'Schedule your debut on the VTuber page schedule tab',
+  'Prepare 2–3 chat games or segment ideas for dead air',
+  'Link your Twitch/YouTube in your ObscuraVT dossier',
+  'Submit clips after streams so fans can discover you off-platform',
+]
 
 const CHAT_GAMES: GameResource[] = [
   { name: 'Jackbox Party Pack', description: 'Chat votes and submits answers via phone browser — works great for big audiences.', link: 'https://www.jackboxgames.com/', tags: ['party', 'voice-optional', 'large chat'] },
@@ -22,10 +42,10 @@ const CHAT_GAMES: GameResource[] = [
   { name: 'Forsen-style Chat Polls', description: 'Use !poll commands via bots like Nightbot or StreamElements to let chat decide what happens next.', link: 'https://nightbot.tv/', tags: ['decision-making', 'bot required'] },
 ]
 
-function ChatGamesTab() {
+function ResourceList({ items }: { items: GameResource[] }) {
   return (
     <div className="space-y-3">
-      {CHAT_GAMES.map(game => (
+      {items.map(game => (
         <a
           key={game.name}
           href={game.link}
@@ -47,9 +67,37 @@ function ChatGamesTab() {
           </div>
         </a>
       ))}
+    </div>
+  )
+}
+
+function ChatGamesTab() {
+  return (
+    <>
+      <ResourceList items={CHAT_GAMES} />
       <p className="text-xs text-muted-foreground text-center mt-6">
         Know a game that should be here? Let us know — this list grows with the community.
       </p>
+    </>
+  )
+}
+
+function StreamToolsTab() {
+  return <ResourceList items={STREAM_TOOLS} />
+}
+
+function DebutChecklistTab() {
+  return (
+    <div className="vault-card rounded-xl p-6">
+      <p className="text-sm text-muted-foreground mb-4">A practical pre-debut list — not exhaustive, but covers the usual gaps.</p>
+      <ul className="space-y-3">
+        {DEBUT_CHECKLIST.map((item, i) => (
+          <li key={item} className="flex items-start gap-3 text-sm text-vault-cream">
+            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-vault-gold/15 text-vault-gold text-xs font-semibold">{i + 1}</span>
+            {item}
+          </li>
+        ))}
+      </ul>
     </div>
   )
 }
@@ -66,13 +114,25 @@ export default function ResourcesPage() {
       </div>
 
       <Tabs defaultValue="chat-games">
-        <TabsList className="mb-6 bg-muted/50">
+        <TabsList className="mb-6 bg-muted/50 flex-wrap h-auto">
           <TabsTrigger value="chat-games" className="data-[state=active]:bg-vault-gold/20 data-[state=active]:text-vault-gold">
-            <Gamepad2 className="h-4 w-4 mr-1" /> Chat-Integrated Games
+            <Gamepad2 className="h-4 w-4 mr-1" /> Chat Games
+          </TabsTrigger>
+          <TabsTrigger value="stream-tools" className="data-[state=active]:bg-vault-gold/20 data-[state=active]:text-vault-gold">
+            <Monitor className="h-4 w-4 mr-1" /> Stream Setup
+          </TabsTrigger>
+          <TabsTrigger value="debut" className="data-[state=active]:bg-vault-gold/20 data-[state=active]:text-vault-gold">
+            <CheckSquare className="h-4 w-4 mr-1" /> Debut Checklist
           </TabsTrigger>
         </TabsList>
         <TabsContent value="chat-games">
           <ChatGamesTab />
+        </TabsContent>
+        <TabsContent value="stream-tools">
+          <StreamToolsTab />
+        </TabsContent>
+        <TabsContent value="debut">
+          <DebutChecklistTab />
         </TabsContent>
       </Tabs>
     </div>
