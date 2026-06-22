@@ -4,6 +4,7 @@ import { Analytics } from '@vercel/analytics/next'
 import { Navbar } from '@/components/layout/navbar'
 import { AddButton } from '@/components/common/add-button'
 import { AuthProvider } from '@/lib/auth-context'
+import { AppShell } from '@/components/layout/app-shell'
 import './globals.css'
 
 const spaceGrotesk = Space_Grotesk({ 
@@ -42,11 +43,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" className={`${spaceGrotesk.variable} ${geistMono.variable} dark`}>
       <body className="font-sans antialiased min-h-screen bg-background text-foreground">
         <AuthProvider>
-          <Navbar />
-          <main className="min-h-[calc(100vh-4rem)]">
-            {children}
-          </main>
-          <AddButton />
+          <AppShell>
+            <Navbar />
+            <main className="min-h-[calc(100vh-4rem)]">
+              {children}
+            </main>
+            <AddButton />
+          </AppShell>
         </AuthProvider>
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>

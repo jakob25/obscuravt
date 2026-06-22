@@ -5,7 +5,7 @@ import { useAuth } from '@/lib/auth-context'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { User, Gift, TrendingUp, Trophy, LogOut } from 'lucide-react'
-import { ROLES } from '@/lib/db-constants'
+import { ROLES } from '@/lib/roles'
 import type { UserProfile } from '@/lib/profile-types'
 import { GlitchHeading } from '@/components/vault/glitch-heading'
 

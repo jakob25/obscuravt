@@ -23,7 +23,7 @@ export const CATEGORIES = [
 ] as const
 export type BetCategory = typeof CATEGORIES[number]
 
-export const ROLES = ['Viewer', 'Streamer', 'Clipper'] as const
+export const ROLES = ['VTuber', 'Creator', 'Fan'] as const
 export type UserRole = typeof ROLES[number]
 
 export const BADGE_STYLES: Record<string, string> = {

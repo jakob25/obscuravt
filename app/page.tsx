@@ -12,6 +12,9 @@ import { useAuth } from '@/lib/auth-context'
 import { useDashboardLayout, DashboardCustomizer, type WidgetId } from '@/components/common/dashboard-customizer'
 import { GlitchHeading } from '@/components/vault/glitch-heading'
 import { LogIn } from 'lucide-react'
+import { MyClipsWidget } from '@/components/dashboard/my-clips-widget'
+import { normalizeRole, ROLE_ALLOWED_WIDGETS, ROLE_DEFAULT_WIDGETS, type AppRole } from '@/lib/roles'
+import { ALL_WIDGETS } from '@/components/common/dashboard-customizer'
 
 // ── Individual widget components ──────────────────────────────────────
 
@@ -283,6 +286,7 @@ const WIDGET_COMPONENTS: Record<WidgetId, React.ComponentType> = {
   leaderboard:          LeaderboardWidget,
   forums:               ForumsWidget,
   recent_notifications: NotificationsWidget,
+  my_clips:             MyClipsWidget,
 }
 
 // ── Main page ──────────────────────────────────────────────
@@ -351,6 +355,19 @@ function UserDashboard() {
   const { user } = useAuth()
   const { layout, addWidget, removeWidget, moveWidget, reset } = useDashboardLayout()
 
+  const role: AppRole | null = normalizeRole(user?.role ?? null)
+  const allowedIds = role ? ROLE_ALLOWED_WIDGETS[role] : ALL_WIDGETS.map(w => w.id)
+  const availableWidgets = ALL_WIDGETS.filter(w => allowedIds.includes(w.id))
+  const visibleLayout = layout.filter(id => allowedIds.includes(id))
+
+  const resetRoleDefaults = () => {
+    if (!role) { reset(); return }
+    try {
+      localStorage.setItem('vtvault_dashboard_layout', JSON.stringify(ROLE_DEFAULT_WIDGETS[role]))
+      window.location.reload()
+    } catch { reset() }
+  }
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex items-center justify-between mb-6">
@@ -358,27 +375,30 @@ function UserDashboard() {
           <GlitchHeading as="h1" className="text-xl font-bold text-vault-cream">
             Welcome back, {user?.username}
           </GlitchHeading>
-          <p className="text-xs text-muted-foreground mt-0.5">{vtubers.length} creators in the Archive</p>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            {role ? `${role} dashboard` : 'Dashboard'} · {vtubers.length} creators in the Archive
+          </p>
         </div>
         <DashboardCustomizer
-          layout={layout}
+          layout={visibleLayout}
           onAdd={addWidget}
           onRemove={removeWidget}
           onMove={moveWidget}
-          onReset={reset}
+          onReset={resetRoleDefaults}
+          availableWidgets={availableWidgets}
         />
       </div>
 
-      {layout.length === 0 ? (
+      {visibleLayout.length === 0 ? (
         <div className="vault-card rounded-xl p-12 text-center">
           <p className="text-muted-foreground mb-4">Your dashboard is empty.</p>
-          <Button onClick={reset} className="bg-vault-gold hover:bg-vault-amber text-vault-deep font-semibold">
-            Restore defaults
+          <Button onClick={resetRoleDefaults} className="bg-vault-gold hover:bg-vault-amber text-vault-deep font-semibold">
+            Restore role defaults
           </Button>
         </div>
       ) : (
         <div className="space-y-8">
-          {layout.map(widgetId => {
+          {visibleLayout.map(widgetId => {
             const W = WIDGET_COMPONENTS[widgetId]
             return W ? <W key={widgetId} /> : null
           })}

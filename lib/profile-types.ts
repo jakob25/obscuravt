@@ -13,4 +13,5 @@ export interface UserProfile {
   bets_correct: number
   bets_placed: number
   favorite_vtubers: string
+  last_seen_version?: string | null
 }

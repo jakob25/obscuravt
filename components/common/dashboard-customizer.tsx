@@ -15,6 +15,7 @@ export type WidgetId =
   | 'forums'
   | 'recent_notifications'
   | 'daily_loop'
+  | 'my_clips'
 
 export interface Widget {
   id: WidgetId
@@ -36,6 +37,7 @@ export const ALL_WIDGETS: Widget[] = [
   { id: 'forums',                label: 'Forums',                 description: 'Latest constellation posts',       defaultSize: 'half',  emoji: '💬' },
   { id: 'recent_notifications',  label: 'Notifications',          description: 'Your recent alerts',              defaultSize: 'half',  emoji: '🔔' },
   { id: 'daily_loop',             label: 'Daily Loop',             description: 'Daily bonus, tag validator, silhouette, bets', defaultSize: 'full', emoji: '🔄' },
+  { id: 'my_clips',               label: 'Your Clips',             description: 'Clip metrics for your submissions',          defaultSize: 'half', emoji: '📎' },
 ]
 
 const DEFAULT_LAYOUT: WidgetId[] = [
@@ -99,13 +101,14 @@ interface DashboardCustomizerProps {
   onRemove: (id: WidgetId) => void
   onMove: (from: number, to: number) => void
   onReset: () => void
+  availableWidgets?: Widget[]
 }
 
-export function DashboardCustomizer({ layout, onAdd, onRemove, onMove, onReset }: DashboardCustomizerProps) {
+export function DashboardCustomizer({ layout, onAdd, onRemove, onMove, onReset, availableWidgets = ALL_WIDGETS }: DashboardCustomizerProps) {
   const [open, setOpen] = useState(false)
   const dragIdx = useRef<number | null>(null)
 
-  const hidden = ALL_WIDGETS.filter(w => !layout.includes(w.id))
+  const hidden = availableWidgets.filter(w => !layout.includes(w.id))
 
   return (
     <>
@@ -138,7 +141,7 @@ export function DashboardCustomizer({ layout, onAdd, onRemove, onMove, onReset }
               <p className="text-xs text-muted-foreground uppercase tracking-wider mb-3">Active Widgets</p>
               <div className="space-y-2 mb-5">
                 {layout.map((widgetId, idx) => {
-                  const w = ALL_WIDGETS.find(x => x.id === widgetId)
+                  const w = availableWidgets.find(x => x.id === widgetId) ?? ALL_WIDGETS.find(x => x.id === widgetId)
                   if (!w) return null
                   return (
                     <div

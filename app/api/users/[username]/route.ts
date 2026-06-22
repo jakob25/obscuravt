@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/session'
 import { DAILY_BONUS } from '@/lib/db-constants'
+import { isValidRole } from '@/lib/roles'
 
 export async function GET(
   _req: NextRequest,
@@ -11,7 +12,7 @@ export async function GET(
   const { username } = await params
   const { data: user } = await supabaseAdmin
     .from('users')
-    .select('username,coins,role,bio,joined_at,total_won,total_lost,bets_placed,bets_correct,biggest_win,biggest_loss,last_bonus,favorite_vtubers')
+    .select('username,coins,role,bio,joined_at,total_won,total_lost,bets_placed,bets_correct,biggest_win,biggest_loss,last_bonus,favorite_vtubers,last_seen_version')
     .eq('username', username)
     .single()
 
@@ -34,10 +35,15 @@ export async function PATCH(
   }
 
   const body = await req.json()
-  const allowed = ['bio', 'role', 'favorite_vtubers']
   const update: Record<string, unknown> = {}
-  for (const key of allowed) {
-    if (key in body) update[key] = body[key]
+  if ('bio' in body) update.bio = body.bio
+  if ('favorite_vtubers' in body) update.favorite_vtubers = body.favorite_vtubers
+  if ('last_seen_version' in body) update.last_seen_version = body.last_seen_version
+  if ('role' in body) {
+    if (!isValidRole(body.role)) {
+      return NextResponse.json({ error: 'Invalid role. Choose VTuber, Creator, or Fan.' }, { status: 400 })
+    }
+    update.role = body.role
   }
 
   if (body.claim_daily) {
