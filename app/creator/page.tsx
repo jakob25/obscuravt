@@ -1,0 +1,155 @@
+'use client'
+
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
+import Link from 'next/link'
+import { useAuth } from '@/lib/auth-context'
+import { normalizeRole } from '@/lib/roles'
+import { GlitchHeading } from '@/components/vault/glitch-heading'
+import { VaultFrame } from '@/components/vault/vault-frame'
+import {
+  LayoutDashboard, Calendar, Palette, Lightbulb, Users, BookOpen, MessageCircle,
+} from 'lucide-react'
+
+interface ClaimedProfile {
+  id: string
+  name: string
+  avatar_url: string | null
+}
+
+const TOOLS: Array<{
+  label: string
+  icon: typeof Calendar
+  desc: string
+  needsProfile: boolean
+  path: (id: string) => string
+}> = [
+  { label: 'Stream Schedule', icon: Calendar, desc: 'Set weekly stream slots', needsProfile: true, path: id => `/schedule?vtuber=${id}` },
+  { label: 'CMDMI Ideas', icon: Lightbulb, desc: 'Community-driven milestones', needsProfile: true, path: id => `/cmdmi?profile=${id}` },
+  { label: 'Fan Art', icon: Palette, desc: 'Gallery submissions', needsProfile: true, path: id => `/fan-art?vtuber=${id}` },
+  { label: 'Collab Finder', icon: Users, desc: 'Vibe match & schedule overlap', needsProfile: false, path: () => '/collab' },
+  { label: 'Stream Resources', icon: BookOpen, desc: 'Chat games & tools', needsProfile: false, path: () => '/resources' },
+]
+
+export default function CreatorDashboardPage() {
+  const { user, loading } = useAuth()
+  const router = useRouter()
+  const [profiles, setProfiles] = useState<ClaimedProfile[]>([])
+  const [activeId, setActiveId] = useState<string | null>(null)
+
+  const role = normalizeRole(user?.role ?? null)
+  const allowed = role === 'VTuber' || role === 'Creator'
+
+  useEffect(() => {
+    if (loading) return
+    if (!user) { router.push('/login'); return }
+    if (!allowed) { router.push('/'); return }
+
+    fetch('/api/profiles/claimed', { credentials: 'include' })
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        setProfiles(data?.profiles ?? [])
+        setActiveId(data?.activeId ?? data?.profiles?.[0]?.id ?? null)
+      })
+      .catch(() => {})
+  }, [user, loading, allowed, router])
+
+  if (loading || !user || !allowed) return null
+
+  const active = profiles.find(p => p.id === activeId)
+
+  return (
+    <div className="container mx-auto px-4 py-8 max-w-3xl">
+      <div className="flex items-center gap-3 mb-6">
+        <LayoutDashboard className="h-6 w-6 text-vault-gold" />
+        <GlitchHeading as="h1" className="text-2xl font-bold text-vault-cream">Creator Dashboard</GlitchHeading>
+      </div>
+
+      <VaultFrame className="p-5 mb-6">
+        <p className="text-sm text-muted-foreground mb-3">
+          {role === 'VTuber' ? 'Manage your claimed VTuber profiles and fan engagement.' : 'Clip, curate, and grow the community.'}
+        </p>
+        {profiles.length > 0 ? (
+          <div className="flex flex-wrap gap-2 items-center">
+            <span className="text-xs text-muted-foreground">Active profile:</span>
+            <select
+              value={activeId ?? ''}
+              onChange={async e => {
+                const id = e.target.value
+                setActiveId(id)
+                await fetch('/api/profiles/claimed', {
+                  method: 'PATCH',
+                  headers: { 'Content-Type': 'application/json' },
+                  credentials: 'include',
+                  body: JSON.stringify({ activeVtuberId: id }),
+                })
+              }}
+              className="h-9 px-3 rounded-lg bg-muted/30 border border-border text-sm text-vault-cream"
+            >
+              {profiles.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+            </select>
+            {active && (
+              <Link href={`/vtuber/${active.id}`} className="text-xs text-vault-gold hover:underline">
+                View public profile →
+              </Link>
+            )}
+          </div>
+        ) : (
+          <p className="text-sm text-vault-cream">
+            No claimed profiles yet.{' '}
+            <Link href="/discover" className="text-vault-gold hover:underline">Discover VTubers</Link>
+            {' '}and claim yours from their profile page.
+          </p>
+        )}
+      </VaultFrame>
+
+      <div className="grid sm:grid-cols-2 gap-4 mb-6">
+        {TOOLS.map(tool => {
+          const href = tool.needsProfile && activeId ? tool.path(activeId) : tool.path(activeId ?? '')
+          const disabled = tool.needsProfile && !activeId
+          const Icon = tool.icon
+          if (disabled) {
+            return (
+              <VaultFrame key={tool.label} className="p-4 h-full opacity-50">
+                <div className="flex items-start gap-3">
+                  <Icon className="h-5 w-5 text-vault-gold shrink-0 mt-0.5" />
+                  <div>
+                    <h3 className="font-semibold text-vault-cream">{tool.label}</h3>
+                    <p className="text-xs text-muted-foreground mt-1">Claim a profile first</p>
+                  </div>
+                </div>
+              </VaultFrame>
+            )
+          }
+          return (
+            <Link key={tool.label} href={href} className="block group">
+              <VaultFrame className="p-4 h-full hover:border-vault-gold/30 transition-colors">
+                <div className="flex items-start gap-3">
+                  <Icon className="h-5 w-5 text-vault-gold shrink-0 mt-0.5" />
+                  <div>
+                    <h3 className="font-semibold text-vault-cream group-hover:text-vault-gold transition-colors">{tool.label}</h3>
+                    <p className="text-xs text-muted-foreground mt-1">{tool.desc}</p>
+                  </div>
+                </div>
+              </VaultFrame>
+            </Link>
+          )
+        })}
+      </div>
+
+      {activeId && (
+        <VaultFrame className="p-5">
+          <h2 className="text-sm font-semibold text-vault-cream mb-3 flex items-center gap-2">
+            <MessageCircle className="h-4 w-4 text-vault-gold" /> Quick engagement
+          </h2>
+          <p className="text-xs text-muted-foreground mb-3">
+            Fans interact on your public profile — memes, Q&A, karaoke requests, and schedule voting.
+          </p>
+          <Link href={`/vtuber/${activeId}`} className="text-sm text-vault-gold hover:underline">
+            Open {active?.name ?? 'profile'} engagement hub →
+          </Link>
+        </VaultFrame>
+      )}
+    </div>
+  )
+}

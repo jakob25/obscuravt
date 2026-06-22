@@ -8,6 +8,8 @@ import { User, Gift, TrendingUp, Trophy, LogOut } from 'lucide-react'
 import { ROLES } from '@/lib/roles'
 import type { UserProfile } from '@/lib/profile-types'
 import { GlitchHeading } from '@/components/vault/glitch-heading'
+import { ProfileSwitcher } from '@/components/profile/profile-switcher'
+import Link from 'next/link'
 
 export default function MyProfilePage() {
   const { user, logout, refreshUser } = useAuth()
@@ -15,6 +17,7 @@ export default function MyProfilePage() {
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [dailyMsg, setDailyMsg] = useState('')
   const [claiming, setClaiming] = useState(false)
+  const [claimedProfiles, setClaimedProfiles] = useState<Array<{ id: string; name: string }>>([])
 
   useEffect(() => {
     if (!user) { router.push('/login'); return }
@@ -22,6 +25,10 @@ export default function MyProfilePage() {
       .then(r => r.json())
       .then((data) => setProfile(data as UserProfile))
       .catch(() => setProfile(null))
+    fetch('/api/profiles/claimed', { credentials: 'include' })
+      .then(r => r.ok ? r.json() : null)
+      .then(data => setClaimedProfiles(data?.profiles ?? []))
+      .catch(() => setClaimedProfiles([]))
   }, [user, router])
 
   if (!user) return null
@@ -63,9 +70,12 @@ export default function MyProfilePage() {
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-2xl">
-      <div className="flex items-center gap-3 mb-6">
-        <User className="h-6 w-6 text-vault-gold" />
-        <GlitchHeading as="h1" className="text-2xl font-bold text-vault-cream">My Profile</GlitchHeading>
+      <div className="flex items-center justify-between gap-3 mb-6">
+        <div className="flex items-center gap-3">
+          <User className="h-6 w-6 text-vault-gold" />
+          <GlitchHeading as="h1" className="text-2xl font-bold text-vault-cream">My Profile</GlitchHeading>
+        </div>
+        <ProfileSwitcher />
       </div>
 
       <div className="vault-card rounded-xl p-6 mb-4 border-vault-gold/10">
@@ -117,6 +127,20 @@ export default function MyProfilePage() {
               </div>
             ))}
           </div>
+        </div>
+      )}
+
+      {claimedProfiles.length > 0 && (
+        <div className="vault-card rounded-xl p-5 mb-4">
+          <h2 className="font-bold text-vault-cream mb-3">Claimed VTuber Profiles</h2>
+          <div className="space-y-2">
+            {claimedProfiles.map(p => (
+              <Link key={p.id} href={`/vtuber/${p.id}`} className="block text-sm text-vault-cream hover:text-vault-gold transition-colors">
+                {p.name} →
+              </Link>
+            ))}
+          </div>
+          <Link href="/creator" className="text-xs text-vault-gold hover:underline mt-3 inline-block">Open Creator Dashboard</Link>
         </div>
       )}
 

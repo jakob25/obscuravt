@@ -2,6 +2,10 @@ import { notFound } from 'next/navigation'
 import { createClient } from '@supabase/supabase-js'
 import Link from 'next/link'
 import { ExternalLink, Twitch, Youtube, ArrowLeft, Tag } from 'lucide-react'
+import { GlitchHeading } from '@/components/vault/glitch-heading'
+import { VaultFrame } from '@/components/vault/vault-frame'
+import { ClaimProfileButton } from '@/components/vtuber/claim-profile-button'
+import { VTuberEngagement } from '@/components/vtuber/vtuber-engagement'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -58,7 +62,7 @@ export default async function VTuberProfilePage({ params }: Props) {
         </Link>
 
         {/* Header card */}
-        <div className="vault-card rounded-2xl p-6 mb-6">
+        <VaultFrame className="rounded-2xl p-6 mb-6">
           <div className="flex items-start gap-4">
             {/* Avatar */}
             {hasCustomAvatar ? (
@@ -77,7 +81,7 @@ export default async function VTuberProfilePage({ params }: Props) {
             )}
 
             <div className="flex-1 min-w-0">
-              <h1 className="text-2xl font-bold text-vault-cream">{vtuber.name}</h1>
+              <GlitchHeading as="h1" className="text-2xl font-bold text-vault-cream">{vtuber.name}</GlitchHeading>
               {vtuber.handle && (
                 <p className="text-sm text-muted-foreground mt-0.5">{vtuber.handle}</p>
               )}
@@ -92,6 +96,7 @@ export default async function VTuberProfilePage({ params }: Props) {
                 </div>
               )}
             </div>
+            <ClaimProfileButton vtuberId={vtuber.id} vtuberName={vtuber.name} claimedBy={vtuber.claimed_by ?? null} />
           </div>
 
           {/* Bio */}
@@ -115,11 +120,11 @@ export default async function VTuberProfilePage({ params }: Props) {
               </a>
             </div>
           )}
-        </div>
+        </VaultFrame>
 
         {/* Vibe tags */}
         {vibeTags.length > 0 && (
-          <div className="vault-card rounded-2xl p-6 mb-6">
+          <VaultFrame className="rounded-2xl p-6 mb-6">
             <h2 className="text-sm font-semibold text-vault-cream mb-3 flex items-center gap-2">
               <Tag className="h-4 w-4 text-vault-gold" />
               Vibes & Content
@@ -143,11 +148,13 @@ export default async function VTuberProfilePage({ params }: Props) {
                 )
               })}
             </div>
-          </div>
+          </VaultFrame>
         )}
 
+        <VTuberEngagement vtuberId={vtuber.id} vtuberName={vtuber.name} claimedBy={vtuber.claimed_by ?? null} />
+
         {/* Tag validator CTA */}
-        <div className="vault-card rounded-2xl p-5 flex items-center justify-between gap-4">
+        <VaultFrame className="rounded-2xl p-5 flex items-center justify-between gap-4">
           <div>
             <p className="text-sm font-medium text-vault-cream">Know this VTuber?</p>
             <p className="text-xs text-muted-foreground mt-0.5">Help the community by validating their tags.</p>
@@ -158,7 +165,7 @@ export default async function VTuberProfilePage({ params }: Props) {
           >
             Validate Tags
           </Link>
-        </div>
+        </VaultFrame>
 
       </div>
     </div>

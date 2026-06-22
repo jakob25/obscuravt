@@ -7,10 +7,12 @@ import { Button } from '@/components/ui/button'
 import {
   Menu, X, Compass, Film, Trophy, User, Medal,
   LogIn, TrendingUp, Shield, Search, Heart,
-  Bell, ShoppingBag, Calendar, Zap, Eye, MessageSquare, LayoutDashboard
+  Bell, ShoppingBag, Calendar, Zap, Eye, MessageSquare, LayoutDashboard,
+  Users, BookOpen,
 } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/lib/auth-context'
+import { ProfileSwitcher } from '@/components/profile/profile-switcher'
 
 const ADMINS = ['jakob25', 'admin']
 
@@ -24,6 +26,8 @@ const navItems = [
 
 const moreItems = [
   { href: '/weekly',        label: 'Weekly Digest',  icon: Calendar       },
+  { href: '/collab',        label: 'Collab',         icon: Users          },
+  { href: '/resources',     label: 'Resources',      icon: BookOpen       },
   { href: '/tag-validator', label: 'Tag Validator',  icon: Zap            },
   { href: '/silhouette',    label: 'Who Is This?',   icon: Eye            },
   { href: '/forums',        label: 'Forums',         icon: MessageSquare  },
@@ -119,6 +123,11 @@ export function Navbar() {
                   )}
                 </Link>
               </Button>
+
+              {/* Profile switcher (multi-claimed VTubers) */}
+              <div className="hidden md:flex">
+                <ProfileSwitcher />
+              </div>
 
               {/* Shop */}
               <Button asChild variant="ghost" size="icon" className="hidden md:flex text-muted-foreground hover:text-vault-cream">
