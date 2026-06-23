@@ -6,9 +6,10 @@ import { useAuth } from '@/lib/auth-context'
 
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { VaultFrame } from '@/components/vault/vault-frame'
+import { GalleryWall, GalleryWallItem } from '@/components/vault/vault-surfaces'
 import { ImageUploadField } from '@/components/common/image-upload-field'
 import {
-  Image, MessageCircle, Mic2, CalendarClock, Palette, Lightbulb, ThumbsUp, Plus, Share2, Trophy,
+  Image, MessageCircle, Mic2, CalendarClock, Palette, Lightbulb, ThumbsUp, Plus, Trophy,
 } from 'lucide-react'
 import { StreamPredictions } from '@/components/vtuber/stream-predictions'
 
@@ -140,7 +141,7 @@ export function VTuberEngagement({ vtuberId, vtuberName, claimedBy }: Props) {
 
   return (
     <VaultFrame className="p-6 mb-6">
-      <h2 className="text-sm font-semibold text-vault-cream mb-4">Fan Engagement — {vtuberName}</h2>
+      <h2 className="text-sm font-semibold text-vault-cream mb-4">Fan corner — {vtuberName}</h2>
 
       <div className="flex flex-wrap gap-2 mb-4">
         <Link href={`/fan-art?vtuber=${vtuberId}`} className="text-xs px-3 py-1.5 rounded-lg border border-border text-muted-foreground hover:text-vault-gold hover:border-vault-gold/40 flex items-center gap-1.5 cursor-pointer">
@@ -180,29 +181,31 @@ export function VTuberEngagement({ vtuberId, vtuberName, claimedBy }: Props) {
               </div>
             </form>
           )}
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            {memes.map(m => (
-              <div key={m.id} className="rounded-lg overflow-hidden border border-border/60 bg-muted/20">
-                <Link href={`/meme/${m.share_slug}`} className="block cursor-pointer">
-                  <img src={m.image_url} alt={m.caption || 'meme'} className="w-full aspect-square object-cover hover:opacity-90 transition-opacity" />
-                </Link>
-                <div className="p-2 flex justify-between items-center gap-1">
-                  <span className="text-[10px] text-muted-foreground truncate">@{m.submitted_by}</span>
-                  <div className="flex items-center gap-2 shrink-0">
-                    {m.share_slug && (
-                      <Link href={`/meme/${m.share_slug}`} className="text-[10px] text-muted-foreground hover:text-vault-gold flex items-center gap-0.5">
-                        <Share2 className="h-3 w-3" />
-                      </Link>
-                    )}
-                    <button type="button" disabled={!user} onClick={async () => { await fetch('/api/memes', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify({ memeId: m.id }) }); loadMemes() }} className="text-xs text-vault-gold flex items-center gap-0.5 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer">
-                      <ThumbsUp className="h-3 w-3" />{m.upvotes}
-                    </button>
+          <GalleryWall>
+            {memes.map((m, i) => (
+              <GalleryWallItem key={m.id} tilt={i % 3 === 0 ? 'left' : i % 3 === 1 ? 'right' : 'none'}>
+                <div className="bg-muted/20">
+                  <Link href={`/meme/${m.share_slug}`} className="block cursor-pointer">
+                    <img src={m.image_url} alt={m.caption || 'meme'} className="w-full object-cover hover:opacity-90 transition-opacity" />
+                  </Link>
+                  <div className="p-2 flex justify-between items-center gap-1 bg-vault-deep/80">
+                    <span className="text-[10px] text-muted-foreground truncate">@{m.submitted_by}</span>
+                    <div className="flex items-center gap-2 shrink-0">
+                      {m.share_slug && (
+                        <Link href={`/meme/${m.share_slug}`} className="text-[10px] text-muted-foreground hover:text-vault-gold">
+                          Share
+                        </Link>
+                      )}
+                      <button type="button" disabled={!user} onClick={async () => { await fetch('/api/memes', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify({ memeId: m.id }) }); loadMemes() }} className="text-xs text-vault-gold disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer">
+                        ↑ {m.upvotes}
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
+              </GalleryWallItem>
             ))}
-          </div>
-          {memes.length === 0 && <p className="text-xs text-muted-foreground">No memes yet — be the first!</p>}
+          </GalleryWall>
+          {memes.length === 0 && <p className="text-xs text-muted-foreground">Wall&apos;s empty. Post the first meme.</p>}
         </TabsContent>
 
         <TabsContent value="qa" className="space-y-3">

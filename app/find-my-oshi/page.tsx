@@ -4,9 +4,11 @@ import { useState } from 'react'
 import { useVTubers } from '@/hooks/use-data'
 import { useStarMapData } from '@/hooks/use-star-map-data'
 import type { VTuber } from '@/lib/types'
-import { ArrowRight, ArrowLeft, Star, RotateCcw, Sparkles } from 'lucide-react'
+import { ArrowRight, ArrowLeft, RotateCcw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
+import { GlitchHeading } from '@/components/vault/glitch-heading'
+import { VaultPanel } from '@/components/vault/vault-surfaces'
 
 // Quiz questions are editorial — the tag IDs in options are matched against
 // whatever tags VTubers have in Supabase. Unknown/removed tag IDs simply score 0.
@@ -136,11 +138,10 @@ export default function FindMyOshiPage() {
       <div className="border-b border-border px-4 py-4">
         <div className="container mx-auto max-w-2xl flex items-center justify-between">
           <div>
-            <h1 className="text-xl font-bold text-vault-cream flex items-center gap-2">
-              <Star className="h-5 w-5 text-vault-gold" />
+            <GlitchHeading as="h1" className="text-xl font-bold text-vault-cream">
               Find My Oshi
-            </h1>
-            <p className="text-xs text-muted-foreground mt-0.5">Personality-based VTuber matching</p>
+            </GlitchHeading>
+            <p className="text-xs text-muted-foreground mt-0.5">Vibe quiz. No follower counts.</p>
           </div>
           {step > 0 && !isDone && (
             <span className="text-sm text-muted-foreground tabular-nums">
@@ -166,12 +167,10 @@ export default function FindMyOshiPage() {
           {/* Intro */}
           {isIntro && (
             <div className="text-center space-y-6">
-              <Star className="h-14 w-14 text-vault-gold mx-auto mb-4" />
               <div>
                 <h2 className="text-2xl font-bold text-vault-cream mb-3">Who is your Oshi?</h2>
                 <p className="text-muted-foreground leading-relaxed max-w-md mx-auto">
-                  Answer {QUESTIONS.length} quick questions about your streaming preferences and
-                  we\'ll match you with VTubers from the Vault who fit your vibe.
+                  {QUESTIONS.length} questions. We match you to creators the algorithm forgot — by vibe, not clout.
                 </p>
               </div>
               <Button
@@ -233,10 +232,9 @@ export default function FindMyOshiPage() {
           {isDone && (
             <div>
               <div className="text-center mb-8">
-                <Sparkles className="h-10 w-10 text-vault-gold mx-auto mb-3" />
                 <h2 className="text-2xl font-bold text-vault-cream mb-2">Your matches</h2>
                 <p className="text-sm text-muted-foreground">
-                  Based on your answers, these VTubers match your vibe the most.
+                  Your vibe, their dossier. Go say hi.
                 </p>
               </div>
 
@@ -252,7 +250,9 @@ export default function FindMyOshiPage() {
                       <Link
                         key={vtuber.id}
                         href={`/vtuber/${vtuber.id}`}
-                        className="vault-card rounded-xl p-4 flex items-center gap-4 hover:border-vault-gold/30 transition-all group"
+                        className="block group"
+                    >
+                      <VaultPanel className="p-4 flex items-center gap-4 hover:border-vault-gold/30 transition-all"
                       >
                         {/* Rank */}
                         <div className={`flex-shrink-0 h-8 w-8 rounded-full flex items-center justify-center font-bold text-sm ${
@@ -291,6 +291,7 @@ export default function FindMyOshiPage() {
                         </div>
 
                         <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-vault-gold transition-colors flex-shrink-0" />
+                      </VaultPanel>
                       </Link>
                     )
                   })}
@@ -309,9 +310,7 @@ export default function FindMyOshiPage() {
                   asChild
                   className="flex-1 bg-vault-gold hover:bg-vault-amber text-vault-deep font-semibold"
                 >
-                  <Link href="/discover">
-                    <Star className="h-4 w-4 mr-2" /> Open Star Map
-                  </Link>
+                  <Link href="/discover">Open Star Map</Link>
                 </Button>
               </div>
             </div>

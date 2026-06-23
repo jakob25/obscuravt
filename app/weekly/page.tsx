@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { Calendar, TrendingUp, Trophy } from 'lucide-react'
 import type { WeeklyDigest } from '@/lib/types'
 import { GlitchHeading } from '@/components/vault/glitch-heading'
 import { VaultFrame } from '@/components/vault/vault-frame'
+import { VaultDivider } from '@/components/vault/vault-surfaces'
 
 export default function WeeklyPage() {
   const [digest, setDigest] = useState<WeeklyDigest | null>(null)
@@ -21,21 +21,20 @@ export default function WeeklyPage() {
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-2xl">
-      <GlitchHeading as="h1" className="text-2xl font-bold text-vault-cream mb-2 flex items-center gap-2">
-        <Calendar className="h-6 w-6 text-vault-gold" /> Weekly Digest
+      <GlitchHeading as="h1" className="text-2xl font-bold text-vault-cream mb-2">
+        Weekly Digest
       </GlitchHeading>
-      <p className="text-sm text-muted-foreground mb-8">Resets every Monday. This week in the Vault.</p>
+      <p className="text-sm text-muted-foreground mb-4">Resets Monday. What happened while you weren&apos;t watching.</p>
+      <VaultDivider className="mb-8" />
 
-      {loading && <p className="text-muted-foreground animate-pulse">Loading…</p>}
+      {loading && <p className="text-muted-foreground animate-pulse">Pulling the tape…</p>}
 
       {!loading && digest && (
         <div className="space-y-6">
           <section>
-            <h2 className="text-sm font-semibold text-vault-cream mb-3 flex items-center gap-2">
-              <TrendingUp className="h-4 w-4 text-vault-gold" /> Top Clips
-            </h2>
+            <h2 className="text-sm font-semibold text-vault-cream mb-3">Top Clips</h2>
             {digest.topClips.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No clips this week yet.</p>
+              <p className="text-sm text-muted-foreground">Clip drought this week. Submit something cursed.</p>
             ) : (
               <div className="space-y-2">
                 {digest.topClips.map(c => (
@@ -52,9 +51,7 @@ export default function WeeklyPage() {
 
           {digest.topBet && (
             <section>
-              <h2 className="text-sm font-semibold text-vault-cream mb-3 flex items-center gap-2">
-                <Trophy className="h-4 w-4 text-vault-gold" /> Hottest Bet
-              </h2>
+              <h2 className="text-sm font-semibold text-vault-cream mb-3">Hottest Bet</h2>
               <VaultFrame>
                 <Link href="/bets" className="block p-4">
                   <p className="font-medium text-vault-cream">{digest.topBet.title}</p>

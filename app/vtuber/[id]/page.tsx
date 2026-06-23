@@ -1,9 +1,11 @@
 import { notFound } from 'next/navigation'
 import { createClient } from '@supabase/supabase-js'
 import Link from 'next/link'
-import { ExternalLink, Twitch, Youtube, ArrowLeft, Tag } from 'lucide-react'
+import { ExternalLink, Twitch, Youtube } from 'lucide-react'
 import { GlitchHeading } from '@/components/vault/glitch-heading'
 import { VaultFrame } from '@/components/vault/vault-frame'
+import { DossierFrame, VaultDivider } from '@/components/vault/vault-surfaces'
+import { PageBackNav } from '@/components/vault/page-back-nav'
 import { ClaimProfileButton } from '@/components/vtuber/claim-profile-button'
 import { VTuberEngagement } from '@/components/vtuber/vtuber-engagement'
 
@@ -55,26 +57,21 @@ export default async function VTuberProfilePage({ params }: Props) {
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8 max-w-6xl">
 
-        {/* Back */}
-        <Link href="/discover" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-vault-cream mb-8 transition-colors">
-          <ArrowLeft className="h-4 w-4" />
-          Back to Discover
-        </Link>
+        <PageBackNav fallbackHref="/discover" label="Back to Star Map" className="mb-8" />
 
-        {/* Header card */}
-        <VaultFrame className="rounded-2xl p-6 mb-6">
+        <DossierFrame stamp="Subject file" className="mb-6">
           <div className="flex items-start gap-4">
-            {/* Avatar */}
             {hasCustomAvatar ? (
               <img
                 src={vtuber.avatar_url}
                 alt={vtuber.name}
-                className="h-16 w-16 rounded-xl object-cover flex-shrink-0 border border-white/10"
+                className="h-20 w-20 object-cover flex-shrink-0 border-2 border-vault-gold/30"
+                style={{ clipPath: 'polygon(0 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%)' }}
               />
             ) : (
               <div
-                className="h-16 w-16 rounded-xl flex-shrink-0 flex items-center justify-center text-2xl font-bold text-vault-deep"
-                style={{ background: cluster?.color ?? '#d4a574' }}
+                className="h-20 w-20 flex-shrink-0 flex items-center justify-center text-2xl font-bold text-vault-deep border-2 border-vault-gold/30"
+                style={{ background: cluster?.color ?? '#d4a574', clipPath: 'polygon(0 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%)' }}
               >
                 {vtuber.name.charAt(0)}
               </div>
@@ -92,7 +89,7 @@ export default async function VTuberProfilePage({ params }: Props) {
                   className="inline-flex items-center gap-1.5 mt-2 px-2.5 py-1 rounded-lg text-xs font-medium border"
                   style={{ borderColor: cluster.color + '50', backgroundColor: cluster.color + '18', color: cluster.color }}
                 >
-                  Constellation {cluster.tag}
+                  Filed under {cluster.tag}
                 </div>
               )}
             </div>
@@ -120,14 +117,15 @@ export default async function VTuberProfilePage({ params }: Props) {
               </a>
             </div>
           )}
-        </VaultFrame>
+        </DossierFrame>
+
+        <VaultDivider />
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {vibeTags.length > 0 && (
-            <VaultFrame className="rounded-2xl p-6">
-              <h2 className="text-sm font-semibold text-vault-cream mb-3 flex items-center gap-2">
-                <Tag className="h-4 w-4 text-vault-gold" />
-                Vibes & Content
+            <VaultFrame className="rounded-sm p-6">
+              <h2 className="text-sm font-semibold text-vault-cream mb-3 font-mono uppercase tracking-wider">
+                Vibe tags
               </h2>
               <div className="flex flex-wrap gap-2">
                 {vibeTags.map(tagId => {
@@ -155,16 +153,16 @@ export default async function VTuberProfilePage({ params }: Props) {
             <VTuberEngagement vtuberId={vtuber.id} vtuberName={vtuber.name} claimedBy={vtuber.claimed_by ?? null} />
           </div>
 
-          <VaultFrame className="rounded-2xl p-5 flex flex-col justify-between gap-4 h-full">
+          <VaultFrame className="rounded-sm p-5 flex flex-col justify-between gap-4 h-full">
             <div>
-              <p className="text-sm font-medium text-vault-cream">Know this VTuber?</p>
-              <p className="text-xs text-muted-foreground mt-0.5">Help the community by validating their tags.</p>
+              <p className="text-sm font-medium text-vault-cream">Tag check</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Confirm or challenge what&apos;s on file.</p>
             </div>
             <Link
               href="/tag-validator"
-              className="flex-shrink-0 inline-flex items-center justify-center h-9 px-4 rounded-lg bg-vault-gold text-vault-deep text-sm font-semibold cursor-pointer"
+              className="vault-btn-texture flex-shrink-0 inline-flex items-center justify-center h-9 px-4 bg-vault-gold text-vault-deep text-sm font-semibold"
             >
-              Validate Tags
+              Open validator
             </Link>
           </VaultFrame>
         </div>

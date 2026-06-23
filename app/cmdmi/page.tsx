@@ -3,10 +3,12 @@
 import { Suspense, useState, useEffect, useCallback } from 'react'
 import { useAuth } from '@/lib/auth-context'
 import { normalizeRole } from '@/lib/roles'
-import { Lightbulb, ThumbsUp, Target, Coins, Plus } from 'lucide-react'
+import { ThumbsUp, Target, Coins } from 'lucide-react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { PageBackNav } from '@/components/vault/page-back-nav'
+import { GlitchHeading } from '@/components/vault/glitch-heading'
+import { VaultDivider, VaultPanel } from '@/components/vault/vault-surfaces'
 
 interface Goal {
   id: string
@@ -122,26 +124,27 @@ function CmdmiPageContent() {
   return (
     <div className="container mx-auto px-4 py-8 max-w-2xl">
       <PageBackNav fallbackHref={profileId ? `/vtuber/${profileId}` : '/discover'} />
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-vault-cream mb-1 flex items-center gap-2">
-          <Lightbulb className="h-6 w-6 text-vault-gold" />
+      <div className="mb-6">
+        <GlitchHeading as="h1" className="text-2xl font-bold text-vault-cream mb-1">
           Chat Made Me Do It
-        </h1>
+        </GlitchHeading>
         <p className="text-muted-foreground text-sm">
-          Submit stream ideas. The creator picks one and sets a scraps goal — hit it, and the stream happens.
+          Chat pitches the chaos. Creator picks one. Pledge scraps — goal met, stream happens.
         </p>
       </div>
+      <VaultDivider className="mb-6" />
 
       {!profileId && (
-        <div className="vault-card rounded-xl p-4 mb-6 text-sm text-muted-foreground">
-          Viewing all ideas across ObscuraVT. Visit a creator's profile and click "Chat Made Me Do It" to submit an idea for them specifically.
-        </div>
+        <VaultPanel className="p-4 mb-6 text-sm text-muted-foreground">
+          All ideas, all creators. Hit a profile&apos;s CMDMI link to pitch someone specific.
+        </VaultPanel>
       )}
 
       {user && profileId && (
-        <form onSubmit={submitIdea} className="vault-card rounded-2xl p-6 mb-8 space-y-3">
-          <h2 className="font-semibold text-vault-cream flex items-center gap-2 mb-2">
-            <Plus className="h-4 w-4 text-vault-gold" /> Submit an idea
+        <form onSubmit={submitIdea}>
+          <VaultPanel className="p-6 mb-8 space-y-3">
+          <h2 className="font-semibold text-vault-cream mb-2">
+            Pitch the stream
           </h2>
           {error && <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-sm">{error}</div>}
           <input
@@ -161,18 +164,19 @@ function CmdmiPageContent() {
           <button type="submit" disabled={submitting} className="w-full h-10 rounded-lg bg-vault-gold text-vault-deep font-semibold text-sm disabled:opacity-50">
             {submitting ? 'Submitting…' : 'Submit Idea'}
           </button>
+          </VaultPanel>
         </form>
       )}
 
       {loading && <p className="text-muted-foreground text-sm animate-pulse text-center py-8">Loading ideas…</p>}
 
       {!loading && ideas.length === 0 && (
-        <p className="text-muted-foreground text-sm text-center py-8">No ideas yet — be the first!</p>
+        <p className="text-muted-foreground text-sm text-center py-8">Nothing pitched yet. Chat&apos;s been too polite.</p>
       )}
 
       <div className="space-y-4">
         {ideas.map(idea => (
-          <div key={idea.id} className="vault-card rounded-xl p-5">
+          <VaultPanel key={idea.id} className="p-5">
             <div className="flex items-start justify-between gap-3 mb-2">
               <div>
                 <h3 className="font-semibold text-vault-cream">{idea.title}</h3>
@@ -245,15 +249,15 @@ function CmdmiPageContent() {
                 )}
               </div>
             )}
-          </div>
+          </VaultPanel>
         ))}
       </div>
 
       {!user && (
-        <div className="vault-card rounded-xl p-5 text-center mt-6">
-          <p className="text-muted-foreground text-sm mb-3">Sign in to submit ideas, vote, and pledge scraps.</p>
+        <VaultPanel className="p-5 text-center mt-6">
+          <p className="text-muted-foreground text-sm mb-3">Sign in to pitch, vote, and pledge scraps.</p>
           <Link href="/login" className="text-vault-gold text-sm font-medium hover:underline">Sign In →</Link>
-        </div>
+        </VaultPanel>
       )}
     </div>
   )

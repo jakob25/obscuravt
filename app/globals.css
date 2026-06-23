@@ -133,3 +133,172 @@
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
+
+/* ── Vault texture language (site-wide, subtle) ── */
+
+.vault-grain {
+  position: relative;
+}
+.vault-grain::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0.04;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 128px 128px;
+}
+
+.vault-scanlines-subtle::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2;
+  opacity: 0.035;
+  background-image: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(212, 168, 67, 0.45) 2px,
+    rgba(212, 168, 67, 0.45) 4px
+  );
+}
+
+.vault-divider {
+  background: linear-gradient(90deg, transparent, var(--vault-gold) 20%, var(--vault-amber) 50%, var(--vault-gold) 80%, transparent);
+  opacity: 0.35;
+}
+.vault-divider::after {
+  content: '';
+  position: absolute;
+  inset: -1px 0;
+  background: repeating-linear-gradient(90deg, transparent 0 4px, rgba(212, 168, 67, 0.15) 4px 5px);
+  animation: vault-flicker 4s steps(2) infinite;
+  opacity: 0.5;
+}
+
+@keyframes vault-flicker {
+  0%, 95%, 100% { opacity: 0.5; }
+  96% { opacity: 0.2; }
+  97% { opacity: 0.7; }
+}
+
+/* Buttons — scanline texture on hover/active */
+.vault-btn-texture {
+  position: relative;
+  overflow: hidden;
+}
+.vault-btn-texture::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s;
+  background-image: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 1px,
+    rgba(13, 13, 20, 0.25) 1px,
+    rgba(13, 13, 20, 0.25) 3px
+  );
+}
+.vault-btn-texture:hover::after,
+.vault-btn-texture:active::after {
+  opacity: 1;
+}
+
+/* Dossier / character sheet */
+.dossier-frame {
+  border: 1px solid oklch(0.35 0.02 75 / 0.5);
+  background: oklch(0.14 0.01 250);
+  clip-path: polygon(0 12px, 12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%);
+}
+.dossier-frame-tab {
+  position: absolute;
+  top: -1px;
+  left: 16px;
+  padding: 4px 12px 2px;
+  background: oklch(0.14 0.01 250);
+  border: 1px solid oklch(0.35 0.02 75 / 0.5);
+  border-bottom: none;
+  z-index: 5;
+}
+.dossier-frame-body {
+  padding: 1.5rem;
+  padding-top: 2rem;
+}
+
+/* Bet slip / ticket */
+.bet-slip {
+  background: oklch(0.15 0.01 80 / 0.4);
+  border: 1px dashed oklch(0.45 0.03 75 / 0.5);
+  border-radius: 2px;
+}
+.bet-slip-perforation {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 6px;
+  background: repeating-linear-gradient(90deg, var(--vault-deep) 0 6px, transparent 6px 12px);
+  opacity: 0.6;
+}
+.bet-slip-stub {
+  position: absolute;
+  top: 8px;
+  right: 0;
+  width: 28px;
+  bottom: 8px;
+  border-left: 2px dotted oklch(0.4 0.02 75 / 0.4);
+  opacity: 0.5;
+}
+
+/* Gallery wall */
+.gallery-wall-item > * {
+  border-radius: 2px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+  border: 2px solid oklch(0.2 0.01 250);
+}
+.gallery-wall-item:hover > * {
+  border-color: oklch(0.45 0.05 75 / 0.5);
+  z-index: 2;
+  position: relative;
+}
+
+/* Stat cards */
+.stat-card-featured {
+  background: linear-gradient(135deg, oklch(0.18 0.02 75 / 0.25), oklch(0.16 0.01 250));
+  border-color: oklch(0.45 0.05 75 / 0.4);
+}
+
+/* Vault panel corners */
+.vault-panel {
+  background: oklch(0.16 0.01 250);
+  border: 1px solid oklch(0.28 0.01 250);
+  padding: 1.25rem;
+}
+.vault-panel-corner {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border-color: var(--vault-gold);
+  border-style: solid;
+  opacity: 0.45;
+  pointer-events: none;
+  z-index: 3;
+}
+.vault-panel-corner-tl { top: 4px; left: 4px; border-width: 2px 0 0 2px; }
+.vault-panel-corner-tr { top: 4px; right: 4px; border-width: 2px 2px 0 0; }
+.vault-panel-corner-bl { bottom: 4px; left: 4px; border-width: 0 0 2px 2px; }
+.vault-panel-corner-br { bottom: 4px; right: 4px; border-width: 0 2px 2px 0; }
+
+/* Landing hero — full-bleed breakout */
+.hero-bleed {
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  margin-right: calc(50% - 50vw);
+}

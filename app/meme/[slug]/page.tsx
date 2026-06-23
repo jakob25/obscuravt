@@ -3,10 +3,10 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
-import { Image, ThumbsUp, Share2 } from 'lucide-react'
+import { ThumbsUp, Share2 } from 'lucide-react'
 import { PageBackNav } from '@/components/vault/page-back-nav'
 import { GlitchHeading } from '@/components/vault/glitch-heading'
-import { VaultFrame } from '@/components/vault/vault-frame'
+import { VaultPanel, VaultDivider } from '@/components/vault/vault-surfaces'
 import { useAuth } from '@/lib/auth-context'
 
 interface MemeDetail {
@@ -90,16 +90,16 @@ export default function MemeSharePage() {
         label={meme.vtuber_name ? `Back to ${meme.vtuber_name}` : 'Back to Discover'}
       />
 
-      <GlitchHeading as="h1" className="text-xl font-bold text-vault-cream mb-1 flex items-center gap-2">
-        <Image className="h-5 w-5 text-vault-gold" /> Vault Meme
+      <GlitchHeading as="h1" className="text-xl font-bold text-vault-cream mb-1">
+        Vault Meme
       </GlitchHeading>
-      <p className="text-sm text-muted-foreground mb-6">
-        Shared by @{meme.submitted_by}
-        {meme.vtuber_name && <> · for <span className="text-vault-cream">{meme.vtuber_name}</span></>}
+      <p className="text-sm text-muted-foreground mb-4">
+        @{meme.submitted_by} dropped this
+        {meme.vtuber_name && <> · aimed at <span className="text-vault-cream">{meme.vtuber_name}</span></>}
       </p>
+      <VaultDivider className="mb-6" />
 
-      <VaultFrame>
-        <div className="p-4">
+      <VaultPanel className="p-4">
           <img src={meme.image_url} alt={meme.caption || 'Vault meme'} className="w-full rounded-xl object-contain max-h-[70vh] bg-muted/20" />
           {meme.caption && <p className="text-sm text-vault-cream mt-4">{meme.caption}</p>}
           <div className="flex items-center justify-between mt-4 pt-4 border-t border-border">
@@ -124,8 +124,7 @@ export default function MemeSharePage() {
               <Link href="/login" className="text-vault-gold hover:underline">Sign in</Link> to upvote.
             </p>
           )}
-        </div>
-      </VaultFrame>
+      </VaultPanel>
     </div>
   )
 }

@@ -3,8 +3,10 @@
 import { use, useEffect, useState } from 'react'
 import { notFound } from 'next/navigation'
 import { useVTubers } from '@/hooks/use-data'
-import { Trophy, Target, TrendingUp, Star, Calendar } from 'lucide-react'
+import { Calendar } from 'lucide-react'
 import Link from 'next/link'
+import { GlitchHeading } from '@/components/vault/glitch-heading'
+import { VaultDivider, VaultPanel, StatCard } from '@/components/vault/vault-surfaces'
 
 interface PublicProfile {
   username: string
@@ -63,7 +65,7 @@ export default function UserProfilePage({ params }: Props) {
   if (loading) {
     return (
       <div className="container mx-auto px-4 py-8 max-w-2xl">
-        <div className="vault-card rounded-2xl p-6 mb-4 animate-pulse">
+        <div className="vault-panel p-6 mb-4 animate-pulse">
           <div className="flex items-center gap-4">
             <div className="h-14 w-14 rounded-full bg-muted/40" />
             <div className="space-y-2">
@@ -96,14 +98,14 @@ export default function UserProfilePage({ params }: Props) {
   return (
     <div className="container mx-auto px-4 py-8 max-w-2xl">
       {/* Header */}
-      <div className="vault-card rounded-2xl p-6 mb-4">
+      <VaultPanel className="p-6 mb-4">
         <div className="flex items-center gap-4 mb-4">
           <div className="h-14 w-14 rounded-full bg-gradient-to-br from-vault-gold to-vault-amber flex items-center justify-center text-vault-deep text-xl font-bold flex-shrink-0">
             {profile.username.charAt(0).toUpperCase()}
           </div>
           <div className="flex-1">
             <div className="flex items-center gap-2 flex-wrap">
-              <h1 className="text-xl font-bold text-vault-cream">{profile.username}</h1>
+              <GlitchHeading as="h1" className="text-xl font-bold text-vault-cream">{profile.username}</GlitchHeading>
               {profile.role && (
                 <span className="px-2 py-0.5 rounded-full bg-vault-gold/15 border border-vault-gold/30 text-vault-gold text-xs font-medium">
                   {profile.role}
@@ -119,32 +121,28 @@ export default function UserProfilePage({ params }: Props) {
           </div>
           <div className="text-right">
             <p className="text-xl font-bold text-vault-gold tabular-nums">{profile.coins.toLocaleString()}</p>
-            <p className="text-xs text-muted-foreground">V-Coins</p>
+            <p className="text-xs text-muted-foreground">scraps</p>
           </div>
         </div>
 
         {profile.bio && (
           <p className="text-sm text-muted-foreground leading-relaxed">{profile.bio}</p>
         )}
-      </div>
+      </VaultPanel>
+
+      <VaultDivider className="mb-4" />
 
       {/* Stats */}
-      <div className="vault-card rounded-2xl p-5 mb-4">
-        <h2 className="text-sm font-semibold text-vault-cream mb-4 flex items-center gap-2">
-          <TrendingUp className="h-4 w-4 text-vault-gold" /> Betting Record
-        </h2>
+      <VaultPanel className="p-5 mb-4">
+        <h2 className="text-sm font-semibold text-vault-cream mb-4">Betting Record</h2>
         <div className="grid grid-cols-2 gap-3">
-          {([
-            { label: 'Bets Placed', value: profile.bets_placed.toLocaleString(), icon: Trophy },
-            { label: 'Correct', value: profile.bets_correct.toLocaleString(), icon: Target },
-            { label: 'Total Won', value: `${profile.total_won.toLocaleString()} ??`, icon: Star },
-            { label: 'Biggest Win', value: `${profile.biggest_win.toLocaleString()} ??`, icon: Star },
-          ] as { label: string; value: string; icon: React.ElementType }[]).map(({ label, value }) => (
-            <div key={label} className="bg-muted/20 rounded-xl p-3 border border-border">
-              <p className="text-xs text-muted-foreground mb-0.5">{label}</p>
-              <p className="font-bold text-vault-cream">{value}</p>
-            </div>
-          ))}
+          {accuracy !== null && (
+            <StatCard featured label="Accuracy" value={`${accuracy}%`} />
+          )}
+          <StatCard label="Bets Placed" value={profile.bets_placed.toLocaleString()} />
+          <StatCard label="Correct" value={profile.bets_correct.toLocaleString()} />
+          <StatCard label="Total Won" value={profile.total_won.toLocaleString()} />
+          <StatCard label="Biggest Win" value={profile.biggest_win.toLocaleString()} />
         </div>
         {accuracy !== null && (
           <div className="mt-3 pt-3 border-t border-border flex items-center justify-between">
@@ -154,13 +152,13 @@ export default function UserProfilePage({ params }: Props) {
             </span>
           </div>
         )}
-      </div>
+      </VaultPanel>
 
       {/* Badges */}
       {earnedBadges.length > 0 && (
-        <div className="vault-card rounded-2xl p-5 mb-4">
-          <h2 className="text-sm font-semibold text-vault-cream mb-4 flex items-center gap-2">
-            <Star className="h-4 w-4 text-vault-gold" /> Achievements ({earnedBadges.length})
+        <VaultPanel className="p-5 mb-4">
+          <h2 className="text-sm font-semibold text-vault-cream mb-4">
+            Achievements ({earnedBadges.length})
           </h2>
           <div className="grid grid-cols-2 gap-3">
             {earnedBadges.map(a => (
@@ -173,12 +171,12 @@ export default function UserProfilePage({ params }: Props) {
               </div>
             ))}
           </div>
-        </div>
+        </VaultPanel>
       )}
 
       {/* Favorite VTubers */}
       {favoriteVtubers.length > 0 && (
-        <div className="vault-card rounded-2xl p-5">
+        <VaultPanel className="p-5">
           <h2 className="text-sm font-semibold text-vault-cream mb-4">Favorite VTubers</h2>
           <div className="flex flex-wrap gap-3">
             {favoriteVtubers.map(v => v && (
@@ -192,7 +190,7 @@ export default function UserProfilePage({ params }: Props) {
               </Link>
             ))}
           </div>
-        </div>
+        </VaultPanel>
       )}
     </div>
   )

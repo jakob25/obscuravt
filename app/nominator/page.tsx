@@ -13,18 +13,18 @@ export default function NominatorPage() {
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-2xl">
-      <GlitchHeading as="h1" className="text-2xl font-bold text-vault-cream mb-2 flex items-center gap-2">
-        <Star className="h-6 w-6 text-vault-gold" /> Nominator
+      <GlitchHeading as="h1" className="text-2xl font-bold text-vault-cream mb-2">
+        Nominator
       </GlitchHeading>
       <p className="text-sm text-muted-foreground mb-8">
-        Know a creator the algorithm forgot? Nominate them for the Star Map.
+        The creators the algorithm forgot to show you — put them on the map.
       </p>
 
       <div className="grid sm:grid-cols-3 gap-3 mb-8">
         {[
-          { Icon: Star, title: 'Nominate', desc: 'Submit a creator you love' },
-          { Icon: ShieldCheck, title: 'Review', desc: 'Admin checks the submission' },
-          { Icon: Compass, title: 'Star Map', desc: 'Approved creators go live' },
+          { Icon: Star, title: 'Nominate', desc: 'Drop a name. We listen.' },
+          { Icon: ShieldCheck, title: 'Review', desc: 'Vault staff sanity-checks it' },
+          { Icon: Compass, title: 'Star Map', desc: 'Approved = discoverable' },
         ].map(({ Icon, title, desc }) => (
           <VaultFrame key={title}>
             <div className="p-4 text-center">

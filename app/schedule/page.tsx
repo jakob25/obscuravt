@@ -3,10 +3,12 @@
 import { Suspense, useState, useEffect, useCallback } from 'react'
 import { useAuth } from '@/lib/auth-context'
 import { normalizeRole } from '@/lib/roles'
-import { Calendar, Plus, Trash2 } from 'lucide-react'
+import { Plus, Trash2 } from 'lucide-react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { PageBackNav } from '@/components/vault/page-back-nav'
+import { GlitchHeading } from '@/components/vault/glitch-heading'
+import { VaultDivider, VaultPanel } from '@/components/vault/vault-surfaces'
 
 interface ScheduleSlot {
   id: string
@@ -82,11 +84,10 @@ function SchedulePageContent() {
       <PageBackNav fallbackHref={vtuberId ? `/vtuber/${vtuberId}` : '/discover'} />
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-vault-cream mb-1 flex items-center gap-2">
-            <Calendar className="h-6 w-6 text-vault-gold" />
+          <GlitchHeading as="h1" className="text-2xl font-bold text-vault-cream mb-1">
             Stream Schedule
-          </h1>
-          <p className="text-muted-foreground text-sm">Never miss a stream.</p>
+          </GlitchHeading>
+          <p className="text-muted-foreground text-sm">Know when they go live. No FOMO required.</p>
         </div>
         {isOwner && vtuberId && (
           <button
@@ -97,15 +98,17 @@ function SchedulePageContent() {
           </button>
         )}
       </div>
+      <VaultDivider className="mb-6" />
 
       {!vtuberId && (
-        <div className="vault-card rounded-xl p-6 text-center text-sm text-muted-foreground">
-          Visit a specific creator's profile to view their stream schedule.
-        </div>
+        <VaultPanel className="p-6 text-center text-sm text-muted-foreground">
+          Pick a creator&apos;s profile to see when they stream.
+        </VaultPanel>
       )}
 
       {showForm && (
-        <form onSubmit={addSlot} className="vault-card rounded-2xl p-6 mb-6 space-y-3">
+        <form onSubmit={addSlot}>
+          <VaultPanel className="p-6 mb-6 space-y-3">
           {error && <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-sm">{error}</div>}
           <select
             value={dayOfWeek}
@@ -137,6 +140,7 @@ function SchedulePageContent() {
           <button type="submit" disabled={submitting} className="w-full h-10 rounded-lg bg-vault-gold text-vault-deep font-semibold text-sm disabled:opacity-50">
             {submitting ? 'Adding…' : 'Add Time Slot'}
           </button>
+          </VaultPanel>
         </form>
       )}
 
@@ -148,7 +152,7 @@ function SchedulePageContent() {
 
       <div className="space-y-2">
         {sorted.map(slot => (
-          <div key={slot.id} className="vault-card rounded-xl p-4 flex items-center justify-between gap-4">
+          <VaultPanel key={slot.id} className="p-4 flex items-center justify-between gap-4">
             <div>
               <div className="font-semibold text-vault-cream">{DAYS[slot.day_of_week]}</div>
               <div className="text-sm text-muted-foreground">
@@ -161,14 +165,14 @@ function SchedulePageContent() {
                 <Trash2 className="h-4 w-4" />
               </button>
             )}
-          </div>
+          </VaultPanel>
         ))}
       </div>
 
       {!user && vtuberId && (
-        <div className="vault-card rounded-xl p-5 text-center mt-6">
+        <VaultPanel className="p-5 text-center mt-6">
           <Link href="/login" className="text-vault-gold text-sm font-medium hover:underline">Sign in for more →</Link>
-        </div>
+        </VaultPanel>
       )}
     </div>
   )

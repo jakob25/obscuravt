@@ -1,9 +1,10 @@
 'use client'
 
-import { Gamepad2, ExternalLink, BookOpen, Monitor, CheckSquare } from 'lucide-react'
+import { Gamepad2, ExternalLink, Monitor, CheckSquare } from 'lucide-react'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { GlitchHeading } from '@/components/vault/glitch-heading'
 import { PageBackNav } from '@/components/vault/page-back-nav'
+import { VaultDivider, VaultPanel } from '@/components/vault/vault-surfaces'
 
 interface GameResource {
   name: string
@@ -52,8 +53,9 @@ function ResourceList({ items }: { items: GameResource[] }) {
           href={game.link}
           target="_blank"
           rel="noopener noreferrer"
-          className="vault-card rounded-xl p-4 flex items-start justify-between gap-4 hover:border-vault-gold/30 transition-all group block"
+          className="block group"
         >
+          <VaultPanel className="p-4 flex items-start justify-between gap-4 hover:border-vault-gold/30 transition-all">
           <div className="min-w-0">
             <div className="flex items-center gap-2 mb-1">
               <h3 className="font-semibold text-vault-cream group-hover:text-vault-gold transition-colors">{game.name}</h3>
@@ -66,6 +68,7 @@ function ResourceList({ items }: { items: GameResource[] }) {
               ))}
             </div>
           </div>
+          </VaultPanel>
         </a>
       ))}
     </div>
@@ -77,7 +80,7 @@ function ChatGamesTab() {
     <>
       <ResourceList items={CHAT_GAMES} />
       <p className="text-xs text-muted-foreground text-center mt-6">
-        Know a game that should be here? Let us know — this list grows with the community.
+        Missing a banger? Tell us — this list is community-fed.
       </p>
     </>
   )
@@ -89,8 +92,8 @@ function StreamToolsTab() {
 
 function DebutChecklistTab() {
   return (
-    <div className="vault-card rounded-xl p-6">
-      <p className="text-sm text-muted-foreground mb-4">A practical pre-debut list — not exhaustive, but covers the usual gaps.</p>
+    <VaultPanel className="p-6">
+      <p className="text-sm text-muted-foreground mb-4">Pre-debut sanity check. Not gospel — but it closes the usual gaps.</p>
       <ul className="space-y-3">
         {DEBUT_CHECKLIST.map((item, i) => (
           <li key={item} className="flex items-start gap-3 text-sm text-vault-cream">
@@ -99,7 +102,7 @@ function DebutChecklistTab() {
           </li>
         ))}
       </ul>
-    </div>
+    </VaultPanel>
   )
 }
 
@@ -108,12 +111,12 @@ export default function ResourcesPage() {
     <div className="container mx-auto px-4 py-8 max-w-3xl">
       <PageBackNav fallbackHref="/creator" />
       <div className="mb-6">
-        <GlitchHeading as="h1" className="text-2xl font-bold text-vault-cream mb-1 flex items-center gap-2">
-          <BookOpen className="h-6 w-6 text-vault-gold" />
+        <GlitchHeading as="h1" className="text-2xl font-bold text-vault-cream mb-1">
           Stream Resources
         </GlitchHeading>
-        <p className="text-muted-foreground text-sm">Curated tools for VTubers and creators.</p>
+        <p className="text-muted-foreground text-sm">Tools, games, and debut prep — no corporate fluff.</p>
       </div>
+      <VaultDivider className="mb-6" />
 
       <Tabs defaultValue="chat-games">
         <TabsList className="mb-6 bg-muted/50 flex-wrap h-auto">

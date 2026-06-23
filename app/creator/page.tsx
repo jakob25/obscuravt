@@ -9,8 +9,9 @@ import { GlitchHeading } from '@/components/vault/glitch-heading'
 import { PageBackNav } from '@/components/vault/page-back-nav'
 import { VaultFrame } from '@/components/vault/vault-frame'
 import {
-  LayoutDashboard, Calendar, Palette, Lightbulb, Users, BookOpen, MessageCircle,
+  Calendar, Palette, Lightbulb, Users, BookOpen,
 } from 'lucide-react'
+import { VaultDivider } from '@/components/vault/vault-surfaces'
 
 interface ClaimedProfile {
   id: string
@@ -62,14 +63,15 @@ export default function CreatorDashboardPage() {
   return (
     <div className="container mx-auto px-4 py-8 max-w-3xl">
       <PageBackNav fallbackHref="/" />
-      <div className="flex items-center gap-3 mb-6">
-        <LayoutDashboard className="h-6 w-6 text-vault-gold" />
-        <GlitchHeading as="h1" className="text-2xl font-bold text-vault-cream">Creator Dashboard</GlitchHeading>
-      </div>
+      <GlitchHeading as="h1" className="text-2xl font-bold text-vault-cream mb-1">Creator Dashboard</GlitchHeading>
+      <p className="text-sm text-muted-foreground mb-4">
+        {role === 'VTuber' ? 'Your profiles, your fans, your chaos.' : 'Clip, curate, grow the underground.'}
+      </p>
+      <VaultDivider className="mb-6" />
 
       <VaultFrame className="p-5 mb-6">
         <p className="text-sm text-muted-foreground mb-3">
-          {role === 'VTuber' ? 'Manage your claimed VTuber profiles and fan engagement.' : 'Clip, curate, and grow the community.'}
+          Switch profiles, jump to tools, keep the Archive fed.
         </p>
         {profiles.length > 0 ? (
           <div className="flex flex-wrap gap-2 items-center">
@@ -141,11 +143,11 @@ export default function CreatorDashboardPage() {
 
       {activeId && (
         <VaultFrame className="p-5">
-          <h2 className="text-sm font-semibold text-vault-cream mb-3 flex items-center gap-2">
-            <MessageCircle className="h-4 w-4 text-vault-gold" /> Quick engagement
+          <h2 className="text-sm font-semibold text-vault-cream mb-3">
+            Quick engagement
           </h2>
           <p className="text-xs text-muted-foreground mb-3">
-            Fans interact on your public profile — memes, Q&A, karaoke requests, and stream predictions.
+            Memes, Q&A, karaoke requests, predictions — all on your public dossier.
           </p>
           <Link href={`/vtuber/${activeId}`} className="text-sm text-vault-gold hover:underline">
             Open {active?.name ?? 'profile'} engagement hub →

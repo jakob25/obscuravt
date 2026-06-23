@@ -9,7 +9,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
-import { Users, Plus, Loader2 } from 'lucide-react'
+import { Plus, Loader2 } from 'lucide-react'
+import { VaultDivider } from '@/components/vault/vault-surfaces'
 
 interface CorpoGroup {
   slug: string
@@ -70,8 +71,8 @@ export default function CorpoIndexPage() {
   return (
     <div className="container mx-auto px-4 py-8 max-w-2xl">
       <div className="flex items-center justify-between mb-2">
-        <GlitchHeading as="h1" className="text-2xl font-bold text-vault-cream flex items-center gap-2">
-          <Users className="h-6 w-6 text-vault-gold" /> Corpo Collectives
+        <GlitchHeading as="h1" className="text-2xl font-bold text-vault-cream">
+          Corpo Collectives
         </GlitchHeading>
         {user && (
           <Button
@@ -84,9 +85,10 @@ export default function CorpoIndexPage() {
           </Button>
         )}
       </div>
-      <p className="text-sm text-muted-foreground mb-8">
-        Shared profiles for small groups and light corpos. Cross-promo without exclusivity.
+      <p className="text-sm text-muted-foreground mb-4">
+        Small groups, shared spotlight. Cross-promo without the contract drama.
       </p>
+      <VaultDivider className="mb-8" />
 
       {showForm && user && (
         <VaultFrame className="mb-8">

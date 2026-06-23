@@ -1,11 +1,12 @@
 'use client'
 
 import { useState } from 'react'
-import { Users, Calendar, EyeOff } from 'lucide-react'
+import { Calendar, EyeOff } from 'lucide-react'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { useVTubers } from '@/hooks/use-data'
 import { GlitchHeading } from '@/components/vault/glitch-heading'
 import { VaultFrame } from '@/components/vault/vault-frame'
+import { VaultDivider, VaultPanel } from '@/components/vault/vault-surfaces'
 
 export default function CollabPage() {
   const { vtubers } = useVTubers()
@@ -37,14 +38,15 @@ export default function CollabPage() {
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-3xl">
-      <GlitchHeading as="h1" className="text-2xl font-bold text-vault-cream mb-2 flex items-center gap-2">
-        <Users className="h-6 w-6 text-vault-gold" /> Collab & Networking
+      <GlitchHeading as="h1" className="text-2xl font-bold text-vault-cream mb-2">
+        Collab & Networking
       </GlitchHeading>
-      <p className="text-sm text-muted-foreground mb-6">
-        Match by shared vibe tags (Jaccard). No follower counts — ever.
+      <p className="text-sm text-muted-foreground mb-4">
+        Vibe match by tags. Zero follower worship. Just overlap.
       </p>
+      <VaultDivider className="mb-6" />
 
-      <div className="mb-6">
+      <VaultPanel className="p-4 mb-6">
         <label className="text-xs text-muted-foreground block mb-1">Your VTuber profile</label>
         <select
           value={sourceId}
@@ -54,7 +56,7 @@ export default function CollabPage() {
           <option value="">Select a creator…</option>
           {vtubers.map(v => <option key={v.id} value={v.id}>{v.name}</option>)}
         </select>
-      </div>
+      </VaultPanel>
 
       <Tabs defaultValue="match">
         <TabsList className="mb-4 bg-muted/50">

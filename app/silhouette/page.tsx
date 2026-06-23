@@ -4,9 +4,11 @@ import { useState, useEffect } from 'react'
 import { useVTubers } from '@/hooks/use-data'
 import { useStarMapData } from '@/hooks/use-star-map-data'
 import type { VTuber } from '@/lib/types'
-import { Eye, RotateCcw, ArrowRight, Check, X, User, Trophy, Target } from 'lucide-react'
+import { RotateCcw, ArrowRight, Check, X, User, Trophy, Target } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
+import { GlitchHeading } from '@/components/vault/glitch-heading'
+import { VaultPanel } from '@/components/vault/vault-surfaces'
 
 function shuffle<T>(arr: T[]): T[] {
   return [...arr].sort(() => Math.random() - 0.5)
@@ -75,10 +77,9 @@ export default function SilhouettePage() {
     <div className="min-h-screen bg-background">
       <div className="border-b border-border px-4 py-4">
         <div className="container mx-auto max-w-lg flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Eye className="h-5 w-5 text-vault-gold" />
-            <h1 className="text-xl font-bold text-vault-cream">Who is this VTuber?</h1>
-          </div>
+          <GlitchHeading as="h1" className="text-xl font-bold text-vault-cream">
+            Who is this VTuber?
+          </GlitchHeading>
           <div className="flex items-center gap-4 text-sm">
             <span className="text-muted-foreground">{round + 1}/{MAX_ROUNDS}</span>
             <span className="font-bold text-vault-gold">Score: {score}</span>
@@ -95,7 +96,7 @@ export default function SilhouettePage() {
               ) : score >= 5 ? (
                 <Target className="h-12 w-12 text-vault-amber" />
               ) : (
-                <Eye className="h-12 w-12 text-muted-foreground" />
+                <User className="h-12 w-12 text-muted-foreground" />
               )}
             </div>
             <div>
@@ -103,9 +104,9 @@ export default function SilhouettePage() {
                 {score}/{MAX_ROUNDS} correct
               </h2>
               <p className="text-muted-foreground">
-                {score >= 8 ? 'You really know your VTubers!' :
-                 score >= 5 ? 'Not bad, keep exploring!' :
-                 'Time to do some research on the Star Map…'}
+                {score >= 8 ? 'Vault encyclopedia. Respect.' :
+                 score >= 5 ? 'Decent eye. Star Map awaits.' :
+                 'Hit the map. Study the silhouettes.'}
               </p>
             </div>
             <div className="flex gap-3 justify-center">
@@ -113,7 +114,7 @@ export default function SilhouettePage() {
                 <RotateCcw className="h-4 w-4" /> Play again
               </Button>
               <Button asChild className="bg-vault-gold hover:bg-vault-amber text-vault-deep font-semibold gap-2">
-                <Link href="/discover"><Eye className="h-4 w-4" /> Explore Star Map</Link>
+                <Link href="/discover">Explore Star Map</Link>
               </Button>
             </div>
           </div>
@@ -142,7 +143,7 @@ export default function SilhouettePage() {
 
             {/* Revealed info */}
             {revealed && current && (
-              <div className="vault-card rounded-xl p-4 text-center">
+              <VaultPanel className="p-4 text-center">
                 <h2 className="font-bold text-vault-cream text-lg mb-1">{current.name}</h2>
                 {constellation && (
                   <span className="text-xs px-2 py-0.5 rounded-full border"
@@ -154,7 +155,7 @@ export default function SilhouettePage() {
                 <Link href={`/vtuber/${current.id}`} className="text-xs text-vault-gold hover:underline mt-2 inline-block">
                   View full profile →
                 </Link>
-              </div>
+              </VaultPanel>
             )}
 
             {/* Choices */}

@@ -2,11 +2,11 @@
 
 import { useState, useMemo } from 'react'
 import Link from 'next/link'
-import { Search } from 'lucide-react'
 import { useVTubers } from '@/hooks/use-data'
 import { useStarMapData } from '@/hooks/use-star-map-data'
 import { GlitchHeading } from '@/components/vault/glitch-heading'
 import { VaultFrame } from '@/components/vault/vault-frame'
+import { VaultDivider } from '@/components/vault/vault-surfaces'
 
 export default function SearchPage() {
   const [query, setQuery] = useState('')
@@ -29,9 +29,11 @@ export default function SearchPage() {
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-2xl">
-      <GlitchHeading as="h1" className="text-2xl font-bold text-vault-cream mb-6 flex items-center gap-2">
-        <Search className="h-6 w-6 text-vault-gold" /> Search the Vault
+      <GlitchHeading as="h1" className="text-2xl font-bold text-vault-cream mb-2">
+        Search the Vault
       </GlitchHeading>
+      <p className="text-sm text-muted-foreground mb-4">Name, tag, constellation — find who the algorithm hid.</p>
+      <VaultDivider className="mb-6" />
 
       <input
         value={query}
@@ -44,7 +46,7 @@ export default function SearchPage() {
       {loading && <p className="text-muted-foreground text-sm animate-pulse">Searching the archive…</p>}
 
       {!loading && query && results.length === 0 && (
-        <p className="text-muted-foreground text-sm">No creators match &ldquo;{query}&rdquo;.</p>
+        <p className="text-muted-foreground text-sm">Nothing for &ldquo;{query}&rdquo;. Try a vibe tag.</p>
       )}
 
       <div className="space-y-3">

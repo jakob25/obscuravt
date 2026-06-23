@@ -3,9 +3,10 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
-import { Users, ExternalLink } from 'lucide-react'
+import { ExternalLink } from 'lucide-react'
 import { GlitchHeading } from '@/components/vault/glitch-heading'
 import { VaultFrame } from '@/components/vault/vault-frame'
+import { VaultDivider } from '@/components/vault/vault-surfaces'
 
 interface CorpoGroup {
   name: string
@@ -48,10 +49,11 @@ export default function CorpoPage() {
         <div className="h-40 bg-cover bg-center border-b border-border" style={{ backgroundImage: `url(${group.banner_url})` }} />
       )}
       <div className="container mx-auto px-4 py-8 max-w-3xl">
-        <GlitchHeading as="h1" className="text-2xl font-bold text-vault-cream mb-2 flex items-center gap-2">
-          <Users className="h-6 w-6 text-vault-gold" /> {group.name}
+        <GlitchHeading as="h1" className="text-2xl font-bold text-vault-cream mb-2">
+          {group.name}
         </GlitchHeading>
-        <p className="text-sm text-muted-foreground mb-2">Shared corpo profile · cross-promo hub</p>
+        <p className="text-sm text-muted-foreground mb-2">Collective dossier · cross-promo hub</p>
+        <VaultDivider className="mb-6" />
         {group.bio && <p className="text-sm text-muted-foreground mb-8">{group.bio}</p>}
 
         <h2 className="text-sm font-semibold text-vault-cream mb-4">Members</h2>

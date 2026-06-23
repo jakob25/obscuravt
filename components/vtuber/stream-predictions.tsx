@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '@/lib/auth-context'
-import { Trophy, Vote, Loader2, Plus } from 'lucide-react'
+import { Loader2, Plus } from 'lucide-react'
+import { BetSlip } from '@/components/vault/vault-surfaces'
 import { Progress } from '@/components/ui/progress'
 import { Input } from '@/components/ui/input'
 import type { StreamPrediction } from '@/lib/stream-predictions'
@@ -90,7 +91,7 @@ export function StreamPredictions({ vtuberId, vtuberName, isOwner }: Props) {
   return (
     <div className="space-y-3">
       <p className="text-xs text-muted-foreground">
-        Predict what happens on {vtuberName}&apos;s next stream. Wager scraps, vote outcomes — same odds as VTuberBets.
+        Call the next stream for {vtuberName}. Wager scraps, vote when it&apos;s over.
       </p>
 
       {isOwner && (
@@ -125,7 +126,7 @@ export function StreamPredictions({ vtuberId, vtuberName, isOwner }: Props) {
       {loading && <p className="text-xs text-muted-foreground animate-pulse">Loading predictions…</p>}
 
       {!loading && predictions.length === 0 && (
-        <p className="text-xs text-muted-foreground">No stream predictions yet.</p>
+        <p className="text-xs text-muted-foreground">No predictions posted. Owner can open the first slip.</p>
       )}
 
       {predictions.map(p => {
@@ -135,7 +136,7 @@ export function StreamPredictions({ vtuberId, vtuberName, isOwner }: Props) {
         const isOpen = p.status === 'open'
 
         return (
-          <div key={p.id} className="p-3 rounded-lg border border-border/60 bg-muted/20 space-y-2">
+          <BetSlip key={p.id} className="space-y-2">
             <div className="flex items-start justify-between gap-2">
               <p className="text-sm font-medium text-vault-cream">{p.title}</p>
               <span className="text-[10px] px-2 py-0.5 rounded-full bg-muted/50 text-muted-foreground shrink-0">{p.status}</span>
@@ -171,16 +172,16 @@ export function StreamPredictions({ vtuberId, vtuberName, isOwner }: Props) {
                 <button
                   type="button"
                   onClick={() => setMode(m => ({ ...m, [p.id]: activeMode === 'place' ? null : 'place' }))}
-                  className="flex-1 flex items-center justify-center gap-1 h-8 rounded-lg text-xs font-semibold border border-vault-gold/30 text-vault-gold hover:bg-vault-gold/10 cursor-pointer"
+                  className="flex-1 flex items-center justify-center h-8 rounded-lg text-xs font-semibold border border-vault-gold/30 text-vault-gold hover:bg-vault-gold/10 cursor-pointer"
                 >
-                  <Trophy className="h-3.5 w-3.5" /> Wager
+                  Wager
                 </button>
                 <button
                   type="button"
                   onClick={() => setMode(m => ({ ...m, [p.id]: activeMode === 'vote' ? null : 'vote' }))}
-                  className="flex-1 flex items-center justify-center gap-1 h-8 rounded-lg text-xs font-semibold border border-border text-vault-cream hover:bg-muted/40 cursor-pointer"
+                  className="flex-1 flex items-center justify-center h-8 rounded-lg text-xs font-semibold border border-border text-vault-cream hover:bg-muted/40 cursor-pointer"
                 >
-                  <Vote className="h-3.5 w-3.5" /> Vote
+                  Vote
                 </button>
               </div>
             )}
@@ -213,7 +214,7 @@ export function StreamPredictions({ vtuberId, vtuberName, isOwner }: Props) {
             {p.status === 'closed' && p.result && (
               <p className="text-xs text-vault-gold">Resolved: {p.result}</p>
             )}
-          </div>
+          </BetSlip>
         )
       })}
     </div>

@@ -7,6 +7,8 @@ import { useStarMapData } from '@/hooks/use-star-map-data'
 import { ThumbsUp, Send } from 'lucide-react'
 import Link from 'next/link'
 import { PageBackNav } from '@/components/vault/page-back-nav'
+import { GlitchHeading } from '@/components/vault/glitch-heading'
+import { VaultDivider, VaultPanel } from '@/components/vault/vault-surfaces'
 
 interface Post {
   id: string
@@ -70,38 +72,46 @@ export default function ClusterForumPage() {
     <div className="container mx-auto px-4 py-8 max-w-2xl">
       <PageBackNav fallbackHref="/forums" label="All forums" />
 
-      <div className="flex items-center gap-3 mb-8">
+      <div className="flex items-center gap-3 mb-2">
         {constellation && <span className="h-3 w-3 rounded-full flex-shrink-0" style={{ backgroundColor: constellation.color }} />}
-        <h1 className="text-2xl font-bold text-vault-cream">{constellation?.name ?? 'Forum'}</h1>
+        <GlitchHeading as="h1" className="text-2xl font-bold text-vault-cream">
+          {constellation?.name ?? 'Forum'}
+        </GlitchHeading>
       </div>
+      <p className="text-muted-foreground text-sm mb-4">
+        {constellation?.description ?? 'Where this constellation talks shop.'}
+      </p>
+      <VaultDivider className="mb-6" />
 
       {user ? (
-        <form onSubmit={post} className="vault-card rounded-2xl p-4 mb-6 flex gap-2">
-          <input
-            value={content}
-            onChange={e => setContent(e.target.value)}
-            placeholder="Share something with this constellation…"
-            className="flex-1 h-10 px-3 rounded-lg bg-muted/30 border border-border text-vault-cream text-sm placeholder:text-muted-foreground focus:outline-none focus:border-vault-bronze/60"
-          />
-          <button type="submit" disabled={posting || !content.trim()} className="h-10 px-4 rounded-lg bg-vault-gold text-vault-deep font-semibold text-sm disabled:opacity-50 flex items-center gap-1.5">
-            <Send className="h-4 w-4" /> Post
-          </button>
+        <form onSubmit={post} className="mb-6">
+          <VaultPanel className="p-4 flex gap-2">
+            <input
+              value={content}
+              onChange={e => setContent(e.target.value)}
+              placeholder="Drop a take. Start the thread."
+              className="flex-1 h-10 px-3 rounded-lg bg-muted/30 border border-border text-vault-cream text-sm placeholder:text-muted-foreground focus:outline-none focus:border-vault-bronze/60"
+            />
+            <button type="submit" disabled={posting || !content.trim()} className="h-10 px-4 rounded-lg bg-vault-gold text-vault-deep font-semibold text-sm disabled:opacity-50 flex items-center gap-1.5">
+              <Send className="h-4 w-4" /> Post
+            </button>
+          </VaultPanel>
         </form>
       ) : (
-        <div className="vault-card rounded-xl p-4 mb-6 text-center text-sm text-muted-foreground">
-          <Link href="/login" className="text-vault-gold hover:underline">Sign in</Link> to post.
-        </div>
+        <VaultPanel className="p-4 mb-6 text-center text-sm text-muted-foreground">
+          <Link href="/login" className="text-vault-gold hover:underline">Sign in</Link> to join the conversation.
+        </VaultPanel>
       )}
 
       {loading && <p className="text-muted-foreground text-sm animate-pulse text-center py-8">Loading posts…</p>}
 
       {!loading && posts.length === 0 && (
-        <p className="text-muted-foreground text-sm text-center py-8">No posts yet — start the conversation.</p>
+        <p className="text-muted-foreground text-sm text-center py-8">Crickets. Someone say something unhinged.</p>
       )}
 
       <div className="space-y-3">
         {posts.map(p => (
-          <div key={p.id} className="vault-card rounded-xl p-4 flex items-start gap-3">
+          <VaultPanel key={p.id} className="p-4 flex items-start gap-3">
             <button
               onClick={() => upvote(p.id)}
               disabled={!user || busyId === p.id}
@@ -114,7 +124,7 @@ export default function ClusterForumPage() {
               <div className="text-sm text-vault-cream">{p.content}</div>
               <div className="text-[11px] text-muted-foreground mt-1">{p.username} · {new Date(p.created_at).toLocaleDateString()}</div>
             </div>
-          </div>
+          </VaultPanel>
         ))}
       </div>
     </div>

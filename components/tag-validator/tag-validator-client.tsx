@@ -2,8 +2,10 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '@/lib/auth-context'
-import { CheckCircle, XCircle, SkipForward, Zap, Trophy } from 'lucide-react'
+import { CheckCircle, XCircle, SkipForward } from 'lucide-react'
 import Link from 'next/link'
+import { VaultPanel, VaultDivider } from '@/components/vault/vault-surfaces'
+import { GlitchHeading } from '@/components/vault/glitch-heading'
 
 interface VTuber {
   id: string
@@ -113,16 +115,15 @@ export function TagValidatorClient() {
   if (!user) {
     return (
       <div className="min-h-[70vh] flex items-center justify-center p-4">
-        <div className="vault-card rounded-2xl p-8 max-w-sm w-full text-center">
-          <Zap className="h-10 w-10 text-vault-gold mx-auto mb-4" />
-          <h1 className="text-xl font-bold text-vault-cream mb-2">Tag Validator</h1>
+        <VaultPanel className="p-8 max-w-sm w-full text-center">
+          <GlitchHeading as="h2" className="text-xl font-bold text-vault-cream mb-2">Tag Validator</GlitchHeading>
           <p className="text-muted-foreground text-sm mb-6">
-            Sign in to validate tags and earn scraps. Your votes shape the Vault.
+            Sign in. Judge tags. Get paid in scraps. The Archive runs on your taste.
           </p>
           <Link href="/login" className="inline-flex items-center justify-center w-full h-10 rounded-lg bg-vault-gold text-vault-deep font-semibold text-sm">
             Sign In
           </Link>
-        </div>
+        </VaultPanel>
       </div>
     )
   }
@@ -138,7 +139,7 @@ export function TagValidatorClient() {
   if (error) {
     return (
       <div className="min-h-[70vh] flex items-center justify-center p-4">
-        <div className="vault-card rounded-2xl p-8 max-w-sm w-full text-center">
+        <VaultPanel className="p-8 max-w-sm w-full text-center">
           <p className="text-sm text-red-400 mb-4">{error}</p>
           <button
             onClick={buildQueue}
@@ -146,7 +147,7 @@ export function TagValidatorClient() {
           >
             Retry
           </button>
-        </div>
+        </VaultPanel>
       </div>
     )
   }
@@ -154,20 +155,19 @@ export function TagValidatorClient() {
   if (!current) {
     return (
       <div className="min-h-[70vh] flex items-center justify-center p-4">
-        <div className="vault-card rounded-2xl p-8 max-w-sm w-full text-center">
-          <Trophy className="h-10 w-10 text-vault-gold mx-auto mb-4" />
-          <h1 className="text-xl font-bold text-vault-cream mb-2">Queue complete!</h1>
+        <VaultPanel className="p-8 max-w-sm w-full text-center">
+          <GlitchHeading as="h2" className="text-xl font-bold text-vault-cream mb-2">Queue cleared</GlitchHeading>
           <p className="text-muted-foreground text-sm mb-2">
-            You voted on {sessionVotes} tags this session.
+            {sessionVotes} tags judged this session. Not bad.
           </p>
-          <p className="text-vault-gold font-semibold mb-6">+{sessionScore} scraps earned</p>
+          <p className="text-vault-gold font-semibold mb-6">+{sessionScore} scraps</p>
           <button
             onClick={() => { setLoading(true); buildQueue() }}
             className="inline-flex items-center justify-center w-full h-10 rounded-lg bg-vault-gold text-vault-deep font-semibold text-sm"
           >
             Load more
           </button>
-        </div>
+        </VaultPanel>
       </div>
     )
   }
@@ -184,7 +184,7 @@ export function TagValidatorClient() {
         </span>
       </div>
 
-      <div className={`vault-card rounded-2xl p-6 w-full max-w-md transition-all duration-200 ${
+      <VaultPanel className={`p-6 w-full max-w-md transition-all duration-200 ${
         feedback === 'confirm' ? 'border-green-500/60 bg-green-500/5' :
         feedback === 'challenge' ? 'border-red-500/60 bg-red-500/5' : ''
       }`}>
@@ -205,7 +205,7 @@ export function TagValidatorClient() {
           )}
         </div>
 
-        <div className="border-t border-border my-4" />
+        <VaultDivider className="my-4" />
 
         <div className="mb-6">
           <p className="text-xs text-muted-foreground mb-2">Does this tag fit?</p>
@@ -249,10 +249,10 @@ export function TagValidatorClient() {
             Confirm
           </button>
         </div>
-      </div>
+      </VaultPanel>
 
       <p className="text-xs text-muted-foreground text-center">
-        {STREAK_BONUS} scraps every {STREAK_TARGET} confirms/challenges in a row · Skip resets streak
+        {STREAK_BONUS} scraps every {STREAK_TARGET} in a row · Skip kills the streak
       </p>
     </div>
   )

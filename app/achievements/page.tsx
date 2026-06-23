@@ -1,9 +1,10 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Medal, Trophy } from 'lucide-react'
+import { Trophy } from 'lucide-react'
 import { useAuth } from '@/lib/auth-context'
 import { GlitchHeading } from '@/components/vault/glitch-heading'
+import { VaultDivider, VaultPanel } from '@/components/vault/vault-surfaces'
 
 interface Achievement {
   id: string
@@ -39,19 +40,18 @@ export default function AchievementsPage() {
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-3xl">
-      <div className="flex items-center gap-3 mb-2">
-        <Medal className="h-6 w-6 text-vault-gold" />
-        <GlitchHeading as="h1" className="text-2xl font-bold text-vault-cream">Achievements</GlitchHeading>
-      </div>
+      <GlitchHeading as="h1" className="text-2xl font-bold text-vault-cream mb-1">Achievements</GlitchHeading>
+      <p className="text-sm text-muted-foreground mb-2">Bragging rights with scrap bonuses attached.</p>
       {user && (
-        <p className="text-sm text-muted-foreground mb-6">{badges.length}/{achievements.length} earned</p>
+        <p className="text-sm text-muted-foreground mb-4">{badges.length}/{achievements.length} earned</p>
       )}
+      <VaultDivider className="mb-6" />
       <div className="grid sm:grid-cols-2 gap-4">
         {achievements.map(a => {
           const earned = earnedIds.has(a.id)
           const badge = badges.find(b => b.achievement_id === a.id)
           return (
-            <div key={a.id} className={`vault-card rounded-xl p-4 transition-all ${earned ? 'border-vault-gold/40' : 'opacity-60'}`}>
+            <VaultPanel key={a.id} className={`p-4 transition-all ${earned ? 'border-vault-gold/40' : 'opacity-60'}`}>
               <div className="flex items-start gap-3">
                 {a.icon && a.icon.length <= 2 && !/[\u{1F300}-\u{1FAFF}]/u.test(a.icon) ? (
                   <span className="text-2xl font-mono text-vault-gold shrink-0">{a.icon}</span>
@@ -74,7 +74,7 @@ export default function AchievementsPage() {
                   )}
                 </div>
               </div>
-            </div>
+            </VaultPanel>
           )
         })}
       </div>

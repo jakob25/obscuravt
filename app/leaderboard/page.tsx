@@ -1,9 +1,10 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Trophy, TrendingUp, TrendingDown, Target } from 'lucide-react'
+import { TrendingUp, TrendingDown, Target } from 'lucide-react'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { GlitchHeading } from '@/components/vault/glitch-heading'
+import { VaultDivider, VaultPanel, StatCard } from '@/components/vault/vault-surfaces'
 
 interface RichRow { username: string; coins: number; total_won: number; bets_placed: number; bets_correct: number }
 interface AccurateRow { username: string; bets_placed: number; bets_correct: number; pct: number }
@@ -29,10 +30,9 @@ export default function LeaderboardPage() {
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-3xl">
-      <div className="flex items-center gap-3 mb-6">
-        <Trophy className="h-6 w-6 text-vault-gold" />
-        <GlitchHeading as="h1" className="text-2xl font-bold text-vault-cream">Leaderboard</GlitchHeading>
-      </div>
+      <GlitchHeading as="h1" className="text-2xl font-bold text-vault-cream mb-1">Leaderboard</GlitchHeading>
+      <p className="text-sm text-muted-foreground mb-4">Who&apos;s swimming in scraps — and who donated to the pool.</p>
+      <VaultDivider className="mb-6" />
 
       <Tabs defaultValue="rich">
         <TabsList className="mb-6 bg-muted/50">
@@ -48,7 +48,13 @@ export default function LeaderboardPage() {
         </TabsList>
 
         <TabsContent value="rich">
-          <div className="vault-card rounded-xl overflow-hidden">
+          {!loading && rich[0] && (
+            <div className="grid md:grid-cols-2 gap-3 mb-4">
+              <StatCard featured label="Vault King" value={rich[0].username} />
+              <StatCard featured label="Scraps" value={rich[0].coins.toLocaleString()} />
+            </div>
+          )}
+          <VaultPanel className="overflow-hidden">
             {loading ? <Skeleton /> : rich.map((row, i) => (
               <div key={row.username} className="flex items-center justify-between px-5 py-3.5 border-b border-border last:border-0 hover:bg-vault-bronze/5 transition-colors">
                 <div className="flex items-center gap-3">
@@ -64,11 +70,17 @@ export default function LeaderboardPage() {
                 </div>
               </div>
             ))}
-          </div>
+          </VaultPanel>
         </TabsContent>
 
         <TabsContent value="accurate">
-          <div className="vault-card rounded-xl overflow-hidden">
+          {!loading && accurate[0] && (
+            <div className="grid md:grid-cols-2 gap-3 mb-4">
+              <StatCard featured label="Sharpest Caller" value={accurate[0].username} />
+              <StatCard featured label="Accuracy" value={`${(accurate[0].pct * 100).toFixed(1)}%`} />
+            </div>
+          )}
+          <VaultPanel className="overflow-hidden">
             {loading ? <Skeleton /> : accurate.map((row, i) => (
               <div key={row.username} className="flex items-center justify-between px-5 py-3.5 border-b border-border last:border-0 hover:bg-vault-bronze/5 transition-colors">
                 <div className="flex items-center gap-3">
@@ -84,11 +96,17 @@ export default function LeaderboardPage() {
                 </div>
               </div>
             ))}
-          </div>
+          </VaultPanel>
         </TabsContent>
 
         <TabsContent value="losers">
-          <div className="vault-card rounded-xl overflow-hidden">
+          {!loading && losers[0] && (
+            <div className="grid md:grid-cols-2 gap-3 mb-4">
+              <StatCard featured label="Biggest Donor" value={losers[0].username} />
+              <StatCard featured label="Total Lost" value={losers[0].total_lost.toLocaleString()} />
+            </div>
+          )}
+          <VaultPanel className="overflow-hidden">
             {loading ? <Skeleton /> : losers.map((row, i) => (
               <div key={row.username} className="flex items-center justify-between px-5 py-3.5 border-b border-border last:border-0 hover:bg-vault-bronze/5 transition-colors">
                 <div className="flex items-center gap-3">
@@ -104,7 +122,7 @@ export default function LeaderboardPage() {
                 </div>
               </div>
             ))}
-          </div>
+          </VaultPanel>
         </TabsContent>
       </Tabs>
     </div>
