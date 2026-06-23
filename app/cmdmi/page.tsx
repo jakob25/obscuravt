@@ -6,6 +6,7 @@ import { normalizeRole } from '@/lib/roles'
 import { Lightbulb, ThumbsUp, Target, Coins, Plus } from 'lucide-react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
+import { PageBackNav } from '@/components/vault/page-back-nav'
 
 interface Goal {
   id: string
@@ -120,6 +121,7 @@ function CmdmiPageContent() {
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-2xl">
+      <PageBackNav fallbackHref={profileId ? `/vtuber/${profileId}` : '/discover'} />
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-vault-cream mb-1 flex items-center gap-2">
           <Lightbulb className="h-6 w-6 text-vault-gold" />

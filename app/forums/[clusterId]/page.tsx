@@ -4,8 +4,9 @@ import { useState, useEffect, useCallback } from 'react'
 import { useParams } from 'next/navigation'
 import { useAuth } from '@/lib/auth-context'
 import { useStarMapData } from '@/hooks/use-star-map-data'
-import { ArrowLeft, ThumbsUp, Send } from 'lucide-react'
+import { ThumbsUp, Send } from 'lucide-react'
 import Link from 'next/link'
+import { PageBackNav } from '@/components/vault/page-back-nav'
 
 interface Post {
   id: string
@@ -67,9 +68,7 @@ export default function ClusterForumPage() {
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-2xl">
-      <Link href="/forums" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-vault-cream mb-6">
-        <ArrowLeft className="h-4 w-4" /> All forums
-      </Link>
+      <PageBackNav fallbackHref="/forums" label="All forums" />
 
       <div className="flex items-center gap-3 mb-8">
         {constellation && <span className="h-3 w-3 rounded-full flex-shrink-0" style={{ backgroundColor: constellation.color }} />}

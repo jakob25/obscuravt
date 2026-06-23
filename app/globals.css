@@ -103,6 +103,18 @@
   body {
     @apply bg-background text-foreground;
   }
+  a,
+  button:not(:disabled),
+  summary,
+  label[for],
+  [role="button"],
+  select {
+    cursor: pointer;
+  }
+  button:disabled,
+  [aria-disabled="true"] {
+    cursor: not-allowed;
+  }
 }
 
 /* VTVault utility classes */

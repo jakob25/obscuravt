@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { getSessionUser } from '@/lib/session'
+import { createNotification, notifyFavoriteVtubers } from '@/lib/notifications'
 
 // ── GET: list ideas (optionally scoped to a vtuber profile) + their goal if one exists ─
 export async function GET(req: NextRequest) {
@@ -44,8 +45,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'profileId and title are required.' }, { status: 400 })
   }
 
+  const ideaId = crypto.randomUUID()
   const { error } = await supabaseAdmin.from('cmdmi_ideas').insert({
-    id: crypto.randomUUID(),
+    id: ideaId,
     profile_id: profileId,
     submitted_by: user.username,
     title,
@@ -56,6 +58,18 @@ export async function POST(req: NextRequest) {
   })
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  const { data: vtuber } = await supabaseAdmin.from('vtubers').select('name').eq('id', profileId).single()
+  await notifyFavoriteVtubers(
+    profileId,
+    vtuber?.name ?? 'a creator',
+    'New CMDMI idea',
+    `${vtuber?.name ?? 'A creator'} has a new stream idea: "${title.trim()}"`,
+    'cmdmi_new',
+    ideaId,
+    user.username,
+  )
+
   return NextResponse.json({ ok: true })
 }
 
@@ -86,23 +100,24 @@ export async function PATCH(req: NextRequest) {
     }
 
     // Verify the requester actually owns this profile
-    const { data: idea } = await supabaseAdmin.from('cmdmi_ideas').select('profile_id').eq('id', ideaId).single()
+    const { data: idea } = await supabaseAdmin.from('cmdmi_ideas').select('profile_id, submitted_by, title').eq('id', ideaId).single()
     if (!idea) return NextResponse.json({ error: 'Idea not found.' }, { status: 404 })
 
-    const { data: vtuber } = await supabaseAdmin
+    const { data: ownedVtuber } = await supabaseAdmin
       .from('vtubers')
-      .select('id')
+      .select('id, name')
       .eq('id', idea.profile_id)
       .eq('claimed_by', user.username)
       .single()
 
-    if (!vtuber) {
+    if (!ownedVtuber) {
       return NextResponse.json({ error: 'You do not own this profile.' }, { status: 403 })
     }
 
     await supabaseAdmin.from('cmdmi_ideas').update({ status: 'selected' }).eq('id', ideaId)
+    const goalId = crypto.randomUUID()
     await supabaseAdmin.from('cmdmi_goals').insert({
-      id: crypto.randomUUID(),
+      id: goalId,
       idea_id: ideaId,
       profile_id: idea.profile_id,
       set_by: user.username,
@@ -112,6 +127,26 @@ export async function PATCH(req: NextRequest) {
       created_at: new Date().toISOString(),
       completed_at: null,
     })
+
+    if (idea.submitted_by !== user.username) {
+      await createNotification(
+        idea.submitted_by,
+        'Your idea was selected!',
+        `"${idea.title}" was picked for Chat Made Me Do It. Goal: ${goalAmount.toLocaleString()} scraps.`,
+        'cmdmi_selected',
+        ideaId,
+      )
+    }
+
+    await notifyFavoriteVtubers(
+      idea.profile_id,
+      ownedVtuber.name ?? 'a creator',
+      'New CMDMI goal',
+      `${ownedVtuber.name ?? 'A creator'} set a ${goalAmount.toLocaleString()} scrap goal for "${idea.title}"`,
+      'cmdmi_new',
+      goalId,
+      user.username,
+    )
 
     return NextResponse.json({ ok: true })
   }
@@ -147,6 +182,20 @@ export async function PATCH(req: NextRequest) {
 
     if (goalMet) {
       await supabaseAdmin.from('cmdmi_ideas').update({ status: 'completed' }).eq('id', goal.idea_id)
+
+      const { data: idea } = await supabaseAdmin
+        .from('cmdmi_ideas')
+        .select('title, submitted_by')
+        .eq('id', goal.idea_id)
+        .single()
+
+      if (idea) {
+        const msg = `"${idea.title}" hit its ${goal.goal_amount.toLocaleString()} scrap goal — stream locked in!`
+        await createNotification(idea.submitted_by, 'CMDMI goal funded!', msg, 'cmdmi_funded', goalId)
+        if (goal.set_by !== idea.submitted_by) {
+          await createNotification(goal.set_by, 'CMDMI goal funded!', msg, 'cmdmi_funded', goalId)
+        }
+      }
     }
 
     return NextResponse.json({ ok: true, funded_amount: newFunded, goal_met: goalMet })

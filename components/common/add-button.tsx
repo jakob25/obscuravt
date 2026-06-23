@@ -70,7 +70,12 @@ export function AddButton() {
 
       {/* Click outside to close menu */}
       {menuOpen && (
-        <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)} />
+        <button
+          type="button"
+          aria-label="Close menu"
+          className="fixed inset-0 z-40 cursor-default bg-transparent border-0 p-0"
+          onClick={() => setMenuOpen(false)}
+        />
       )}
 
       {/* Modal */}

@@ -6,6 +6,7 @@ import { normalizeRole } from '@/lib/roles'
 import { Calendar, Plus, Trash2 } from 'lucide-react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
+import { PageBackNav } from '@/components/vault/page-back-nav'
 
 interface ScheduleSlot {
   id: string
@@ -78,6 +79,7 @@ function SchedulePageContent() {
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-xl">
+      <PageBackNav fallbackHref={vtuberId ? `/vtuber/${vtuberId}` : '/discover'} />
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-2xl font-bold text-vault-cream mb-1 flex items-center gap-2">

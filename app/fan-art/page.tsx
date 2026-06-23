@@ -6,6 +6,7 @@ import { Palette, Plus, Flag, ExternalLink } from 'lucide-react'
 import { ImageUploadField } from '@/components/common/image-upload-field'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
+import { PageBackNav } from '@/components/vault/page-back-nav'
 
 interface ArtPiece {
   id: string
@@ -79,6 +80,7 @@ function FanArtPageContent() {
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-3xl">
+      <PageBackNav fallbackHref={vtuberId ? `/vtuber/${vtuberId}` : '/discover'} />
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-2xl font-bold text-vault-cream mb-1 flex items-center gap-2">

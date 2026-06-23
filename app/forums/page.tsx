@@ -3,12 +3,14 @@
 import { useStarMapData } from '@/hooks/use-star-map-data'
 import { MessageSquare } from 'lucide-react'
 import Link from 'next/link'
+import { PageBackNav } from '@/components/vault/page-back-nav'
 
 export default function ForumsIndexPage() {
   const { constellations, loading } = useStarMapData()
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-2xl">
+      <PageBackNav fallbackHref="/discover" />
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-vault-cream mb-1 flex items-center gap-2">
           <MessageSquare className="h-6 w-6 text-vault-gold" />

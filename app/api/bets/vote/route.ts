@@ -5,14 +5,7 @@ import { parseBody, voteSchema } from '@/lib/validation'
 import { supabaseAdmin } from '@/lib/supabase'
 import { randomUUID } from 'crypto'
 import { MIN_VOTES, HOUSE_CUT } from '@/lib/db-constants'
-
-async function notify(username: string, title: string, message: string, type: string, related_id?: string) {
-  await supabaseAdmin.from('notifications').insert({
-    id: randomUUID(), username, title, message, type,
-    related_id: related_id ?? null, is_read: false,
-    created_at: new Date().toISOString(),
-  })
-}
+import { createNotification } from '@/lib/notifications'
 
 async function resolveBet(betId: string) {
   const { data: bet } = await supabaseAdmin.from('bets').select('*').eq('id', betId).single()
@@ -46,12 +39,12 @@ async function resolveBet(betId: string) {
         bets_correct: (user.bets_correct ?? 0) + 1,
       }).eq('username', e.username)
       // Notify winners
-      await notify(
+      await createNotification(
         e.username,
         'Bet won',
         `"${bet.title}" resolved. You wagered on "${winner}" and won ${share.toLocaleString()} V-Coins!`,
         'bet_won',
-        betId
+        betId,
       )
     }
   }
@@ -64,12 +57,12 @@ async function resolveBet(betId: string) {
         biggest_loss: Math.max(user.biggest_loss ?? 0, e.amount),
       }).eq('username', e.username)
       // Notify losers
-      await notify(
+      await createNotification(
         e.username,
         'Bet resolved',
         `"${bet.title}" resolved. The winner was "${winner}". Better luck next time!`,
         'bet_lost',
-        betId
+        betId,
       )
     }
   }
@@ -103,7 +96,7 @@ async function checkAchievements(usernames: string[]) {
         earned_at: new Date().toISOString(),
       })
       await supabaseAdmin.from('users').update({ coins: (user.coins ?? 0) + coins }).eq('username', username)
-      await notify(username, `Achievement unlocked: ${name}`, `You earned the ${name} badge and ${coins.toLocaleString()} V-Coins.`, 'achievement', id)
+      await createNotification(username, `Achievement unlocked: ${name}`, `You earned the ${name} badge and ${coins.toLocaleString()} V-Coins.`, 'achievement', id)
     }
   }
 }
@@ -135,10 +128,29 @@ export async function POST(req: NextRequest) {
     await supabaseAdmin.from('users').update({ deciding_votes: (voter.deciding_votes ?? 0) + 1 }).eq('username', username)
   }
 
+  const { count: priorVotes } = await supabaseAdmin
+    .from('votes')
+    .select('id', { count: 'exact', head: true })
+    .eq('bet_id', bet_id)
+
   await supabaseAdmin.from('votes').insert({
     id: randomUUID(), bet_id, username, option,
     created_at: new Date().toISOString(),
   })
+
+  if ((priorVotes ?? 0) === 0) {
+    const { data: bet } = await supabaseAdmin.from('bets').select('title').eq('id', bet_id).single()
+    const { data: entries } = await supabaseAdmin.from('bet_entries').select('username').eq('bet_id', bet_id)
+    for (const e of entries ?? []) {
+      await createNotification(
+        e.username,
+        'Bet entering voting phase',
+        `"${bet?.title ?? 'Your bet'}" is now open for outcome votes. Cast your vote to help resolve it.`,
+        'bet_voting',
+        bet_id,
+      )
+    }
+  }
 
   const resolved = await resolveBet(bet_id)
   return NextResponse.json({ ok: true, resolved })

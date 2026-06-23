@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { useAuth } from '@/lib/auth-context'
 import { normalizeRole } from '@/lib/roles'
 import { GlitchHeading } from '@/components/vault/glitch-heading'
+import { PageBackNav } from '@/components/vault/page-back-nav'
 import { VaultFrame } from '@/components/vault/vault-frame'
 import {
   LayoutDashboard, Calendar, Palette, Lightbulb, Users, BookOpen, MessageCircle,
@@ -60,6 +61,7 @@ export default function CreatorDashboardPage() {
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-3xl">
+      <PageBackNav fallbackHref="/" />
       <div className="flex items-center gap-3 mb-6">
         <LayoutDashboard className="h-6 w-6 text-vault-gold" />
         <GlitchHeading as="h1" className="text-2xl font-bold text-vault-cream">Creator Dashboard</GlitchHeading>
@@ -143,7 +145,7 @@ export default function CreatorDashboardPage() {
             <MessageCircle className="h-4 w-4 text-vault-gold" /> Quick engagement
           </h2>
           <p className="text-xs text-muted-foreground mb-3">
-            Fans interact on your public profile — memes, Q&A, karaoke requests, and schedule voting.
+            Fans interact on your public profile — memes, Q&A, karaoke requests, and stream predictions.
           </p>
           <Link href={`/vtuber/${activeId}`} className="text-sm text-vault-gold hover:underline">
             Open {active?.name ?? 'profile'} engagement hub →

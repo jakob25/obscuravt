@@ -3,6 +3,7 @@
 import { Gamepad2, ExternalLink, BookOpen, Monitor, CheckSquare } from 'lucide-react'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { GlitchHeading } from '@/components/vault/glitch-heading'
+import { PageBackNav } from '@/components/vault/page-back-nav'
 
 interface GameResource {
   name: string
@@ -105,6 +106,7 @@ function DebutChecklistTab() {
 export default function ResourcesPage() {
   return (
     <div className="container mx-auto px-4 py-8 max-w-3xl">
+      <PageBackNav fallbackHref="/creator" />
       <div className="mb-6">
         <GlitchHeading as="h1" className="text-2xl font-bold text-vault-cream mb-1 flex items-center gap-2">
           <BookOpen className="h-6 w-6 text-vault-gold" />

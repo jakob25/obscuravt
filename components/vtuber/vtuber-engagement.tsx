@@ -8,10 +8,9 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { VaultFrame } from '@/components/vault/vault-frame'
 import { ImageUploadField } from '@/components/common/image-upload-field'
 import {
-  Image, MessageCircle, Mic2, CalendarClock, Palette, Lightbulb, ThumbsUp, Plus, Share2,
+  Image, MessageCircle, Mic2, CalendarClock, Palette, Lightbulb, ThumbsUp, Plus, Share2, Trophy,
 } from 'lucide-react'
-
-const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+import { StreamPredictions } from '@/components/vtuber/stream-predictions'
 
 interface Props {
   vtuberId: string
@@ -23,8 +22,6 @@ interface Meme { id: string; image_url: string; caption: string; upvotes: number
 interface QaSession { id: string; title: string; status: string }
 interface QaQuestion { id: string; question: string; asked_by: string; upvotes: number; answered: boolean }
 interface KaraokeReq { id: string; song_title: string; artist: string; status: string; upvotes: number; requested_by: string }
-interface ScheduleProposal { id: string; proposed_day: number; proposed_time: string; label: string | null; votes: number; dayLabel?: string }
-
 export function VTuberEngagement({ vtuberId, vtuberName, claimedBy }: Props) {
   const { user } = useAuth()
   const isOwner = user?.username === claimedBy
@@ -34,16 +31,11 @@ export function VTuberEngagement({ vtuberId, vtuberName, claimedBy }: Props) {
   const [activeSession, setActiveSession] = useState<string | null>(null)
   const [questions, setQuestions] = useState<QaQuestion[]>([])
   const [karaoke, setKaraoke] = useState<KaraokeReq[]>([])
-  const [proposals, setProposals] = useState<ScheduleProposal[]>([])
-
   const [memeUrl, setMemeUrl] = useState('')
   const [memeCaption, setMemeCaption] = useState('')
   const [newQuestion, setNewQuestion] = useState('')
   const [songTitle, setSongTitle] = useState('')
   const [songArtist, setSongArtist] = useState('')
-  const [voteDay, setVoteDay] = useState(5)
-  const [voteTime, setVoteTime] = useState('20:00')
-  const [voteLabel, setVoteLabel] = useState('')
   const [qaTitle, setQaTitle] = useState('')
   const [error, setError] = useState('')
 
@@ -74,18 +66,11 @@ export function VTuberEngagement({ vtuberId, vtuberName, claimedBy }: Props) {
     setKaraoke(data.requests ?? [])
   }, [vtuberId])
 
-  const loadProposals = useCallback(async () => {
-    const res = await fetch(`/api/schedule-votes?vtuberId=${encodeURIComponent(vtuberId)}`)
-    const data = await res.json()
-    setProposals(data.proposals ?? [])
-  }, [vtuberId])
-
   useEffect(() => {
     loadMemes()
     loadSessions()
     loadKaraoke()
-    loadProposals()
-  }, [loadMemes, loadSessions, loadKaraoke, loadProposals])
+  }, [loadMemes, loadSessions, loadKaraoke])
 
   useEffect(() => {
     if (activeSession) loadQuestions(activeSession)
@@ -139,22 +124,6 @@ export function VTuberEngagement({ vtuberId, vtuberName, claimedBy }: Props) {
     loadKaraoke()
   }
 
-  const submitProposal = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!user) return
-    setError('')
-    const res = await fetch('/api/schedule-votes', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({ vtuberId, proposedDay: voteDay, proposedTime: voteTime, label: voteLabel || null }),
-    })
-    const data = await res.json()
-    if (!res.ok) { setError(data.error); return }
-    setVoteLabel('')
-    loadProposals()
-  }
-
   const createQaSession = async () => {
     if (!isOwner || !qaTitle.trim()) return
     const res = await fetch('/api/qa', {
@@ -174,13 +143,13 @@ export function VTuberEngagement({ vtuberId, vtuberName, claimedBy }: Props) {
       <h2 className="text-sm font-semibold text-vault-cream mb-4">Fan Engagement — {vtuberName}</h2>
 
       <div className="flex flex-wrap gap-2 mb-4">
-        <Link href={`/fan-art?vtuber=${vtuberId}`} className="text-xs px-3 py-1.5 rounded-lg border border-border text-muted-foreground hover:text-vault-gold hover:border-vault-gold/40 flex items-center gap-1.5">
+        <Link href={`/fan-art?vtuber=${vtuberId}`} className="text-xs px-3 py-1.5 rounded-lg border border-border text-muted-foreground hover:text-vault-gold hover:border-vault-gold/40 flex items-center gap-1.5 cursor-pointer">
           <Palette className="h-3.5 w-3.5" /> Fan Art Gallery
         </Link>
-        <Link href={`/cmdmi?profile=${vtuberId}`} className="text-xs px-3 py-1.5 rounded-lg border border-border text-muted-foreground hover:text-vault-gold hover:border-vault-gold/40 flex items-center gap-1.5">
+        <Link href={`/cmdmi?profile=${vtuberId}`} className="text-xs px-3 py-1.5 rounded-lg border border-border text-muted-foreground hover:text-vault-gold hover:border-vault-gold/40 flex items-center gap-1.5 cursor-pointer">
           <Lightbulb className="h-3.5 w-3.5" /> CMDMI Ideas
         </Link>
-        <Link href={`/schedule?vtuber=${vtuberId}`} className="text-xs px-3 py-1.5 rounded-lg border border-border text-muted-foreground hover:text-vault-gold hover:border-vault-gold/40 flex items-center gap-1.5">
+        <Link href={`/schedule?vtuber=${vtuberId}`} className="text-xs px-3 py-1.5 rounded-lg border border-border text-muted-foreground hover:text-vault-gold hover:border-vault-gold/40 flex items-center gap-1.5 cursor-pointer">
           <CalendarClock className="h-3.5 w-3.5" /> Stream Schedule
         </Link>
       </div>
@@ -192,7 +161,7 @@ export function VTuberEngagement({ vtuberId, vtuberName, claimedBy }: Props) {
           <TabsTrigger value="memes"><Image className="h-3.5 w-3.5 mr-1" />Memes</TabsTrigger>
           <TabsTrigger value="qa"><MessageCircle className="h-3.5 w-3.5 mr-1" />Q&A</TabsTrigger>
           <TabsTrigger value="karaoke"><Mic2 className="h-3.5 w-3.5 mr-1" />Karaoke</TabsTrigger>
-          <TabsTrigger value="votes"><CalendarClock className="h-3.5 w-3.5 mr-1" />Schedule Vote</TabsTrigger>
+          <TabsTrigger value="predictions"><Trophy className="h-3.5 w-3.5 mr-1" />Stream Predictions</TabsTrigger>
         </TabsList>
 
         <TabsContent value="memes" className="space-y-3">
@@ -214,7 +183,7 @@ export function VTuberEngagement({ vtuberId, vtuberName, claimedBy }: Props) {
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             {memes.map(m => (
               <div key={m.id} className="rounded-lg overflow-hidden border border-border/60 bg-muted/20">
-                <Link href={`/meme/${m.share_slug}`}>
+                <Link href={`/meme/${m.share_slug}`} className="block cursor-pointer">
                   <img src={m.image_url} alt={m.caption || 'meme'} className="w-full aspect-square object-cover hover:opacity-90 transition-opacity" />
                 </Link>
                 <div className="p-2 flex justify-between items-center gap-1">
@@ -225,7 +194,7 @@ export function VTuberEngagement({ vtuberId, vtuberName, claimedBy }: Props) {
                         <Share2 className="h-3 w-3" />
                       </Link>
                     )}
-                    <button type="button" onClick={async () => { await fetch('/api/memes', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify({ memeId: m.id }) }); loadMemes() }} className="text-xs text-vault-gold flex items-center gap-0.5">
+                    <button type="button" disabled={!user} onClick={async () => { await fetch('/api/memes', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify({ memeId: m.id }) }); loadMemes() }} className="text-xs text-vault-gold flex items-center gap-0.5 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer">
                       <ThumbsUp className="h-3 w-3" />{m.upvotes}
                     </button>
                   </div>
@@ -295,29 +264,8 @@ export function VTuberEngagement({ vtuberId, vtuberName, claimedBy }: Props) {
           {karaoke.length === 0 && <p className="text-xs text-muted-foreground">No karaoke requests yet.</p>}
         </TabsContent>
 
-        <TabsContent value="votes" className="space-y-3">
-          {user && (
-            <form onSubmit={submitProposal} className="flex flex-wrap gap-2 items-end">
-              <select value={voteDay} onChange={e => setVoteDay(Number(e.target.value))} className="h-9 px-3 rounded-lg bg-muted/30 border border-border text-sm text-vault-cream">
-                {DAYS.map((d, i) => <option key={d} value={i}>{d}</option>)}
-              </select>
-              <input value={voteTime} onChange={e => setVoteTime(e.target.value)} placeholder="Time (e.g. 20:00)" className="h-9 px-3 rounded-lg bg-muted/30 border border-border text-sm text-vault-cream w-28" />
-              <input value={voteLabel} onChange={e => setVoteLabel(e.target.value)} placeholder="Label (optional)" className="flex-1 min-w-[120px] h-9 px-3 rounded-lg bg-muted/30 border border-border text-sm text-vault-cream" />
-              <button type="submit" className="h-9 px-4 rounded-lg bg-vault-gold text-vault-deep text-sm font-semibold">Propose</button>
-            </form>
-          )}
-          {proposals.map(p => (
-            <div key={p.id} className="p-3 rounded-lg border border-border/60 bg-muted/20 flex justify-between items-center">
-              <div>
-                <p className="text-sm text-vault-cream">{p.dayLabel ?? DAYS[p.proposed_day]} at {p.proposed_time}</p>
-                {p.label && <p className="text-xs text-muted-foreground">{p.label}</p>}
-              </div>
-              <button type="button" disabled={!user} onClick={async () => { await fetch('/api/schedule-votes', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify({ proposalId: p.id }) }); loadProposals() }} className="text-xs text-vault-gold flex items-center gap-0.5 disabled:opacity-40">
-                <ThumbsUp className="h-3 w-3" />{p.votes}
-              </button>
-            </div>
-          ))}
-          {proposals.length === 0 && <p className="text-xs text-muted-foreground">No schedule proposals yet.</p>}
+        <TabsContent value="predictions">
+          <StreamPredictions vtuberId={vtuberId} vtuberName={vtuberName} isOwner={isOwner} />
         </TabsContent>
       </Tabs>
     </VaultFrame>

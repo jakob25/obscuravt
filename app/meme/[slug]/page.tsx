@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
-import { Image, ThumbsUp, Share2, ArrowLeft } from 'lucide-react'
+import { Image, ThumbsUp, Share2 } from 'lucide-react'
+import { PageBackNav } from '@/components/vault/page-back-nav'
 import { GlitchHeading } from '@/components/vault/glitch-heading'
 import { VaultFrame } from '@/components/vault/vault-frame'
 import { useAuth } from '@/lib/auth-context'
@@ -84,10 +85,10 @@ export default function MemeSharePage() {
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-lg">
-      <Link href={meme.vtuber_id ? `/vtuber/${meme.vtuber_id}` : '/discover'} className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-vault-gold mb-6">
-        <ArrowLeft className="h-4 w-4" />
-        {meme.vtuber_name ? `Back to ${meme.vtuber_name}` : 'Back to Discover'}
-      </Link>
+      <PageBackNav
+        fallbackHref={meme.vtuber_id ? `/vtuber/${meme.vtuber_id}` : '/discover'}
+        label={meme.vtuber_name ? `Back to ${meme.vtuber_name}` : 'Back to Discover'}
+      />
 
       <GlitchHeading as="h1" className="text-xl font-bold text-vault-cream mb-1 flex items-center gap-2">
         <Image className="h-5 w-5 text-vault-gold" /> Vault Meme

@@ -53,7 +53,7 @@ export default async function VTuberProfilePage({ params }: Props) {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-8 max-w-2xl">
+      <div className="container mx-auto px-4 py-8 max-w-6xl">
 
         {/* Back */}
         <Link href="/discover" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-vault-cream mb-8 transition-colors">
@@ -122,50 +122,52 @@ export default async function VTuberProfilePage({ params }: Props) {
           )}
         </VaultFrame>
 
-        {/* Vibe tags */}
-        {vibeTags.length > 0 && (
-          <VaultFrame className="rounded-2xl p-6 mb-6">
-            <h2 className="text-sm font-semibold text-vault-cream mb-3 flex items-center gap-2">
-              <Tag className="h-4 w-4 text-vault-gold" />
-              Vibes & Content
-            </h2>
-            <div className="flex flex-wrap gap-2">
-              {vibeTags.map(tagId => {
-                const t = tagMap[tagId]
-                if (!t) return null
-                return (
-                  <span
-                    key={tagId}
-                    className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border"
-                    style={{
-                      borderColor: (t.color ?? '#888') + '50',
-                      backgroundColor: (t.color ?? '#888') + '15',
-                      color: t.color ?? '#888',
-                    }}
-                  >
-                    {t.tag}
-                  </span>
-                )
-              })}
-            </div>
-          </VaultFrame>
-        )}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {vibeTags.length > 0 && (
+            <VaultFrame className="rounded-2xl p-6">
+              <h2 className="text-sm font-semibold text-vault-cream mb-3 flex items-center gap-2">
+                <Tag className="h-4 w-4 text-vault-gold" />
+                Vibes & Content
+              </h2>
+              <div className="flex flex-wrap gap-2">
+                {vibeTags.map(tagId => {
+                  const t = tagMap[tagId]
+                  if (!t) return null
+                  return (
+                    <span
+                      key={tagId}
+                      className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border"
+                      style={{
+                        borderColor: (t.color ?? '#888') + '50',
+                        backgroundColor: (t.color ?? '#888') + '15',
+                        color: t.color ?? '#888',
+                      }}
+                    >
+                      {t.tag}
+                    </span>
+                  )
+                })}
+              </div>
+            </VaultFrame>
+          )}
 
-        <VTuberEngagement vtuberId={vtuber.id} vtuberName={vtuber.name} claimedBy={vtuber.claimed_by ?? null} />
-
-        {/* Tag validator CTA */}
-        <VaultFrame className="rounded-2xl p-5 flex items-center justify-between gap-4">
-          <div>
-            <p className="text-sm font-medium text-vault-cream">Know this VTuber?</p>
-            <p className="text-xs text-muted-foreground mt-0.5">Help the community by validating their tags.</p>
+          <div className={vibeTags.length > 0 ? 'md:col-span-2 lg:col-span-2' : 'md:col-span-2 lg:col-span-3'}>
+            <VTuberEngagement vtuberId={vtuber.id} vtuberName={vtuber.name} claimedBy={vtuber.claimed_by ?? null} />
           </div>
-          <Link
-            href="/tag-validator"
-            className="flex-shrink-0 inline-flex items-center justify-center h-9 px-4 rounded-lg bg-vault-gold text-vault-deep text-sm font-semibold"
-          >
-            Validate Tags
-          </Link>
-        </VaultFrame>
+
+          <VaultFrame className="rounded-2xl p-5 flex flex-col justify-between gap-4 h-full">
+            <div>
+              <p className="text-sm font-medium text-vault-cream">Know this VTuber?</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Help the community by validating their tags.</p>
+            </div>
+            <Link
+              href="/tag-validator"
+              className="flex-shrink-0 inline-flex items-center justify-center h-9 px-4 rounded-lg bg-vault-gold text-vault-deep text-sm font-semibold cursor-pointer"
+            >
+              Validate Tags
+            </Link>
+          </VaultFrame>
+        </div>
 
       </div>
     </div>

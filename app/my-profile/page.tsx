@@ -69,7 +69,7 @@ export default function MyProfilePage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-2xl">
+    <div className="container mx-auto px-4 py-8 max-w-6xl">
       <div className="flex items-center justify-between gap-3 mb-6">
         <div className="flex items-center gap-3">
           <User className="h-6 w-6 text-vault-gold" />
@@ -78,7 +78,8 @@ export default function MyProfilePage() {
         <ProfileSwitcher />
       </div>
 
-      <div className="vault-card rounded-xl p-6 mb-4 border-vault-gold/10">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="vault-card rounded-xl p-6 border-vault-gold/10 lg:col-span-3">
         <div className="flex items-center justify-between mb-4">
           <div>
             <p className="text-sm text-muted-foreground">Vault Scraps Balance</p>
@@ -108,7 +109,7 @@ export default function MyProfilePage() {
       </div>
 
       {profile && (
-        <div className="vault-card rounded-xl p-5 mb-4">
+        <div className="vault-card rounded-xl p-5 md:col-span-2 lg:col-span-2">
           <h2 className="font-bold text-vault-cream mb-4 flex items-center gap-2">
             <TrendingUp className="h-4 w-4 text-vault-gold" /> Betting Stats
           </h2>
@@ -131,7 +132,7 @@ export default function MyProfilePage() {
       )}
 
       {claimedProfiles.length > 0 && (
-        <div className="vault-card rounded-xl p-5 mb-4">
+        <div className="vault-card rounded-xl p-5 md:col-span-2">
           <h2 className="font-bold text-vault-cream mb-3">Claimed VTuber Profiles</h2>
           <div className="space-y-2">
             {claimedProfiles.map(p => (
@@ -144,7 +145,7 @@ export default function MyProfilePage() {
         </div>
       )}
 
-      <div className="vault-card rounded-xl p-5 mb-4">
+      <div className="vault-card rounded-xl p-5">
         <h2 className="font-bold text-vault-cream mb-3 flex items-center gap-2">
           <Trophy className="h-4 w-4 text-vault-gold" /> Role
         </h2>
@@ -165,13 +166,16 @@ export default function MyProfilePage() {
         </div>
       </div>
 
-      <Button
-        variant="outline"
-        className="w-full border-red-500/30 text-red-400 hover:bg-red-500/10"
-        onClick={() => { logout(); router.push('/') }}
-      >
-        <LogOut className="mr-2 h-4 w-4" /> Sign Out
-      </Button>
+      <div className="vault-card rounded-xl p-5 flex items-end">
+        <Button
+          variant="outline"
+          className="w-full border-red-500/30 text-red-400 hover:bg-red-500/10"
+          onClick={() => { logout(); router.push('/') }}
+        >
+          <LogOut className="mr-2 h-4 w-4" /> Sign Out
+        </Button>
+      </div>
+      </div>
     </div>
   )
 }
