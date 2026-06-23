@@ -6,6 +6,7 @@ import { useAuth } from '@/lib/auth-context'
 
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { VaultFrame } from '@/components/vault/vault-frame'
+import { ImageUploadField } from '@/components/common/image-upload-field'
 import {
   Image, MessageCircle, Mic2, CalendarClock, Palette, Lightbulb, ThumbsUp, Plus, Share2,
 } from 'lucide-react'
@@ -196,10 +197,18 @@ export function VTuberEngagement({ vtuberId, vtuberName, claimedBy }: Props) {
 
         <TabsContent value="memes" className="space-y-3">
           {user && (
-            <form onSubmit={submitMeme} className="flex flex-col gap-2 sm:flex-row sm:items-end">
-              <input value={memeUrl} onChange={e => setMemeUrl(e.target.value)} placeholder="Image URL" className="flex-1 h-9 px-3 rounded-lg bg-muted/30 border border-border text-sm text-vault-cream" />
-              <input value={memeCaption} onChange={e => setMemeCaption(e.target.value)} placeholder="Caption (optional)" className="flex-1 h-9 px-3 rounded-lg bg-muted/30 border border-border text-sm text-vault-cream" />
-              <button type="submit" className="h-9 px-4 rounded-lg bg-vault-gold text-vault-deep text-sm font-semibold">Post</button>
+            <form onSubmit={submitMeme} className="space-y-3">
+              <ImageUploadField
+                purpose="meme"
+                label="Upload meme"
+                onUploaded={url => setMemeUrl(url)}
+                onClear={() => setMemeUrl('')}
+              />
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
+                <input value={memeUrl} onChange={e => setMemeUrl(e.target.value)} placeholder="Or paste image URL" className="flex-1 h-9 px-3 rounded-lg bg-muted/30 border border-border text-sm text-vault-cream" />
+                <input value={memeCaption} onChange={e => setMemeCaption(e.target.value)} placeholder="Caption (optional)" className="flex-1 h-9 px-3 rounded-lg bg-muted/30 border border-border text-sm text-vault-cream" />
+                <button type="submit" disabled={!memeUrl.trim()} className="h-9 px-4 rounded-lg bg-vault-gold text-vault-deep text-sm font-semibold disabled:opacity-50">Post</button>
+              </div>
             </form>
           )}
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">

@@ -28,16 +28,19 @@ export async function POST(req: NextRequest) {
   }
 
   const { vtuberId, twitterUrl, imageUrl } = await req.json()
-  if (!vtuberId || !twitterUrl) {
-    return NextResponse.json({ error: 'vtuberId and twitterUrl are required.' }, { status: 400 })
+  if (!vtuberId) {
+    return NextResponse.json({ error: 'vtuberId is required.' }, { status: 400 })
+  }
+  if (!twitterUrl?.trim() && !imageUrl?.trim()) {
+    return NextResponse.json({ error: 'Provide a Twitter/X link or upload an image.' }, { status: 400 })
   }
 
   const { error } = await supabaseAdmin.from('fan_art').insert({
     id: crypto.randomUUID(),
     vtuber_id: vtuberId,
     submitted_by: user.username,
-    twitter_url: twitterUrl,
-    image_url: imageUrl ?? null,
+    twitter_url: twitterUrl?.trim() || imageUrl!.trim(),
+    image_url: imageUrl?.trim() ?? null,
     reported: false,
     created_at: new Date().toISOString(),
   })

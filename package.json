@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "test": "playwright test",
+    "test:staging": "playwright test --config=playwright.config.ts",
     "test:ui": "playwright test --ui",
     "test:report": "playwright show-report",
     "test:headed": "playwright test --headed",

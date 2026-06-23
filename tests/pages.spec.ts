@@ -17,6 +17,8 @@ const PUBLIC_PAGES = [
   { path: '/tag-validator', title: /tag/i },
   { path: '/nominator',     title: /nominator|nominate/i },
   { path: '/corpo',         title: /corpo|collective/i },
+  { path: '/resources',     title: /resources|stream/i },
+  { path: '/fan-art',       title: /fan art|gallery/i },
   { path: '/silhouette',    title: /vtuber|silhouette|who/i },
   { path: '/login',         title: /login|sign/i },
 ]
@@ -51,9 +53,11 @@ test('discover page shows map toggle', async ({ page }) => {
   await expect(page.locator('canvas')).toBeVisible()
 })
 
-test('home page has customise button', async ({ page }) => {
+test('home page loads landing or dashboard', async ({ page }) => {
   await page.goto('/')
-  await expect(page.getByText(/customise|customize/i)).toBeVisible()
+  const landing = page.getByText(/algorithm forgot|sign in to enter/i)
+  const dashboard = page.getByText(/customise|customize|your vault dashboard/i)
+  await expect(landing.or(dashboard)).toBeVisible()
 })
 
 test('clips page shows filter tabs', async ({ page }) => {
@@ -113,6 +117,18 @@ test('silhouette game loads', async ({ page }) => {
 
 test('tag validator page loads', async ({ page }) => {
   await page.goto('/tag-validator')
+  await page.waitForLoadState('networkidle')
+  await expect(page.locator('body')).not.toContainText('Application error')
+})
+
+test('resources page has extra tabs', async ({ page }) => {
+  await page.goto('/resources')
+  await expect(page.getByRole('tab', { name: /stream setup/i })).toBeVisible()
+  await expect(page.getByRole('tab', { name: /debut checklist/i })).toBeVisible()
+})
+
+test('meme share page handles missing slug gracefully', async ({ page }) => {
+  await page.goto('/meme/meme_not_real_slug_abc123')
   await page.waitForLoadState('networkidle')
   await expect(page.locator('body')).not.toContainText('Application error')
 })

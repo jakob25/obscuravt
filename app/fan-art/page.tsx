@@ -3,6 +3,7 @@
 import { Suspense, useState, useEffect, useCallback } from 'react'
 import { useAuth } from '@/lib/auth-context'
 import { Palette, Plus, Flag, ExternalLink } from 'lucide-react'
+import { ImageUploadField } from '@/components/common/image-upload-field'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 
@@ -42,13 +43,17 @@ function FanArtPageContent() {
   const submit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!user || !vtuberId) return
+    if (!twitterUrl.trim() && !imageUrl.trim()) {
+      setError('Add a Twitter/X link or upload an image.')
+      return
+    }
     setSubmitting(true)
     setError('')
     try {
       const res = await fetch('/api/fan-art', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ vtuberId, twitterUrl, imageUrl: imageUrl || null }),
+        body: JSON.stringify({ vtuberId, twitterUrl: twitterUrl.trim() || null, imageUrl: imageUrl.trim() || null }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
@@ -95,18 +100,24 @@ function FanArtPageContent() {
       {showForm && (
         <form onSubmit={submit} className="vault-card rounded-2xl p-6 mb-8 space-y-3">
           {error && <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-sm">{error}</div>}
+          <ImageUploadField
+            purpose="fan-art"
+            label="Upload fan art"
+            onUploaded={url => setImageUrl(url)}
+            onClear={() => setImageUrl('')}
+            disabled={submitting}
+          />
           <input
             value={twitterUrl}
             onChange={e => setTwitterUrl(e.target.value)}
-            placeholder="Twitter/X post URL"
+            placeholder="Twitter/X post URL (optional if you uploaded)"
             type="url"
-            required
             className="w-full h-10 px-3 rounded-lg bg-muted/30 border border-border text-vault-cream text-sm placeholder:text-muted-foreground focus:outline-none focus:border-vault-bronze/60"
           />
           <input
             value={imageUrl}
             onChange={e => setImageUrl(e.target.value)}
-            placeholder="Direct image URL (optional, for gallery preview)"
+            placeholder="Or paste direct image URL"
             type="url"
             className="w-full h-10 px-3 rounded-lg bg-muted/30 border border-border text-vault-cream text-sm placeholder:text-muted-foreground focus:outline-none focus:border-vault-bronze/60"
           />
@@ -147,9 +158,11 @@ function FanArtPageContent() {
             <div className="p-2 flex items-center justify-between">
               <span className="text-[10px] text-muted-foreground truncate">by {piece.submitted_by}</span>
               <div className="flex items-center gap-2 flex-shrink-0">
-                <a href={piece.twitter_url} target="_blank" rel="noopener noreferrer" className="text-vault-gold hover:underline text-[10px]">
-                  Source
-                </a>
+                {piece.twitter_url.startsWith('http') && !piece.twitter_url.includes('supabase') && (
+                  <a href={piece.twitter_url} target="_blank" rel="noopener noreferrer" className="text-vault-gold hover:underline text-[10px]">
+                    Source
+                  </a>
+                )}
                 {user && (
                   <button onClick={() => report(piece.id)} className="text-muted-foreground hover:text-red-400">
                     <Flag className="h-3 w-3" />
