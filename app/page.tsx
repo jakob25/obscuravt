@@ -15,7 +15,7 @@ import { Progress } from '@/components/ui/progress'
 import { useAuth } from '@/lib/auth-context'
 import { useDashboardLayout, DashboardCustomizer, type WidgetId } from '@/components/common/dashboard-customizer'
 import { GlitchHeading } from '@/components/vault/glitch-heading'
-import { VaultDivider, VaultPanel } from '@/components/vault/vault-surfaces'
+
 import { LogIn } from 'lucide-react'
 import { MyClipsWidget } from '@/components/dashboard/my-clips-widget'
 import { normalizeRole, ROLE_ALLOWED_WIDGETS, ROLE_DEFAULT_WIDGETS, type AppRole } from '@/lib/roles'
@@ -325,47 +325,57 @@ const WIDGET_COMPONENTS: Record<WidgetId, React.ComponentType> = {
 
 function LandingHero() {
   return (
-    <section className="hero-bleed relative border-b border-border overflow-hidden vault-grain min-h-[70vh] flex items-center">
-      <div className="absolute inset-0 bg-gradient-to-br from-vault-gold/10 via-transparent to-[#e056a0]/8 pointer-events-none" />
-      <div className="absolute inset-0 vault-scanlines-subtle pointer-events-none" />
-      <div className="absolute -right-24 top-1/4 w-96 h-96 rounded-full bg-vault-gold/5 blur-3xl pointer-events-none" />
-      <div className="container mx-auto px-4 py-16 md:py-24 relative z-10">
-        <div className="grid lg:grid-cols-[1.2fr_0.8fr] gap-10 items-end">
-          <div>
-            <p className="text-xs font-mono uppercase tracking-[0.25em] text-vault-gold/80 mb-4">ObscuraVT · classified open</p>
-            <GlitchHeading as="h1" className="text-4xl md:text-5xl lg:text-6xl font-bold text-vault-cream mb-4 leading-[1.05]">
-              The creators the algorithm{' '}
-              <span className="text-vault-gold">forgot to show you.</span>
-            </GlitchHeading>
-            <p className="text-muted-foreground text-lg leading-relaxed mb-3 max-w-xl">
-              Vibes over view counts. Clips that credit the creator. Bets on what actually happens on stream.
+    <section className="relative border-b border-border overflow-hidden">
+      <div className="absolute inset-0 bg-gradient-to-br from-vault-gold/8 via-transparent to-[#e056a0]/5 pointer-events-none" />
+      <div className="absolute inset-0 opacity-[0.03] pointer-events-none"
+        style={{ backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(212,168,67,0.4) 2px, rgba(212,168,67,0.4) 4px)' }} />
+      <div className="container mx-auto px-4 py-10 md:py-16">
+        <div className="max-w-2xl mb-6">
+          <GlitchHeading as="h1" className="text-3xl md:text-4xl font-bold text-vault-cream mb-3 leading-tight">
+            The creators the algorithm{' '}
+            <span className="text-vault-gold">forgot to show you.</span>
+          </GlitchHeading>
+            <p className="text-muted-foreground text-base leading-relaxed mb-2">
+              ObscuraVT is a discovery hub built around vibes, not views. Find VTubers by personality,
+              content niche, or community tag — not subscriber count. Every clip links back to the
+              creator. Every search rewards the niche.
             </p>
-            <p className="text-sm text-muted-foreground/70 max-w-lg">
-              Indies, duos, light corpos — no contracts, no exclusives, just the Archive.
+            <p className="text-sm text-muted-foreground/70">
+              Works for solo indies, small groups, and light corpos. No contracts, no exclusives.
             </p>
           </div>
 
-          <div className="vault-panel lg:translate-y-4">
-            <p className="text-sm text-vault-cream mb-4 font-medium">Pick your entry point</p>
-            <div className="flex flex-col gap-2">
-              <Button asChild variant="vault" size="lg" className="w-full justify-center">
-                <Link href="/login">Enter the Vault</Link>
-              </Button>
-              <Button asChild variant="outline" className="w-full border-vault-bronze/50 text-vault-cream hover:bg-vault-bronze/10">
-                <Link href="/discover">Open Star Map</Link>
-              </Button>
-              <Button asChild variant="ghost" className="w-full text-muted-foreground hover:text-vault-cream">
-                <Link href="/find-my-oshi">Find my oshi →</Link>
-              </Button>
-            </div>
-            <VaultDivider className="my-4" />
-            <div className="flex flex-wrap gap-2 text-[11px] text-muted-foreground font-mono">
-              {['vibe tags', 'raw clips', 'community bets', 'daily scraps'].map(t => (
-                <span key={t} className="px-2 py-0.5 border border-border/60 rounded-sm">{t}</span>
-              ))}
-            </div>
+          <div className="flex flex-wrap items-center gap-3 mb-6">
+            <Button asChild className="bg-vault-gold hover:bg-vault-amber text-vault-deep font-semibold">
+              <Link href="/login"><LogIn className="mr-2 h-4 w-4" />Sign In to Enter the Vault</Link>
+            </Button>
+            <Button asChild className="bg-vault-gold hover:bg-vault-amber text-vault-deep font-semibold">
+              <Link href="/discover"><Compass className="mr-2 h-4 w-4" />Explore Star Map</Link>
+            </Button>
+            <Button asChild variant="outline" className="border-vault-bronze/50 text-vault-cream hover:bg-vault-bronze/10">
+              <Link href="/find-my-oshi"><Heart className="mr-2 h-4 w-4" />Find My Oshi</Link>
+            </Button>
+            <Button asChild variant="outline" className="border-vault-bronze/50 text-vault-cream hover:bg-vault-bronze/10">
+              <Link href="/clips"><Film className="mr-2 h-4 w-4" />Raw Clips</Link>
+            </Button>
+            <Button asChild variant="outline" className="border-vault-bronze/50 text-vault-cream hover:bg-vault-bronze/10">
+              <Link href="/search"><Search className="mr-2 h-4 w-4" />Search</Link>
+            </Button>
           </div>
-        </div>
+
+          <div className="flex flex-wrap gap-2">
+            {[
+              { Icon: Wrench, text: 'Vibe-based discovery' },
+              { Icon: Film, text: 'Raw clips with timestamps' },
+              { Icon: Trophy, text: 'Community predictions' },
+              { Icon: Zap, text: 'Daily habit loop' },
+              { Icon: Globe, text: 'Drives views to creators' },
+            ].map(({ Icon, text }) => (
+              <span key={text} className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-muted/30 border border-border text-xs text-muted-foreground">
+                <Icon className="h-3 w-3 text-vault-gold" />{text}
+              </span>
+            ))}
+          </div>
       </div>
     </section>
   )
