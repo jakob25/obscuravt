@@ -12,9 +12,12 @@ interface Props {
   vtuberId: string
   vtuberName: string
   isOwner: boolean
+  hideIntro?: boolean
+  /** When set, only render predictions matching these statuses */
+  statusFilter?: Array<StreamPrediction['status']>
 }
 
-export function StreamPredictions({ vtuberId, vtuberName, isOwner }: Props) {
+export function StreamPredictions({ vtuberId, vtuberName, isOwner, hideIntro, statusFilter }: Props) {
   const { user, refreshUser } = useAuth()
   const [predictions, setPredictions] = useState<StreamPrediction[]>([])
   const [loading, setLoading] = useState(true)
@@ -88,11 +91,17 @@ export function StreamPredictions({ vtuberId, vtuberName, isOwner }: Props) {
     load()
   }
 
+  const visible = statusFilter
+    ? predictions.filter(p => statusFilter.includes(p.status))
+    : predictions
+
   return (
     <div className="space-y-3">
-      <p className="text-xs text-muted-foreground">
-        Call the next stream for {vtuberName}. Wager scraps, vote when it&apos;s over.
-      </p>
+      {!hideIntro && (
+        <p className="text-xs text-muted-foreground">
+          Call the next stream for {vtuberName}. Wager scraps, vote when it&apos;s over.
+        </p>
+      )}
 
       {isOwner && (
         <>
@@ -125,11 +134,11 @@ export function StreamPredictions({ vtuberId, vtuberName, isOwner }: Props) {
 
       {loading && <p className="text-xs text-muted-foreground animate-pulse">Loading predictions…</p>}
 
-      {!loading && predictions.length === 0 && (
+      {!loading && visible.length === 0 && (
         <p className="text-xs text-muted-foreground">No predictions posted. Owner can open the first slip.</p>
       )}
 
-      {predictions.map(p => {
+      {visible.map(p => {
         const total = p.options.reduce((s, o) => s + o.totalScraps, 0)
         const activeMode = mode[p.id] ?? null
         const sel = selected[p.id] ?? null
