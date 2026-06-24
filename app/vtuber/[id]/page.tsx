@@ -7,6 +7,7 @@ import { VaultFrame } from '@/components/vault/vault-frame'
 import { DossierFrame, VaultDivider } from '@/components/vault/vault-surfaces'
 import { PageBackNav } from '@/components/vault/page-back-nav'
 import { ClaimProfileButton } from '@/components/vtuber/claim-profile-button'
+import { AddToCircleButton } from '@/components/vtuber/add-to-circle-button'
 import { VTuberEngagement } from '@/components/vtuber/vtuber-engagement'
 
 const supabase = createClient(
@@ -93,7 +94,10 @@ export default async function VTuberProfilePage({ params }: Props) {
                 </div>
               )}
             </div>
-            <ClaimProfileButton vtuberId={vtuber.id} vtuberName={vtuber.name} claimedBy={vtuber.claimed_by ?? null} />
+            <div className="flex flex-col items-end gap-2 shrink-0">
+              <AddToCircleButton vtuberId={vtuber.id} vtuberName={vtuber.name} />
+              <ClaimProfileButton vtuberId={vtuber.id} vtuberName={vtuber.name} claimedBy={vtuber.claimed_by ?? null} />
+            </div>
           </div>
 
           {/* Bio */}

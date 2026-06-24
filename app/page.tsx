@@ -18,6 +18,7 @@ import { GlitchHeading } from '@/components/vault/glitch-heading'
 
 import { LogIn } from 'lucide-react'
 import { MyClipsWidget } from '@/components/dashboard/my-clips-widget'
+import { YourCircleWidget } from '@/components/dashboard/your-circle-widget'
 import { normalizeRole, ROLE_ALLOWED_WIDGETS, ROLE_DEFAULT_WIDGETS, type AppRole } from '@/lib/roles'
 import { ALL_WIDGETS } from '@/components/common/dashboard-customizer'
 import type { WeeklyDigest } from '@/lib/types'
@@ -295,18 +296,49 @@ function ForumsWidget() {
 }
 
 function NotificationsWidget() {
+  const { user } = useAuth()
+  const [notes, setNotes] = useState<Array<{ id: string; title: string; message: string; is_read: boolean; created_at: string }>>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    if (!user) { setLoading(false); return }
+    fetch(`/api/notifications?username=${encodeURIComponent(user.username)}`, { credentials: 'include' })
+      .then(r => r.ok ? r.json() : [])
+      .then(data => setNotes(Array.isArray(data) ? data.slice(0, 3) : []))
+      .catch(() => setNotes([]))
+      .finally(() => setLoading(false))
+  }, [user])
+
   return (
     <section className="vault-panel">
       <div className="flex items-center justify-between mb-3">
         <h2 className="font-bold text-vault-cream">Notifications</h2>
         <Link href="/notifications" className="text-xs text-vault-gold hover:text-vault-amber">See all →</Link>
       </div>
-      <p className="text-sm text-muted-foreground">Bets resolved, goals funded, ideas picked.</p>
+      {loading ? (
+        <p className="text-sm text-muted-foreground animate-pulse">Checking alerts…</p>
+      ) : notes.length === 0 ? (
+        <p className="text-sm text-muted-foreground">Nothing new. Add oshis to your Circle to get CMDMI and bet alerts.</p>
+      ) : (
+        <ul className="space-y-2">
+          {notes.map(n => (
+            <li key={n.id} className={`text-sm ${n.is_read ? 'text-muted-foreground' : 'text-vault-cream'}`}>
+              <span className="font-medium">{n.title}</span>
+              <span className="text-muted-foreground"> — {n.message}</span>
+            </li>
+          ))}
+        </ul>
+      )}
     </section>
   )
 }
 
+const FULL_WIDTH_WIDGETS: WidgetId[] = [
+  'your_circle', 'trending_clips', 'daily_loop', 'constellations', 'featured_vtubers',
+]
+
 const WIDGET_COMPONENTS: Record<WidgetId, React.ComponentType> = {
+  your_circle:          YourCircleWidget,
   trending_clips:       TrendingClipsWidget,
   daily_loop:           DailyLoopWidget,
   active_bets:          ActiveBetsWidget,
@@ -428,10 +460,16 @@ function UserDashboard() {
           </Button>
         </div>
       ) : (
-        <div className="space-y-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {visibleLayout.map(widgetId => {
             const W = WIDGET_COMPONENTS[widgetId]
-            return W ? <W key={widgetId} /> : null
+            if (!W) return null
+            const full = FULL_WIDTH_WIDGETS.includes(widgetId)
+            return (
+              <div key={widgetId} className={full ? 'md:col-span-2' : undefined}>
+                <W />
+              </div>
+            )
           })}
         </div>
       )}

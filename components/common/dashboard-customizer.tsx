@@ -4,6 +4,7 @@ import { useState, useCallback, useRef } from 'react'
 import { Settings, GripVertical, X, Plus, Eye, EyeOff } from 'lucide-react'
 
 export type WidgetId =
+  | 'your_circle'
   | 'trending_clips'
   | 'active_bets'
   | 'constellations'
@@ -26,6 +27,7 @@ export interface Widget {
 }
 
 export const ALL_WIDGETS: Widget[] = [
+  { id: 'your_circle',           label: 'Your Circle',            description: 'Activity from oshis you follow',   defaultSize: 'full',  symbol: '◎' },
   { id: 'trending_clips',        label: 'Trending Clips',         description: 'Top upvoted clips this week',      defaultSize: 'full',  symbol: '◈' },
   { id: 'active_bets',           label: 'Active Bets',            description: 'Open bets you can place on',       defaultSize: 'half',  symbol: '★' },
   { id: 'constellations',        label: 'Constellations',          description: 'Quick links to all clusters',      defaultSize: 'full',  symbol: '✦' },

@@ -151,3 +151,64 @@ export interface WeeklyDigest {
   topVtuber: { id: string; name: string; endorsements: number } | null
   topCmdmi: { goal_amount: number; funded_amount: number; idea_title: string; vtuber_name: string } | null
 }
+
+/** Your Circle — saved oshi on the dashboard */
+export interface CircleOshi {
+  id: string
+  name: string
+  avatar_url: string | null
+}
+
+export type CircleFeedItem =
+  | {
+      kind: 'cmdmi_goal'
+      id: string
+      vtuberId: string
+      vtuberName: string
+      ideaTitle: string
+      goalId: string
+      fundedAmount: number
+      goalAmount: number
+      sortAt: string
+      priority: number
+    }
+  | {
+      kind: 'prediction'
+      id: string
+      vtuberId: string
+      vtuberName: string
+      title: string
+      status: string
+      sortAt: string
+      priority: number
+    }
+  | {
+      kind: 'clip'
+      id: string
+      vtuberId: string
+      vtuberName: string
+      title: string
+      upvotes: number
+      clipUrl: string
+      sortAt: string
+      priority: number
+    }
+  | {
+      kind: 'schedule'
+      id: string
+      vtuberId: string
+      vtuberName: string
+      dayOfWeek: number
+      startTime: string
+      timezone: string
+      label: string | null
+      sortAt: string
+      priority: number
+    }
+
+export interface YourCircleResponse {
+  oshis: CircleOshi[]
+  items: CircleFeedItem[]
+}
+
+export const MAX_CIRCLE_SIZE = 12
