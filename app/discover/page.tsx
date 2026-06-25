@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { StarMap } from '@/components/common/star-map'
 import { NicheMap } from '@/components/common/niche-map'
 import { Sparkles, BookOpen, Compass } from 'lucide-react'
-import { SignalSurface } from '@/components/vault/signal-surface'
+
 
 type MapMode = 'vibe' | 'niche'
 
@@ -22,7 +22,7 @@ function FirstTimerBanner() {
 
   return (
     <div className="absolute bottom-4 left-4 z-30 max-w-sm pointer-events-auto">
-      <SignalSurface preset="surface" className="bg-black/80 border border-[var(--archive-border)] rounded-xl px-4 py-3 backdrop-blur-sm">
+      <div className="bg-black/80 border border-white/10 rounded-xl px-4 py-3 backdrop-blur-sm">
         <div className="flex items-start gap-3">
           <Compass className="h-5 w-5 text-vault-gold flex-shrink-0" />
           <div>
@@ -43,7 +43,7 @@ function FirstTimerBanner() {
             Close
           </button>
         </div>
-      </SignalSurface>
+      </div>
     </div>
   )
 }

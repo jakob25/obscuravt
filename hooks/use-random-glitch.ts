@@ -43,13 +43,13 @@ const PRESETS: Record<GlitchPreset, PresetConfig> = {
     fullIntensity: [0.7, 1],
   },
   dossier: {
-    microChance: 0.35,
-    initialDelay: [1200, 4000],
-    interval: [2200, 6500],
-    microBurst: [280, 600],
-    fullBurst: [700, 1500],
-    microIntensity: [0.35, 0.65],
-    fullIntensity: [0.65, 1],
+    microChance: 0.55,
+    initialDelay: [4000, 8000],
+    interval: [6000, 14000],
+    microBurst: [220, 450],
+    fullBurst: [500, 900],
+    microIntensity: [0.25, 0.45],
+    fullIntensity: [0.45, 0.7],
   },
 }
 

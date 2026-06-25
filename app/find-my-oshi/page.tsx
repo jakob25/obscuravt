@@ -8,7 +8,7 @@ import { ArrowRight, ArrowLeft, RotateCcw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
 import { GlitchHeading } from '@/components/vault/glitch-heading'
-import { SignalSurface } from '@/components/vault/signal-surface'
+
 import { VaultPanel } from '@/components/vault/vault-surfaces'
 
 // Quiz questions are editorial — the tag IDs in options are matched against
@@ -167,7 +167,7 @@ export default function FindMyOshiPage() {
 
           {/* Intro */}
           {isIntro && (
-            <SignalSurface preset="hero" className="text-center space-y-6 p-8 rounded-xl border border-border/60">
+            <div className="text-center space-y-6">
               <div>
                 <h2 className="text-2xl font-bold text-vault-cream mb-3">Who is your Oshi?</h2>
                 <p className="text-muted-foreground leading-relaxed max-w-md mx-auto">
@@ -180,7 +180,7 @@ export default function FindMyOshiPage() {
               >
                 Start Quiz <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
-            </SignalSurface>
+            </div>
           )}
 
           {/* Question */}

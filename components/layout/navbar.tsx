@@ -55,7 +55,7 @@ export function Navbar() {
   }, [user])
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border/50 bg-vault-deep/95 backdrop-blur supports-[backdrop-filter]:bg-vault-deep/80 vault-scanlines-subtle relative">
+    <header className="sticky top-0 z-50 w-full border-b border-border/50 bg-vault-deep/95 backdrop-blur supports-[backdrop-filter]:bg-vault-deep/80">
       <nav className="container mx-auto flex h-16 items-center justify-between px-4">
 
         {/* Logo */}
@@ -65,7 +65,7 @@ export function Navbar() {
             <div className="absolute inset-0 rounded-lg bg-vault-gold/20 opacity-0 group-hover:opacity-100 transition-opacity" />
           </div>
           <div className="flex flex-col">
-            <span className="text-lg font-bold tracking-tight text-vault-cream navbar-logo-glitch inline-block">
+            <span className="text-lg font-bold tracking-tight text-vault-cream">
               Obscura<span className="text-gold-gradient">VT</span>
             </span>
             <span className="text-[10px] text-muted-foreground -mt-1 hidden sm:block">Find Your Oshi</span>

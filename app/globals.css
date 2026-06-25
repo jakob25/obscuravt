@@ -720,17 +720,6 @@
   animation: archiveShellJolt 0.05s steps(1) 2;
 }
 
-/* Navbar logo — rare hard jolt */
-.navbar-logo-glitch {
-  animation: navbarLogoJolt 12s steps(1) infinite;
-}
-@keyframes navbarLogoJolt {
-  0%, 94%, 100% { transform: translate(0, 0); filter: none; }
-  95% { transform: translate(-2px, 0); filter: drop-shadow(2px 0 0 rgba(63, 198, 214, 0.6)); }
-  96% { transform: translate(2px, 0); filter: drop-shadow(-2px 0 0 rgba(255, 42, 122, 0.5)); }
-  97% { transform: translate(0, 0); filter: none; }
-}
-
 @keyframes archiveShellJolt {
   0% { transform: translate(0, 0); }
   8% { transform: translate(-3px, 1px); }
@@ -912,7 +901,6 @@
   .archive-shell.is-glitching .archive-slice-3,
   .signal-interference.is-glitching .archive-slice-3,
   .archive-shell.is-glitching .case-folder,
-  .navbar-logo-glitch,
   .glitch-heading-idle::before,
   .glitch-heading-idle::after {
     animation: none;

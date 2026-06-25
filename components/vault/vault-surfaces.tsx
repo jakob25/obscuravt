@@ -3,7 +3,7 @@
 import { cn } from '@/lib/utils'
 import { useRandomGlitch } from '@/hooks/use-random-glitch'
 import { SignalGlitchLayers } from '@/components/vault/signal-glitch-layers'
-import { SignalSurface } from '@/components/vault/signal-surface'
+
 
 /** Thin glitch/static strip — use instead of plain hr or border-only dividers */
 export function VaultDivider({ className }: { className?: string }) {
@@ -255,12 +255,12 @@ export function VaultPanel({
   className?: string
 }) {
   return (
-    <SignalSurface preset="surface" className={cn('vault-panel vault-grain', className)}>
+    <div className={cn('vault-panel relative vault-grain', className)}>
       <span className="vault-panel-corner vault-panel-corner-tl" aria-hidden />
       <span className="vault-panel-corner vault-panel-corner-tr" aria-hidden />
       <span className="vault-panel-corner vault-panel-corner-bl" aria-hidden />
       <span className="vault-panel-corner vault-panel-corner-br" aria-hidden />
       <div className="relative z-10">{children}</div>
-    </SignalSurface>
+    </div>
   )
 }

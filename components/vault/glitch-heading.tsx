@@ -16,7 +16,7 @@ export function GlitchHeading({
   className,
   as: Tag = 'h2',
   glitchText,
-  idle = true,
+  idle = false,
 }: GlitchHeadingProps) {
   const plainText =
     typeof children === 'string' ? children : glitchText ?? null
