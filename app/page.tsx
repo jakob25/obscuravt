@@ -418,12 +418,29 @@ function LandingHero() {
   )
 }
 
+const CIRCLE_MIGRATION_KEY = 'vtvault_circle_widget_migrated'
+
 function UserDashboard() {
   const { vtubers } = useVTubers()
   const { user } = useAuth()
   const { layout, addWidget, removeWidget, moveWidget, reset } = useDashboardLayout()
 
   const role: AppRole | null = normalizeRole(user?.role ?? null)
+
+  useEffect(() => {
+    if (!role || typeof window === 'undefined') return
+    try {
+      if (localStorage.getItem(CIRCLE_MIGRATION_KEY)) return
+      const saved = localStorage.getItem('vtvault_dashboard_layout')
+      const current: WidgetId[] = saved ? JSON.parse(saved) : []
+      if (!current.includes('your_circle')) {
+        const next = ['your_circle', ...current]
+        localStorage.setItem('vtvault_dashboard_layout', JSON.stringify(next))
+        window.location.reload()
+      }
+      localStorage.setItem(CIRCLE_MIGRATION_KEY, '1')
+    } catch { /* ignore */ }
+  }, [role])
   const allowedIds = role ? ROLE_ALLOWED_WIDGETS[role] : ALL_WIDGETS.map(w => w.id)
   const availableWidgets = ALL_WIDGETS.filter(w => allowedIds.includes(w.id))
   const visibleLayout = layout.filter(id => allowedIds.includes(id))

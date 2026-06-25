@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { randomUUID } from 'crypto'
 import { supabaseAdmin } from '@/lib/supabase'
 import { getSessionUser, requireAuth } from '@/lib/session'
+import { ownsVtuber } from '@/lib/owns-vtuber'
 import { STREAM_PREDICTION_CATEGORY } from '@/lib/stream-predictions'
 import type { StreamPrediction } from '@/lib/stream-predictions'
 
@@ -97,8 +98,7 @@ export async function POST(req: NextRequest) {
 
   if (!vtuber) return NextResponse.json({ error: 'VTuber not found.' }, { status: 404 })
 
-  const isOwner = vtuber.claimed_by === user.username
-  if (!isOwner) {
+  if (!await ownsVtuber(user.username, vtuberId)) {
     return NextResponse.json({ error: 'Only the profile owner can create stream predictions.' }, { status: 403 })
   }
 

@@ -2,10 +2,9 @@
 
 import { Suspense, useState, useEffect, useCallback } from 'react'
 import { useAuth } from '@/lib/auth-context'
-import { normalizeRole } from '@/lib/roles'
-import { Plus, Trash2 } from 'lucide-react'
+import { Plus, Trash2, ChevronDown } from 'lucide-react'
 import Link from 'next/link'
-import { useSearchParams } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { PageBackNav } from '@/components/vault/page-back-nav'
 import { GlitchHeading } from '@/components/vault/glitch-heading'
 import { VaultDivider, VaultPanel } from '@/components/vault/vault-surfaces'
@@ -19,14 +18,21 @@ interface ScheduleSlot {
   label: string | null
 }
 
+interface ClaimedProfile {
+  id: string
+  name: string
+}
+
 const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
 
 function SchedulePageContent() {
   const { user } = useAuth()
+  const router = useRouter()
   const searchParams = useSearchParams()
   const vtuberId = searchParams.get('vtuber') ?? ''
 
   const [schedule, setSchedule] = useState<ScheduleSlot[]>([])
+  const [claimedProfiles, setClaimedProfiles] = useState<ClaimedProfile[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [dayOfWeek, setDayOfWeek] = useState(0)
@@ -36,7 +42,23 @@ function SchedulePageContent() {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
 
-  const isOwner = normalizeRole(user?.role ?? null) === 'VTuber' && !!vtuberId
+  const ownedIds = new Set(claimedProfiles.map(p => p.id))
+  const isOwner = !!user && !!vtuberId && ownedIds.has(vtuberId)
+  const activeProfile = claimedProfiles.find(p => p.id === vtuberId)
+
+  const loadClaimed = useCallback(async () => {
+    if (!user) {
+      setClaimedProfiles([])
+      return
+    }
+    const res = await fetch('/api/profiles/claimed', { credentials: 'include' })
+    if (!res.ok) {
+      setClaimedProfiles([])
+      return
+    }
+    const data = await res.json()
+    setClaimedProfiles(data.profiles ?? [])
+  }, [user])
 
   const load = useCallback(async () => {
     if (!vtuberId) { setLoading(false); return }
@@ -47,7 +69,14 @@ function SchedulePageContent() {
     setLoading(false)
   }, [vtuberId])
 
+  useEffect(() => { loadClaimed() }, [loadClaimed])
   useEffect(() => { load() }, [load])
+
+  useEffect(() => {
+    if (!user || vtuberId || claimedProfiles.length === 0) return
+    const activeId = claimedProfiles[0]?.id
+    if (activeId) router.replace(`/schedule?vtuber=${encodeURIComponent(activeId)}`)
+  }, [user, vtuberId, claimedProfiles, router])
 
   const addSlot = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -64,8 +93,8 @@ function SchedulePageContent() {
       if (!res.ok) throw new Error(data.error)
       setLabel(''); setShowForm(false)
       load()
-    } catch (err: any) {
-      setError(err.message)
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to add slot')
     } finally {
       setSubmitting(false)
     }
@@ -87,7 +116,9 @@ function SchedulePageContent() {
           <GlitchHeading as="h1" className="text-2xl font-bold text-vault-cream mb-1">
             Stream Schedule
           </GlitchHeading>
-          <p className="text-muted-foreground text-sm">Know when they go live. No FOMO required.</p>
+          <p className="text-muted-foreground text-sm">
+            {activeProfile ? `${activeProfile.name}'s stream times` : 'Know when they go live. No FOMO required.'}
+          </p>
         </div>
         {isOwner && vtuberId && (
           <button
@@ -98,11 +129,39 @@ function SchedulePageContent() {
           </button>
         )}
       </div>
+
+      {user && claimedProfiles.length > 0 && (
+        <div className="mb-6">
+          <label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">
+            Managing profile
+          </label>
+          <div className="relative">
+            <select
+              value={vtuberId}
+              onChange={e => router.push(`/schedule?vtuber=${encodeURIComponent(e.target.value)}`)}
+              className="w-full h-10 px-3 pr-9 rounded-lg bg-muted/30 border border-border text-vault-cream text-sm appearance-none focus:outline-none focus:border-vault-bronze/60"
+            >
+              {claimedProfiles.map(p => (
+                <option key={p.id} value={p.id}>{p.name}</option>
+              ))}
+            </select>
+            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+          </div>
+        </div>
+      )}
+
       <VaultDivider className="mb-6" />
 
-      {!vtuberId && (
+      {!vtuberId && !user && (
         <VaultPanel className="p-6 text-center text-sm text-muted-foreground">
           Pick a creator&apos;s profile to see when they stream.
+        </VaultPanel>
+      )}
+
+      {!vtuberId && user && claimedProfiles.length === 0 && (
+        <VaultPanel className="p-6 text-center text-sm text-muted-foreground space-y-3">
+          <p>You haven&apos;t claimed a VTuber profile yet.</p>
+          <Link href="/discover" className="text-vault-gold hover:underline">Browse dossiers to claim one →</Link>
         </VaultPanel>
       )}
 

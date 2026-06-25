@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { getSessionUser } from '@/lib/session'
+import { ownsVtuber } from '@/lib/owns-vtuber'
 
 // ── GET: get a vtuber's weekly schedule ───────────────────────────────────────
 export async function GET(req: NextRequest) {
@@ -31,14 +32,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'vtuberId, dayOfWeek, startTime, and timezone are required.' }, { status: 400 })
   }
 
-  const { data: vtuber } = await supabaseAdmin
-    .from('vtubers')
-    .select('id')
-    .eq('id', vtuberId)
-    .eq('claimed_by', user.username)
-    .single()
-
-  if (!vtuber) {
+  if (!await ownsVtuber(user.username, vtuberId)) {
     return NextResponse.json({ error: 'You do not own this profile.' }, { status: 403 })
   }
 
@@ -69,14 +63,7 @@ export async function DELETE(req: NextRequest) {
   const { data: slot } = await supabaseAdmin.from('stream_schedules').select('vtuber_id').eq('id', id).single()
   if (!slot) return NextResponse.json({ error: 'Not found.' }, { status: 404 })
 
-  const { data: vtuber } = await supabaseAdmin
-    .from('vtubers')
-    .select('id')
-    .eq('id', slot.vtuber_id)
-    .eq('claimed_by', user.username)
-    .single()
-
-  if (!vtuber) {
+  if (!await ownsVtuber(user.username, slot.vtuber_id)) {
     return NextResponse.json({ error: 'You do not own this profile.' }, { status: 403 })
   }
 

@@ -130,7 +130,7 @@ export function DashboardCustomizer({ layout, onAdd, onRemove, onMove, onReset, 
               <h2 className="font-bold text-vault-cream">Customize Dashboard</h2>
               <div className="flex items-center gap-2">
                 <button onClick={onReset} className="text-xs text-muted-foreground hover:text-vault-cream transition-colors">
-                  Reset
+                  Restore role defaults
                 </button>
                 <button onClick={() => setOpen(false)} className="text-muted-foreground hover:text-vault-cream transition-colors">
                   <X className="h-5 w-5" />

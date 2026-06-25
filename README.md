@@ -31,8 +31,17 @@ ADMIN_USERNAMES=jakob25,admin
 
 ## Database
 
-Run `supabase-schema.sql` in your Supabase SQL editor.
-All tables, indexes, RLS policies, seed data (achievements, shop items, canonical tags) are included.
+Run migrations in order in your Supabase SQL editor:
+
+1. `db/migrations/001-user-onboarding.sql` — roles, onboarding
+2. `db/migrations/002-multi-profile-and-engagement.sql` — claimed profiles, memes, Q&A, karaoke, schedule votes, corpo
+3. `db/migrations/003-tag-validator.sql` — tag validation streaks
+4. `db/migrations/004-vault-uploads-storage.sql` — storage bucket policies
+5. `db/migrations/005-notifications-and-tag-streak.sql` — notification types, tag streak
+
+`db/supabase-schema.sql` is a legacy stub; use the numbered migrations above for staging/prod.
+
+**Your Circle** depends on `users.favorite_vtubers` (comma-separated VTuber IDs). **Schedule votes** require migration `002` (`schedule_votes` table).
 
 ---
 

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { getSessionUser } from '@/lib/session'
 import { createNotification, notifyFavoriteVtubers } from '@/lib/notifications'
+import { ownsVtuber } from '@/lib/owns-vtuber'
 
 // ── GET: list ideas (optionally scoped to a vtuber profile) + their goal if one exists ─
 export async function GET(req: NextRequest) {
@@ -103,16 +104,17 @@ export async function PATCH(req: NextRequest) {
     const { data: idea } = await supabaseAdmin.from('cmdmi_ideas').select('profile_id, submitted_by, title').eq('id', ideaId).single()
     if (!idea) return NextResponse.json({ error: 'Idea not found.' }, { status: 404 })
 
+    if (!await ownsVtuber(user.username, idea.profile_id)) {
+      return NextResponse.json({ error: 'You do not own this profile.' }, { status: 403 })
+    }
+
     const { data: ownedVtuber } = await supabaseAdmin
       .from('vtubers')
       .select('id, name')
       .eq('id', idea.profile_id)
-      .eq('claimed_by', user.username)
       .single()
 
-    if (!ownedVtuber) {
-      return NextResponse.json({ error: 'You do not own this profile.' }, { status: 403 })
-    }
+    if (!ownedVtuber) return NextResponse.json({ error: 'VTuber profile not found.' }, { status: 404 })
 
     await supabaseAdmin.from('cmdmi_ideas').update({ status: 'selected' }).eq('id', ideaId)
     const goalId = crypto.randomUUID()
