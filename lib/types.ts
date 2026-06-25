@@ -205,6 +205,51 @@ export type CircleFeedItem =
       sortAt: string
       priority: number
     }
+  | {
+      kind: 'meme'
+      id: string
+      vtuberId: string
+      vtuberName: string
+      caption: string
+      shareSlug: string
+      upvotes: number
+      sortAt: string
+      priority: number
+    }
+  | {
+      kind: 'qa_session'
+      id: string
+      vtuberId: string
+      vtuberName: string
+      title: string
+      status: string
+      sortAt: string
+      priority: number
+    }
+  | {
+      kind: 'karaoke'
+      id: string
+      vtuberId: string
+      vtuberName: string
+      songTitle: string
+      artist: string
+      upvotes: number
+      status: string
+      sortAt: string
+      priority: number
+    }
+  | {
+      kind: 'schedule_vote'
+      id: string
+      vtuberId: string
+      vtuberName: string
+      proposedDay: number
+      proposedTime: string
+      label: string | null
+      votes: number
+      sortAt: string
+      priority: number
+    }
 
 export interface YourCircleResponse {
   oshis: CircleOshi[]

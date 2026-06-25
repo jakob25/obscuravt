@@ -94,20 +94,88 @@ function FeedRow({ item }: { item: CircleFeedItem }) {
     )
   }
 
-  return (
-    <div className="p-3 rounded-lg border border-border/60 bg-muted/20 flex items-center justify-between gap-2">
-      <div className="min-w-0">
-        <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Schedule · {item.vtuberName}</p>
-        <p className="text-sm font-medium text-vault-cream">
-          {DAYS[item.dayOfWeek]} {formatTime12h(item.startTime)} {item.timezone}
-        </p>
-        {item.label && <p className="text-xs text-muted-foreground mt-0.5">{item.label}</p>}
+  if (item.kind === 'meme') {
+    return (
+      <div className="p-3 rounded-lg border border-border/60 bg-muted/20 flex items-center justify-between gap-2">
+        <div className="min-w-0">
+          <p className="text-[10px] text-muted-foreground uppercase tracking-wide">New meme · {item.vtuberName}</p>
+          <p className="text-sm font-medium text-vault-cream line-clamp-1">{item.caption || 'Reaction dropped'}</p>
+          <p className="text-xs text-muted-foreground mt-0.5">↑ {item.upvotes}</p>
+        </div>
+        <Link href={`/meme/${item.shareSlug}`} className="text-xs text-vault-gold hover:underline shrink-0">
+          View →
+        </Link>
       </div>
-      <Link href={`/schedule?vtuber=${item.vtuberId}`} className="text-xs text-vault-gold hover:underline shrink-0">
-        Full →
-      </Link>
-    </div>
-  )
+    )
+  }
+
+  if (item.kind === 'qa_session') {
+    return (
+      <div className="p-3 rounded-lg border border-border/60 bg-muted/20 flex items-center justify-between gap-2">
+        <div className="min-w-0">
+          <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Q&A open · {item.vtuberName}</p>
+          <p className="text-sm font-medium text-vault-cream line-clamp-1">{item.title}</p>
+        </div>
+        <Link href={`/vtuber/${item.vtuberId}`} className="text-xs text-vault-gold hover:underline shrink-0">
+          Ask →
+        </Link>
+      </div>
+    )
+  }
+
+  if (item.kind === 'karaoke') {
+    return (
+      <div className="p-3 rounded-lg border border-border/60 bg-muted/20 flex items-center justify-between gap-2">
+        <div className="min-w-0">
+          <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Karaoke · {item.vtuberName}</p>
+          <p className="text-sm font-medium text-vault-cream line-clamp-1">
+            {item.songTitle}{item.artist ? ` — ${item.artist}` : ''}
+          </p>
+          <p className="text-xs text-muted-foreground mt-0.5 capitalize">{item.status} · ↑ {item.upvotes}</p>
+        </div>
+        <Link href={`/vtuber/${item.vtuberId}`} className="text-xs text-vault-gold hover:underline shrink-0">
+          Queue →
+        </Link>
+      </div>
+    )
+  }
+
+  if (item.kind === 'schedule_vote') {
+    return (
+      <div className="p-3 rounded-lg border border-border/60 bg-muted/20 flex items-center justify-between gap-2">
+        <div className="min-w-0">
+          <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Schedule vote · {item.vtuberName}</p>
+          <p className="text-sm font-medium text-vault-cream">
+            {DAYS[item.proposedDay]} {formatTime12h(item.proposedTime)}
+          </p>
+          {item.label && <p className="text-xs text-muted-foreground mt-0.5">{item.label}</p>}
+          <p className="text-xs text-muted-foreground mt-0.5">{item.votes} vote{item.votes === 1 ? '' : 's'}</p>
+        </div>
+        <Link href={`/vtuber/${item.vtuberId}`} className="text-xs text-vault-gold hover:underline shrink-0">
+          Vote →
+        </Link>
+      </div>
+    )
+  }
+
+  if (item.kind === 'schedule') {
+    return (
+      <div className="p-3 rounded-lg border border-border/60 bg-muted/20 flex items-center justify-between gap-2">
+        <div className="min-w-0">
+          <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Schedule · {item.vtuberName}</p>
+          <p className="text-sm font-medium text-vault-cream">
+            {DAYS[item.dayOfWeek]} {formatTime12h(item.startTime)} {item.timezone}
+          </p>
+          {item.label && <p className="text-xs text-muted-foreground mt-0.5">{item.label}</p>}
+        </div>
+        <Link href={`/schedule?vtuber=${item.vtuberId}`} className="text-xs text-vault-gold hover:underline shrink-0">
+          Full →
+        </Link>
+      </div>
+    )
+  }
+
+  return null
 }
 
 export function YourCircleWidget() {
@@ -138,7 +206,7 @@ export function YourCircleWidget() {
       <section className="vault-panel">
         <h2 className="text-lg font-bold text-vault-cream mb-2">Your Circle</h2>
         <p className="text-sm text-muted-foreground mb-4">
-          Follow oshis and their activity shows up here — CMDMI goals, predictions, clips, schedule.
+          Follow oshis and their activity shows up here — CMDMI, predictions, memes, Q&A, karaoke, and more.
         </p>
         <Link href="/discover" className="text-sm text-vault-gold hover:underline font-medium">
           Open Star Map to find someone →

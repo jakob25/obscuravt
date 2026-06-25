@@ -64,7 +64,7 @@ export async function GET(req: NextRequest) {
   const nameById = Object.fromEntries(oshis.map(o => [o.id, o.name]))
   const names = oshis.map(o => o.name)
 
-  const [clipsRes, goalsRes, betsRes, schedulesRes] = await Promise.all([
+  const [clipsRes, goalsRes, betsRes, schedulesRes, memesRes, qaRes, karaokeRes, votesRes] = await Promise.all([
     supabaseAdmin
       .from('clips')
       .select('id, profile_id, title, upvotes, clip_url, created_at, vtuber_name')
@@ -88,12 +88,44 @@ export async function GET(req: NextRequest) {
       .from('stream_schedules')
       .select('id, vtuber_id, day_of_week, start_time, timezone, label')
       .in('vtuber_id', [...idSet]),
+    supabaseAdmin
+      .from('memes')
+      .select('id, vtuber_id, caption, upvotes, share_slug, created_at')
+      .in('vtuber_id', [...idSet])
+      .order('created_at', { ascending: false })
+      .limit(12),
+    supabaseAdmin
+      .from('qa_sessions')
+      .select('id, vtuber_id, title, status, created_at')
+      .in('vtuber_id', [...idSet])
+      .eq('status', 'open')
+      .order('created_at', { ascending: false })
+      .limit(12),
+    supabaseAdmin
+      .from('karaoke_requests')
+      .select('id, vtuber_id, song_title, artist, upvotes, status, created_at')
+      .in('vtuber_id', [...idSet])
+      .in('status', ['queued', 'pending'])
+      .order('upvotes', { ascending: false })
+      .order('created_at', { ascending: false })
+      .limit(12),
+    supabaseAdmin
+      .from('schedule_votes')
+      .select('id, vtuber_id, proposed_day, proposed_time, label, votes, created_at')
+      .in('vtuber_id', [...idSet])
+      .order('votes', { ascending: false })
+      .order('created_at', { ascending: false })
+      .limit(20),
   ])
 
   if (clipsRes.error) return NextResponse.json({ error: clipsRes.error.message }, { status: 500 })
   if (goalsRes.error) return NextResponse.json({ error: goalsRes.error.message }, { status: 500 })
   if (betsRes.error) return NextResponse.json({ error: betsRes.error.message }, { status: 500 })
   if (schedulesRes.error) return NextResponse.json({ error: schedulesRes.error.message }, { status: 500 })
+  if (memesRes.error && memesRes.error.code !== '42P01') return NextResponse.json({ error: memesRes.error.message }, { status: 500 })
+  if (qaRes.error && qaRes.error.code !== '42P01') return NextResponse.json({ error: qaRes.error.message }, { status: 500 })
+  if (karaokeRes.error && karaokeRes.error.code !== '42P01') return NextResponse.json({ error: karaokeRes.error.message }, { status: 500 })
+  if (votesRes.error && votesRes.error.code !== '42P01') return NextResponse.json({ error: votesRes.error.message }, { status: 500 })
 
   const ideaIds = [...new Set((goalsRes.data ?? []).map(g => g.idea_id))]
   let ideaTitleById: Record<string, string> = {}
@@ -175,7 +207,72 @@ export async function GET(req: NextRequest) {
       timezone: next.timezone,
       label: next.label,
       sortAt: new Date().toISOString(),
-      priority: 4,
+      priority: 5,
+    })
+  }
+
+  for (const m of memesRes.data ?? []) {
+    if (!m.vtuber_id || !idSet.has(m.vtuber_id)) continue
+    items.push({
+      kind: 'meme',
+      id: m.id,
+      vtuberId: m.vtuber_id,
+      vtuberName: nameById[m.vtuber_id] ?? 'Unknown',
+      caption: m.caption ?? '',
+      shareSlug: m.share_slug,
+      upvotes: m.upvotes ?? 0,
+      sortAt: m.created_at,
+      priority: 3,
+    })
+  }
+
+  for (const s of qaRes.data ?? []) {
+    if (!idSet.has(s.vtuber_id)) continue
+    items.push({
+      kind: 'qa_session',
+      id: s.id,
+      vtuberId: s.vtuber_id,
+      vtuberName: nameById[s.vtuber_id] ?? 'Unknown',
+      title: s.title,
+      status: s.status,
+      sortAt: s.created_at,
+      priority: 1,
+    })
+  }
+
+  const karaokeSeen = new Set<string>()
+  for (const k of karaokeRes.data ?? []) {
+    if (!idSet.has(k.vtuber_id) || karaokeSeen.has(k.vtuber_id)) continue
+    karaokeSeen.add(k.vtuber_id)
+    items.push({
+      kind: 'karaoke',
+      id: k.id,
+      vtuberId: k.vtuber_id,
+      vtuberName: nameById[k.vtuber_id] ?? 'Unknown',
+      songTitle: k.song_title,
+      artist: k.artist ?? '',
+      upvotes: k.upvotes ?? 0,
+      status: k.status,
+      sortAt: k.created_at,
+      priority: k.status === 'queued' ? 2 : 3,
+    })
+  }
+
+  const voteSeen = new Set<string>()
+  for (const v of votesRes.data ?? []) {
+    if (!idSet.has(v.vtuber_id) || voteSeen.has(v.vtuber_id)) continue
+    voteSeen.add(v.vtuber_id)
+    items.push({
+      kind: 'schedule_vote',
+      id: v.id,
+      vtuberId: v.vtuber_id,
+      vtuberName: nameById[v.vtuber_id] ?? 'Unknown',
+      proposedDay: v.proposed_day,
+      proposedTime: v.proposed_time,
+      label: v.label,
+      votes: v.votes ?? 0,
+      sortAt: v.created_at,
+      priority: 2,
     })
   }
 
