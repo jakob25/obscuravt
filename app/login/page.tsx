@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/auth-context'
+import { SignalSurface } from '@/components/vault/signal-surface'
 
 export default function LoginPage() {
   const { login, register } = useAuth()
@@ -195,10 +196,15 @@ export default function LoginPage() {
         }
       `}</style>
 
-      <div className="vl-page">
-        <div className="vl-card">
+      <div className="vl-page relative">
+        <div className="absolute inset-0 z-20 pointer-events-none">
+          <SignalSurface preset="hero" className="h-full w-full min-h-screen">
+            <span className="sr-only" aria-hidden>Signal interference</span>
+          </SignalSurface>
+        </div>
+        <div className="vl-card relative z-10">
           <div className="vl-title">ObscuraVT</div>
-          <div className="vl-honor">For the creators the algorithm forgot · In honor of Spindra Popaly</div>
+          <div className="vl-honor">For the creators the algorithm doesn&apos;t want you to see · In honor of Spindra Popaly</div>
 
           <div className="vl-lock">
             <svg className="vl-svg" viewBox="0 0 460 460" xmlns="http://www.w3.org/2000/svg">

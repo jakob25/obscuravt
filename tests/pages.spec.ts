@@ -55,7 +55,7 @@ test('discover page shows map toggle', async ({ page }) => {
 
 test('home page loads landing or dashboard', async ({ page }) => {
   await page.goto('/')
-  const landing = page.getByText(/algorithm forgot|sign in to enter/i)
+  const landing = page.getByText(/algorithm doesn't want you to see|sign in to enter/i)
   const dashboard = page.getByText(/customise|customize|your vault dashboard/i)
   await expect(landing.or(dashboard)).toBeVisible()
 })

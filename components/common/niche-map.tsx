@@ -123,6 +123,22 @@ export function NicheMap() {
       ctx.fillStyle = vig
       ctx.fillRect(0, 0, width, height)
 
+      // Light CCTV scanlines + static (niche map parity, lower intensity)
+      ctx.save()
+      for (let y = 0; y < height; y += 4) {
+        ctx.globalAlpha = 0.025
+        ctx.fillStyle = '#000'
+        ctx.fillRect(0, y, width, 1)
+      }
+      ctx.globalAlpha = 1
+      for (let i = 0; i < 120; i++) {
+        ctx.globalAlpha = Math.random() * 0.04
+        ctx.fillStyle = Math.random() > 0.5 ? '#fff' : '#0af'
+        ctx.fillRect(Math.random() * width, Math.random() * height, 1, 1)
+      }
+      ctx.globalAlpha = 1
+      ctx.restore()
+
       ctx.save()
       ctx.translate(tr.x, tr.y)
       ctx.scale(k, k)

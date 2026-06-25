@@ -15,6 +15,7 @@ import { Progress } from '@/components/ui/progress'
 import { useAuth } from '@/lib/auth-context'
 import { useDashboardLayout, DashboardCustomizer, type WidgetId } from '@/components/common/dashboard-customizer'
 import { GlitchHeading } from '@/components/vault/glitch-heading'
+import { SignalSurface } from '@/components/vault/signal-surface'
 
 import { LogIn } from 'lucide-react'
 import { MyClipsWidget } from '@/components/dashboard/my-clips-widget'
@@ -171,8 +172,9 @@ function FeaturedVTubersWidget() {
           {featured.map((v, i) => {
             const c = constellations.find(c => c.id === v.category)
             return (
-              <Link key={v.id} href={`/vtuber/${v.id}`}
-                className={`dossier-frame p-4 hover:border-vault-gold/40 transition-all group vault-grain ${i % 2 === 0 ? 'lg:-rotate-[0.3deg]' : 'lg:rotate-[0.3deg]'}`}>
+              <SignalSurface key={v.id} preset="surface"
+                className={`dossier-frame p-4 hover:border-vault-gold/40 transition-all vault-grain ${i % 2 === 0 ? 'lg:-rotate-[0.3deg]' : 'lg:rotate-[0.3deg]'}`}>
+              <Link href={`/vtuber/${v.id}`} className="block group">
                 <div className="flex items-start gap-3 mb-3 relative z-10">
                   <img src={v.avatarUrl} alt={v.name}
                     className="h-10 w-10 object-cover border-2 border-vault-bronze/50 group-hover:border-vault-gold/50 transition-colors"
@@ -185,6 +187,7 @@ function FeaturedVTubersWidget() {
                 {v.bio && <p className="text-xs text-muted-foreground line-clamp-2 mb-3 relative z-10">{v.bio}</p>}
                 <div className="relative z-10"><VibeTagList tagIds={v.vibeTags} size="sm" maxTags={3} /></div>
               </Link>
+              </SignalSurface>
             )
           })}
         </div>
@@ -249,13 +252,13 @@ function WeeklyDigestWidget() {
 
 function FindMyOshiWidget() {
   return (
-    <section className="vault-panel bg-gradient-to-br from-vault-gold/5 to-vault-amber/5 border-vault-gold/20">
+    <SignalSurface preset="surface" className="vault-panel bg-gradient-to-br from-vault-gold/5 to-vault-amber/5 border-vault-gold/20">
       <h2 className="font-bold text-vault-cream mb-2">Find my oshi</h2>
       <p className="text-sm text-muted-foreground mb-4">Five questions. Vibe match, not follower count.</p>
       <Button asChild size="sm" className="bg-vault-gold hover:bg-vault-amber text-vault-deep font-semibold">
         <Link href="/find-my-oshi">Take the quiz <ArrowRight className="h-3.5 w-3.5 ml-1" /></Link>
       </Button>
-    </section>
+    </SignalSurface>
   )
 }
 
@@ -357,16 +360,18 @@ const WIDGET_COMPONENTS: Record<WidgetId, React.ComponentType> = {
 
 function LandingHero() {
   return (
-    <section className="relative border-b border-border overflow-hidden">
+    <SignalSurface preset="hero" className="hero-bleed border-b border-border">
       <div className="absolute inset-0 bg-gradient-to-br from-vault-gold/8 via-transparent to-[#e056a0]/5 pointer-events-none" />
-      <div className="absolute inset-0 opacity-[0.03] pointer-events-none"
-        style={{ backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(212,168,67,0.4) 2px, rgba(212,168,67,0.4) 4px)' }} />
       <div className="container mx-auto px-4 py-10 md:py-16">
         <div className="max-w-2xl mb-6">
-          <GlitchHeading as="h1" className="text-3xl md:text-4xl font-bold text-vault-cream mb-3 leading-tight">
-            The creators the algorithm{' '}
-            <span className="text-vault-gold">forgot to show you.</span>
-          </GlitchHeading>
+          <h1 className="text-3xl md:text-4xl font-bold text-vault-cream mb-3 leading-tight">
+            <GlitchHeading as="span" className="block" glitchText="The creators the algorithm">
+              The creators the algorithm
+            </GlitchHeading>
+            <GlitchHeading as="span" className="block text-vault-gold" glitchText="doesn't want you to see.">
+              doesn&apos;t want you to see.
+            </GlitchHeading>
+          </h1>
             <p className="text-muted-foreground text-base leading-relaxed mb-2">
               ObscuraVT is a discovery hub built around vibes, not views. Find VTubers by personality,
               content niche, or community tag — not subscriber count. Every clip links back to the
@@ -409,7 +414,7 @@ function LandingHero() {
             ))}
           </div>
       </div>
-    </section>
+    </SignalSurface>
   )
 }
 

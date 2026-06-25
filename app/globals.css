@@ -547,8 +547,13 @@
   letter-spacing: 0.06em;
 }
 
-/* ── Analog glitch — hard cuts, not smooth fades. .is-glitching on .archive-shell ── */
-.archive-shell .archive-scanlines {
+/* ── Analog glitch — hard cuts. Shared by .signal-interference (dossier, surfaces, shell) ── */
+.signal-interference {
+  position: relative;
+}
+
+.archive-shell .archive-scanlines,
+.signal-interference .archive-scanlines {
   position: absolute;
   inset: 0;
   pointer-events: none;
@@ -564,7 +569,8 @@
   opacity: 0.5;
 }
 
-.archive-shell .archive-static {
+.archive-shell .archive-static,
+.signal-interference .archive-static {
   position: absolute;
   inset: 0;
   z-index: 31;
@@ -575,7 +581,8 @@
   mix-blend-mode: screen;
 }
 
-.archive-shell .archive-track {
+.archive-shell .archive-track,
+.signal-interference .archive-track {
   position: absolute;
   left: 0;
   right: 0;
@@ -592,13 +599,15 @@
   box-shadow: 0 0 12px rgba(120, 200, 255, 0.35);
 }
 
-.archive-shell .archive-track-2 {
+.archive-shell .archive-track-2,
+.signal-interference .archive-track-2 {
   height: 6px;
   background: rgba(255, 255, 255, 0.12);
   box-shadow: none;
 }
 
-.archive-shell .archive-flash {
+.archive-shell .archive-flash,
+.signal-interference .archive-flash {
   position: absolute;
   inset: 0;
   z-index: 34;
@@ -608,7 +617,8 @@
   mix-blend-mode: overlay;
 }
 
-.archive-shell .archive-slice {
+.archive-shell .archive-slice,
+.signal-interference .archive-slice {
   position: absolute;
   left: 0;
   right: 0;
@@ -619,45 +629,57 @@
   mix-blend-mode: hard-light;
 }
 
-.archive-shell .archive-slice-1 { top: 18%; height: 7%; }
-.archive-shell .archive-slice-2 { top: 47%; height: 4%; }
-.archive-shell .archive-slice-3 { top: 71%; height: 9%; }
+.archive-shell .archive-slice-1,
+.signal-interference .archive-slice-1 { top: 18%; height: 7%; }
+.archive-shell .archive-slice-2,
+.signal-interference .archive-slice-2 { top: 47%; height: 4%; }
+.archive-shell .archive-slice-3,
+.signal-interference .archive-slice-3 { top: 71%; height: 9%; }
 
-.archive-shell.is-glitching {
+.archive-shell.is-glitching,
+.signal-interference.is-glitching {
   animation: archiveShellJolt 0.09s steps(1) 12;
 }
 
-.archive-shell.is-glitching .archive-scanlines {
+.archive-shell.is-glitching .archive-scanlines,
+.signal-interference.is-glitching .archive-scanlines {
   opacity: 1;
   animation: scanlinePulse 0.08s steps(2) 14;
 }
 
-.archive-shell.is-glitching .archive-static {
+.archive-shell.is-glitching .archive-static,
+.signal-interference.is-glitching .archive-static {
   opacity: 0.85;
   animation: staticGrainShift 0.06s steps(4) 18;
 }
 
-.archive-shell.is-glitching .archive-track {
+.archive-shell.is-glitching .archive-track,
+.signal-interference.is-glitching .archive-track {
   opacity: 1;
   animation: dossierTrackJerk 1.1s steps(6) 1;
 }
 
-.archive-shell.is-glitching .archive-track-2 {
+.archive-shell.is-glitching .archive-track-2,
+.signal-interference.is-glitching .archive-track-2 {
   opacity: 0.9;
   animation: dossierTrackJerk2 0.7s steps(5) 1 reverse;
 }
 
-.archive-shell.is-glitching .archive-flash {
+.archive-shell.is-glitching .archive-flash,
+.signal-interference.is-glitching .archive-flash {
   animation: archiveHardFlash 1.2s steps(1) 1;
 }
 
-.archive-shell.is-glitching .archive-slice-1 {
+.archive-shell.is-glitching .archive-slice-1,
+.signal-interference.is-glitching .archive-slice-1 {
   animation: horizontalTear1 0.11s steps(1) 8;
 }
-.archive-shell.is-glitching .archive-slice-2 {
+.archive-shell.is-glitching .archive-slice-2,
+.signal-interference.is-glitching .archive-slice-2 {
   animation: horizontalTear2 0.13s steps(1) 7;
 }
-.archive-shell.is-glitching .archive-slice-3 {
+.archive-shell.is-glitching .archive-slice-3,
+.signal-interference.is-glitching .archive-slice-3 {
   animation: horizontalTear3 0.1s steps(1) 9;
 }
 
@@ -666,15 +688,19 @@
 }
 
 /* Shorter, sharper bursts for ambient micro-glitches */
-.archive-shell.is-glitching-micro {
+.archive-shell.is-glitching-micro,
+.signal-interference.is-glitching-micro {
   animation: archiveShellJolt 0.06s steps(1) 4;
 }
 .archive-shell.is-glitching-micro .archive-track,
-.archive-shell.is-glitching-micro .archive-track-2 {
+.archive-shell.is-glitching-micro .archive-track-2,
+.signal-interference.is-glitching-micro .archive-track,
+.signal-interference.is-glitching-micro .archive-track-2 {
   animation-duration: 0.45s;
   animation-timing-function: steps(3);
 }
-.archive-shell.is-glitching-micro .archive-flash {
+.archive-shell.is-glitching-micro .archive-flash,
+.signal-interference.is-glitching-micro .archive-flash {
   animation-duration: 0.3s;
 }
 .archive-shell.is-glitching-micro .case-folder {
@@ -682,8 +708,27 @@
 }
 .archive-shell.is-glitching-micro .archive-slice-1,
 .archive-shell.is-glitching-micro .archive-slice-2,
-.archive-shell.is-glitching-micro .archive-slice-3 {
+.archive-shell.is-glitching-micro .archive-slice-3,
+.signal-interference.is-glitching-micro .archive-slice-1,
+.signal-interference.is-glitching-micro .archive-slice-2,
+.signal-interference.is-glitching-micro .archive-slice-3 {
   animation-iteration-count: 3;
+}
+
+/* Viewport shell — even subtler */
+.signal-interference.is-glitching-micro:has(.archive-scanlines) {
+  animation: archiveShellJolt 0.05s steps(1) 2;
+}
+
+/* Navbar logo — rare hard jolt */
+.navbar-logo-glitch {
+  animation: navbarLogoJolt 12s steps(1) infinite;
+}
+@keyframes navbarLogoJolt {
+  0%, 94%, 100% { transform: translate(0, 0); filter: none; }
+  95% { transform: translate(-2px, 0); filter: drop-shadow(2px 0 0 rgba(63, 198, 214, 0.6)); }
+  96% { transform: translate(2px, 0); filter: drop-shadow(-2px 0 0 rgba(255, 42, 122, 0.5)); }
+  97% { transform: translate(0, 0); filter: none; }
 }
 
 @keyframes archiveShellJolt {
@@ -821,11 +866,11 @@
 }
 
 .glitch-heading-idle::before {
-  animation: headingGlitchCyan 3.2s steps(1) infinite;
+  animation: headingGlitchCyan 2.4s steps(1) infinite;
 }
 
 .glitch-heading-idle::after {
-  animation: headingGlitchMagenta 2.7s steps(1) infinite;
+  animation: headingGlitchMagenta 2s steps(1) infinite;
 }
 
 .glitch-heading:hover::before,
@@ -851,14 +896,23 @@
 
 @media (prefers-reduced-motion: reduce) {
   .archive-shell.is-glitching,
+  .signal-interference.is-glitching,
   .archive-shell.is-glitching .archive-static,
+  .signal-interference.is-glitching .archive-static,
   .archive-shell.is-glitching .archive-track,
+  .signal-interference.is-glitching .archive-track,
   .archive-shell.is-glitching .archive-track-2,
+  .signal-interference.is-glitching .archive-track-2,
   .archive-shell.is-glitching .archive-flash,
+  .signal-interference.is-glitching .archive-flash,
   .archive-shell.is-glitching .archive-slice-1,
+  .signal-interference.is-glitching .archive-slice-1,
   .archive-shell.is-glitching .archive-slice-2,
+  .signal-interference.is-glitching .archive-slice-2,
   .archive-shell.is-glitching .archive-slice-3,
+  .signal-interference.is-glitching .archive-slice-3,
   .archive-shell.is-glitching .case-folder,
+  .navbar-logo-glitch,
   .glitch-heading-idle::before,
   .glitch-heading-idle::after {
     animation: none;

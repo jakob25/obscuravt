@@ -17,7 +17,7 @@ export default function NominatorPage() {
         Nominator
       </GlitchHeading>
       <p className="text-sm text-muted-foreground mb-8">
-        The creators the algorithm forgot to show you — put them on the map.
+        The creators the algorithm doesn&apos;t want you to see — put them on the map.
       </p>
 
       <div className="grid sm:grid-cols-3 gap-3 mb-8">

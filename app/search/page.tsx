@@ -32,7 +32,7 @@ export default function SearchPage() {
       <GlitchHeading as="h1" className="text-2xl font-bold text-vault-cream mb-2">
         Search the Vault
       </GlitchHeading>
-      <p className="text-sm text-muted-foreground mb-4">Name, tag, constellation — find who the algorithm hid.</p>
+      <p className="text-sm text-muted-foreground mb-4">Name, tag, constellation — find who the algorithm doesn&apos;t want you to see.</p>
       <VaultDivider className="mb-6" />
 
       <input

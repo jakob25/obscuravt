@@ -1,46 +1,9 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
 import { cn } from '@/lib/utils'
-import { AnalogStaticCanvas } from '@/components/vault/analog-static-canvas'
-
-/** Random ambient signal bursts — no user trigger */
-function useRandomGlitch() {
-  const [active, setActive] = useState(false)
-  const [intensity, setIntensity] = useState(1)
-  const timers = useRef<ReturnType<typeof setTimeout>[]>([])
-
-  useEffect(() => {
-    const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    if (prefersReduced) return
-
-    const clearAll = () => {
-      timers.current.forEach(clearTimeout)
-      timers.current = []
-    }
-
-    const arm = (delayMs: number) => {
-      const id = setTimeout(() => {
-        const micro = Math.random() < 0.35
-        setIntensity(micro ? 0.35 + Math.random() * 0.3 : 0.65 + Math.random() * 0.35)
-        setActive(true)
-        const burstMs = micro ? 280 + Math.random() * 320 : 700 + Math.random() * 800
-        const offId = setTimeout(() => {
-          setActive(false)
-          arm(2200 + Math.random() * 6500)
-        }, burstMs)
-        timers.current.push(offId)
-      }, delayMs)
-      timers.current.push(id)
-    }
-
-    arm(1200 + Math.random() * 2800)
-
-    return clearAll
-  }, [])
-
-  return { active, intensity }
-}
+import { useRandomGlitch } from '@/hooks/use-random-glitch'
+import { SignalGlitchLayers } from '@/components/vault/signal-glitch-layers'
+import { SignalSurface } from '@/components/vault/signal-surface'
 
 /** Thin glitch/static strip — use instead of plain hr or border-only dividers */
 export function VaultDivider({ className }: { className?: string }) {
@@ -80,26 +43,18 @@ export function DossierFrame({
   caseId?: string
   accessLine?: string
 }) {
-  const { active: glitching, intensity } = useRandomGlitch()
+  const { active: glitching, intensity, isMicro } = useRandomGlitch({ preset: 'dossier' })
 
   return (
     <div
       className={cn(
-        'archive-shell relative',
+        'archive-shell signal-interference relative',
         glitching && 'is-glitching',
-        glitching && intensity < 0.55 && 'is-glitching-micro',
+        isMicro && 'is-glitching-micro',
         className,
       )}
     >
-      <div className="archive-scanlines" aria-hidden />
-      <div className="archive-static" aria-hidden />
-      <div className="archive-track" aria-hidden />
-      <div className="archive-track archive-track-2" aria-hidden />
-      <div className="archive-flash" aria-hidden />
-      <div className="archive-slice archive-slice-1" aria-hidden />
-      <div className="archive-slice archive-slice-2" aria-hidden />
-      <div className="archive-slice archive-slice-3" aria-hidden />
-      <AnalogStaticCanvas active={glitching} intensity={glitching ? intensity : 0} />
+      <SignalGlitchLayers active={glitching} intensity={intensity} />
 
       <div className="archive-header">
         <div>
@@ -300,12 +255,12 @@ export function VaultPanel({
   className?: string
 }) {
   return (
-    <div className={cn('vault-panel relative vault-grain', className)}>
+    <SignalSurface preset="surface" className={cn('vault-panel vault-grain', className)}>
       <span className="vault-panel-corner vault-panel-corner-tl" aria-hidden />
       <span className="vault-panel-corner vault-panel-corner-tr" aria-hidden />
       <span className="vault-panel-corner vault-panel-corner-bl" aria-hidden />
       <span className="vault-panel-corner vault-panel-corner-br" aria-hidden />
       <div className="relative z-10">{children}</div>
-    </div>
+    </SignalSurface>
   )
 }

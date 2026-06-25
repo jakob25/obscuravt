@@ -20,6 +20,7 @@ const MAX_ZOOM = 5
 export function StarMap() {
   const { vtubers, constellations, loading } = useStarMapData()
   const router = useRouter()
+  const [vhsFailed, setVhsFailed] = useState(false)
 
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -496,13 +497,16 @@ export function StarMap() {
 
   return (
     <div ref={containerRef} className="relative w-full h-full min-h-[500px] bg-[#020408] overflow-hidden">
-      <video
-        autoPlay loop muted playsInline
-        className="absolute inset-0 w-full h-full object-cover pointer-events-none"
-        style={{ zIndex: 0, opacity: 0.15, mixBlendMode: 'screen' }}
-      >
-        <source src="/vhs-static.mp4" type="video/mp4" />
-      </video>
+      {!vhsFailed && (
+        <video
+          autoPlay loop muted playsInline
+          className="absolute inset-0 w-full h-full object-cover pointer-events-none"
+          style={{ zIndex: 0, opacity: 0.15, mixBlendMode: 'screen' }}
+          onError={() => setVhsFailed(true)}
+        >
+          <source src="/vhs-static.mp4" type="video/mp4" />
+        </video>
+      )}
       <canvas
         ref={canvasRef}
         width={dimensions.width}
