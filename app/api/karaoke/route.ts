@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { getSessionUser } from '@/lib/session'
 import { ownsVtuber } from '@/lib/owns-vtuber'
+import { notifyFavoriteVtubers } from '@/lib/notifications'
 
 const VALID_STATUS = ['pending', 'queued', 'done', 'rejected'] as const
 
@@ -78,6 +79,20 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ error: 'You do not own this profile.' }, { status: 403 })
     }
     await supabaseAdmin.from('karaoke_requests').update({ status }).eq('id', requestId)
+
+    if (status === 'queued' && row.status !== 'queued') {
+      const { data: vtuber } = await supabaseAdmin.from('vtubers').select('name').eq('id', row.vtuber_id).single()
+      await notifyFavoriteVtubers(
+        row.vtuber_id,
+        vtuber?.name ?? 'A creator',
+        'Karaoke queue live',
+        'Song requests are being queued — jump in.',
+        'karaoke_open',
+        requestId,
+        user.username,
+      )
+    }
+
     return NextResponse.json({ ok: true })
   }
 

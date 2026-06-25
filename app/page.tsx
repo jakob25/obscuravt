@@ -319,7 +319,7 @@ function NotificationsWidget() {
       {loading ? (
         <p className="text-sm text-muted-foreground animate-pulse">Checking alerts…</p>
       ) : notes.length === 0 ? (
-        <p className="text-sm text-muted-foreground">Nothing new. Add oshis to your Circle to get CMDMI and bet alerts.</p>
+        <p className="text-sm text-muted-foreground">Nothing new. Add oshis to your Circle for CMDMI, predictions, Q&A, and meme alerts.</p>
       ) : (
         <ul className="space-y-2">
           {notes.map(n => (

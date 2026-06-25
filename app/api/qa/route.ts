@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { getSessionUser } from '@/lib/session'
 import { ownsVtuber } from '@/lib/owns-vtuber'
+import { notifyFavoriteVtubers } from '@/lib/notifications'
 
 export async function GET(req: NextRequest) {
   const vtuberId = req.nextUrl.searchParams.get('vtuberId')
@@ -65,6 +66,18 @@ export async function POST(req: NextRequest) {
       if (error.code === '42P01') return NextResponse.json({ error: 'Q&A not available yet — run migration 002.' }, { status: 503 })
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
+
+    const { data: vtuber } = await supabaseAdmin.from('vtubers').select('name').eq('id', vtuberId).single()
+    await notifyFavoriteVtubers(
+      vtuberId,
+      vtuber?.name ?? 'A creator',
+      'Q&A is open',
+      `"${title.trim()}" — submit your questions.`,
+      'qa_open',
+      data?.id,
+      user.username,
+    )
+
     return NextResponse.json({ ok: true, sessionId: data?.id })
   }
 

@@ -9,6 +9,10 @@ export type NotificationType =
   | 'bet_won'
   | 'bet_lost'
   | 'achievement'
+  | 'qa_open'
+  | 'karaoke_open'
+  | 'schedule_vote'
+  | 'meme_new'
 
 export async function createNotification(
   username: string,

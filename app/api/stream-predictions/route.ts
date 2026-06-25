@@ -3,6 +3,7 @@ import { randomUUID } from 'crypto'
 import { supabaseAdmin } from '@/lib/supabase'
 import { getSessionUser, requireAuth } from '@/lib/session'
 import { ownsVtuber } from '@/lib/owns-vtuber'
+import { notifyFavoriteVtubers } from '@/lib/notifications'
 import { STREAM_PREDICTION_CATEGORY } from '@/lib/stream-predictions'
 import type { StreamPrediction } from '@/lib/stream-predictions'
 
@@ -102,8 +103,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Only the profile owner can create stream predictions.' }, { status: 403 })
   }
 
+  const betId = randomUUID()
   const { error } = await supabaseAdmin.from('bets').insert({
-    id: randomUUID(),
+    id: betId,
     vtuber_name: vtuber.name,
     stream_link: '',
     game_or_activity: '',
@@ -118,5 +120,16 @@ export async function POST(req: NextRequest) {
   })
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  await notifyFavoriteVtubers(
+    vtuberId,
+    vtuber.name,
+    'New stream prediction',
+    `"${title.trim()}" is open for wagers.`,
+    'bet_voting',
+    betId,
+    user.username,
+  )
+
   return NextResponse.json({ ok: true }, { status: 201 })
 }

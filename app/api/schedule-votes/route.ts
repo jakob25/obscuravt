@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { getSessionUser } from '@/lib/session'
+import { notifyFavoriteVtubers } from '@/lib/notifications'
 
 const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
 
@@ -40,7 +41,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'proposedDay must be 0–6.' }, { status: 400 })
   }
 
-  const { error } = await supabaseAdmin.from('schedule_votes').insert({
+  const { data: inserted, error } = await supabaseAdmin.from('schedule_votes').insert({
     vtuber_id: vtuberId,
     proposed_day: proposedDay,
     proposed_time: proposedTime.trim(),
@@ -48,12 +49,25 @@ export async function POST(req: NextRequest) {
     votes: 0,
     created_by: user.username,
     created_at: new Date().toISOString(),
-  })
+  }).select('id').single()
 
   if (error) {
     if (error.code === '42P01') return NextResponse.json({ error: 'Schedule voting not available yet — run migration 002.' }, { status: 503 })
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
+
+  const { data: vtuber } = await supabaseAdmin.from('vtubers').select('name').eq('id', vtuberId).single()
+  const dayLabel = DAYS[proposedDay] ?? String(proposedDay)
+  await notifyFavoriteVtubers(
+    vtuberId,
+    vtuber?.name ?? 'A creator',
+    'Schedule vote',
+    `New proposal: ${dayLabel} ${proposedTime.trim()}${label?.trim() ? ` · ${label.trim()}` : ''}`,
+    'schedule_vote',
+    inserted?.id,
+    user.username,
+  )
+
   return NextResponse.json({ ok: true })
 }
 

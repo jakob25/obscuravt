@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { randomBytes } from 'crypto'
 import { supabaseAdmin } from '@/lib/supabase'
 import { getSessionUser } from '@/lib/session'
+import { notifyFavoriteVtubers } from '@/lib/notifications'
 
 export async function GET(req: NextRequest) {
   const vtuberId = req.nextUrl.searchParams.get('vtuberId')
@@ -74,6 +75,20 @@ export async function POST(req: NextRequest) {
     if (error.code === '42P01') return NextResponse.json({ error: 'Memes not available yet — run migration 002.' }, { status: 503 })
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
+
+  if (vtuberId) {
+    const { data: vtuber } = await supabaseAdmin.from('vtubers').select('name').eq('id', vtuberId).single()
+    await notifyFavoriteVtubers(
+      vtuberId,
+      vtuber?.name ?? 'A creator',
+      'New meme',
+      caption?.trim() ? `"${caption.trim()}"` : 'A new reaction was posted.',
+      'meme_new',
+      data?.id,
+      user.username,
+    )
+  }
+
   return NextResponse.json({ ok: true, id: data?.id, shareSlug: data?.share_slug })
 }
 
