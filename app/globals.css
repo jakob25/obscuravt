@@ -302,3 +302,309 @@
   margin-left: calc(50% - 50vw);
   margin-right: calc(50% - 50vw);
 }
+
+/* ════════════════════════════════════════════════════════════════════════
+   DOSSIER SYSTEM — append to app/globals.css
+   Adds the case-file visual language used by DossierFrame on VTuber
+   profile pages. Cold archive-terminal chrome (cyan/navy) wrapping a
+   warm aged-paper case file. Additive only — does not remove or rename
+   any existing class. Existing callers of .dossier-frame keep working;
+   they simply render richer by default.
+   ════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* archive terminal chrome (cold) */
+  --archive-bg: #060d16;
+  --archive-panel: #0a1620;
+  --archive-border: #143544;
+  --archive-cyan: #3fc6d6;
+  --archive-cyan-dim: #4fc9d6;
+  --archive-teal-text: #4fd6a8;
+  --archive-text-dim: #5a8a99;
+
+  /* case paper (warm) */
+  --case-paper-1: #e9dfc4;
+  --case-paper-2: #ddd0ac;
+  --case-paper-3: #d3c49b;
+  --case-ink: #2c2616;
+  --case-ink-dim: #5a4f2e;
+  --case-stamp-red: #8a2317;
+}
+
+/* ── Archive shell — wraps DossierFrame in the cold terminal chrome ── */
+.archive-shell {
+  position: relative;
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: 0 0 0 1px var(--archive-border), 0 0 40px rgba(20, 140, 170, 0.14);
+  background: linear-gradient(160deg, var(--archive-panel) 0%, #081119 100%);
+}
+
+.archive-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 16px 20px 12px;
+  border-bottom: 1px dashed rgba(60, 200, 220, 0.35);
+  font-family: 'Space Mono', monospace;
+}
+
+.archive-header .archive-label {
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--archive-cyan-dim);
+}
+
+.archive-header .archive-case-id {
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: var(--archive-text-dim);
+}
+
+.archive-header .archive-access {
+  display: block;
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  color: var(--archive-teal-text);
+  margin-top: 3px;
+}
+
+/* ── Case folder — the warm aged-paper surface inside the archive ── */
+.case-folder {
+  position: relative;
+  margin: 18px 20px 20px;
+  padding: 24px;
+  border-radius: 2px;
+  background:
+    repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.025) 0px, rgba(0, 0, 0, 0.025) 1px, transparent 1px, transparent 26px),
+    linear-gradient(135deg, var(--case-paper-1) 0%, var(--case-paper-2) 45%, var(--case-paper-3) 100%);
+  box-shadow: inset 0 0 0 1px rgba(80, 60, 20, 0.15), 0 10px 26px rgba(0, 0, 0, 0.45);
+  color: var(--case-ink);
+}
+
+.case-folder::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 2px;
+  pointer-events: none;
+  background-image:
+    radial-gradient(circle at 18% 30%, rgba(110, 80, 30, 0.10) 0%, transparent 12%),
+    radial-gradient(circle at 78% 68%, rgba(110, 80, 30, 0.08) 0%, transparent 14%),
+    radial-gradient(circle at 60% 15%, rgba(80, 60, 20, 0.06) 0%, transparent 10%);
+}
+
+/* ── Polaroid avatar slot with paperclip ── */
+.case-photo-slot {
+  position: relative;
+  width: 116px;
+  flex-shrink: 0;
+}
+
+.case-paperclip {
+  position: absolute;
+  top: -12px;
+  left: 12px;
+  width: 26px;
+  height: 40px;
+  z-index: 3;
+  pointer-events: none;
+}
+
+.case-polaroid {
+  background: #f4f1e6;
+  padding: 7px 7px 18px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.35), 0 1px 0 rgba(255, 255, 255, 0.4) inset;
+  transform: rotate(-2deg);
+}
+
+.case-polaroid-photo {
+  width: 100%;
+  height: 116px;
+  background: linear-gradient(150deg, #2a2230 0%, #181420 100%);
+  overflow: hidden;
+}
+
+.case-polaroid-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: saturate(0.85) contrast(1.05);
+}
+
+.case-polaroid-fallback {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 28px;
+  color: var(--vault-gold);
+}
+
+/* ── Typewriter field rows ── */
+.case-field-row {
+  display: flex;
+  gap: 8px;
+  font-family: 'Space Mono', monospace;
+  font-size: 12px;
+  line-height: 1.85;
+  border-bottom: 1px solid rgba(60, 50, 20, 0.18);
+}
+
+.case-field-key {
+  color: var(--case-ink-dim);
+  min-width: 88px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.case-field-val {
+  color: var(--case-ink);
+  font-weight: 700;
+}
+
+/* ── Classified stamp ── */
+.case-stamp {
+  position: absolute;
+  top: 6px;
+  right: 10px;
+  width: 86px;
+  border: 3px solid var(--case-stamp-red);
+  color: var(--case-stamp-red);
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  text-align: center;
+  letter-spacing: 0.08em;
+  padding: 5px 4px;
+  transform: rotate(8deg);
+  opacity: 0.82;
+  mix-blend-mode: multiply;
+  pointer-events: none;
+}
+
+.case-stamp-sub {
+  font-size: 7px;
+  margin-top: 2px;
+  letter-spacing: 0.04em;
+}
+
+/* ── Redacted text — never decode/define, used purely as a visual lock ── */
+.case-redacted {
+  display: inline-block;
+  background: #14110a;
+  color: transparent;
+  border-radius: 1px;
+  user-select: none;
+}
+
+/* ── Coffee ring stain — layered, irregular, not a flat circle ── */
+.case-stain {
+  position: absolute;
+  bottom: 12px;
+  right: 22px;
+  width: 70px;
+  height: 62px;
+  pointer-events: none;
+  border-radius: 50%;
+  transform: rotate(-6deg) scaleX(1.08);
+  background:
+    radial-gradient(ellipse 70% 65% at 50% 50%, transparent 54%, rgba(101, 66, 24, 0.30) 58%, rgba(120, 80, 32, 0.42) 63%, rgba(95, 60, 20, 0.20) 68%, transparent 74%),
+    radial-gradient(ellipse 62% 58% at 47% 45%, rgba(150, 110, 55, 0.10) 0%, transparent 70%);
+  filter: blur(0.4px);
+  mix-blend-mode: multiply;
+}
+
+.case-stain::after {
+  content: '';
+  position: absolute;
+  top: 8%;
+  left: 14%;
+  width: 30%;
+  height: 22%;
+  background: radial-gradient(ellipse, rgba(120, 82, 30, 0.38) 0%, transparent 75%);
+  border-radius: 50%;
+  transform: rotate(20deg);
+}
+
+/* ── Archive footer ── */
+.archive-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 14px 20px 18px;
+  border-top: 1px dashed rgba(60, 200, 220, 0.35);
+}
+
+.archive-footer .archive-hint {
+  font-family: 'Space Mono', monospace;
+  font-size: 9px;
+  color: var(--archive-text-dim);
+  letter-spacing: 0.06em;
+}
+
+/* ── Analog glitch transition — triggered by adding .is-glitching ── */
+.archive-shell .archive-scanlines {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 30;
+  background: repeating-linear-gradient(to bottom, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 1px, rgba(0, 0, 0, 0.08) 2px, rgba(0, 0, 0, 0.08) 3px);
+  mix-blend-mode: overlay;
+  opacity: 0.45;
+}
+
+.archive-shell .archive-static {
+  position: absolute;
+  inset: 0;
+  z-index: 31;
+  pointer-events: none;
+  opacity: 0;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/><feColorMatrix type='matrix' values='0 0 0 0 0.55  0 0 0 0 0.62  0 0 0 0 0.7  0 0 0 0.9 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+  mix-blend-mode: screen;
+}
+
+.archive-shell .archive-track {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 24px;
+  background: linear-gradient(to bottom, rgba(120, 150, 200, 0), rgba(150, 180, 230, 0.32), rgba(120, 150, 200, 0));
+  z-index: 32;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.archive-shell.is-glitching .archive-scanlines { opacity: 0.85; }
+.archive-shell.is-glitching .archive-static { opacity: 0.5; animation: dossierStaticFlicker 0.5s steps(2) 3; }
+.archive-shell.is-glitching .archive-track { opacity: 1; animation: dossierTrackMove 0.5s linear 1; }
+.archive-shell.is-glitching .case-folder { animation: dossierRgbSplit 0.5s steps(3) 1; }
+
+@keyframes dossierStaticFlicker {
+  0%, 100% { opacity: 0.15; }
+  50% { opacity: 0.55; }
+}
+@keyframes dossierTrackMove {
+  0% { top: -10%; }
+  100% { top: 110%; }
+}
+@keyframes dossierRgbSplit {
+  0% { filter: none; transform: translate(0, 0); }
+  20% { filter: drop-shadow(2px 0 0 rgba(255, 60, 60, 0.45)) drop-shadow(-2px 0 0 rgba(60, 160, 255, 0.45)); transform: translate(1px, 0); }
+  40% { filter: drop-shadow(-1px 0 0 rgba(255, 60, 60, 0.35)) drop-shadow(2px 0 0 rgba(60, 160, 255, 0.35)); transform: translate(-1px, 0); }
+  60% { filter: none; transform: translate(0, 0); }
+  80% { filter: drop-shadow(1px 0 0 rgba(255, 60, 60, 0.25)) drop-shadow(-1px 0 0 rgba(60, 160, 255, 0.25)); transform: translate(1px, 0); }
+  100% { filter: none; transform: translate(0, 0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .archive-shell.is-glitching .archive-static,
+  .archive-shell.is-glitching .archive-track,
+  .archive-shell.is-glitching .case-folder {
+    animation: none;
+  }
+}

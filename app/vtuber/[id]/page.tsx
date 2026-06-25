@@ -2,12 +2,16 @@ import { notFound } from 'next/navigation'
 import { createClient } from '@supabase/supabase-js'
 import Link from 'next/link'
 import { ExternalLink, Twitch, Youtube } from 'lucide-react'
-import { GlitchHeading } from '@/components/vault/glitch-heading'
 import { VaultFrame } from '@/components/vault/vault-frame'
-import { DossierFrame, VaultDivider } from '@/components/vault/vault-surfaces'
+import {
+  DossierFrame,
+  CaseFolder,
+  CasePhoto,
+  CaseField,
+  VaultDivider,
+} from '@/components/vault/vault-surfaces'
 import { PageBackNav } from '@/components/vault/page-back-nav'
 import { ClaimProfileButton } from '@/components/vtuber/claim-profile-button'
-import { AddToCircleButton } from '@/components/vtuber/add-to-circle-button'
 import { VTuberEngagement } from '@/components/vtuber/vtuber-engagement'
 
 const supabase = createClient(
@@ -34,10 +38,6 @@ export default async function VTuberProfilePage({ params }: Props) {
     notFound()
   }
 
-  // Use custom avatar if available, otherwise show initial
-  const hasCustomAvatar = !!vtuber.avatar_url
-
-  // Fetch canonical tag names for display
   const tags: string[] = vtuber.tags ?? []
   const { data: canonicalTags } = await supabase
     .from('canonical_tags')
@@ -54,73 +54,85 @@ export default async function VTuberProfilePage({ params }: Props) {
   const isTwitch = platform.includes('twitch')
   const isYoutube = platform.includes('youtube')
 
+  // Short case ID derived from the row id — stable, not random per render
+  const caseId = `OVT-${String(vtuber.id).replace(/[^a-zA-Z0-9]/g, '').slice(-5).toUpperCase().padStart(5, '0')}`
+
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8 max-w-6xl">
 
         <PageBackNav fallbackHref="/discover" label="Back to Star Map" className="mb-8" />
 
-        <DossierFrame stamp="Subject file" className="mb-6">
-          <div className="flex items-start gap-4">
-            {hasCustomAvatar ? (
-              <img
+        <DossierFrame
+          stamp="ObscuraVT · Subject Archive"
+          caseId={`CASE NO. ${caseId}`}
+          accessLine={vtuber.claimed_by ? '● VERIFIED SUBJECT' : '● UNCLAIMED FILE'}
+          glitchable
+          className="mb-6"
+        >
+          <CaseFolder
+            stampLabel={vtuber.claimed_by ? 'VERIFIED' : 'UNCLAIMED'}
+            stampSub={cluster?.tag ?? undefined}
+          >
+            <div className="flex items-start gap-5">
+              <CasePhoto
                 src={vtuber.avatar_url}
                 alt={vtuber.name}
-                className="h-20 w-20 object-cover flex-shrink-0 border-2 border-vault-gold/30"
-                style={{ clipPath: 'polygon(0 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%)' }}
+                caption="FIG. 1 — SUBJECT"
               />
-            ) : (
-              <div
-                className="h-20 w-20 flex-shrink-0 flex items-center justify-center text-2xl font-bold text-vault-deep border-2 border-vault-gold/30"
-                style={{ background: cluster?.color ?? '#d4a574', clipPath: 'polygon(0 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%)' }}
-              >
-                {vtuber.name.charAt(0)}
+
+              <div className="flex-1 min-w-0 font-mono">
+                <CaseField label="CODENAME" value={vtuber.name} />
+                <CaseField label="HANDLE" value={vtuber.handle || undefined} />
+                <CaseField
+                  label="CLUSTER"
+                  value={cluster ? `FILED UNDER ${cluster.tag.toUpperCase()}` : undefined}
+                />
+                <CaseField
+                  label="PLATFORM"
+                  value={isTwitch ? 'TWITCH' : isYoutube ? 'YOUTUBE' : vtuber.platform || undefined}
+                />
+              </div>
+            </div>
+
+            {vtuber.bio && (
+              <div className="mt-5">
+                <div className="font-mono text-[11px] uppercase tracking-wide text-[var(--case-ink-dim)] mb-1.5">
+                  Field Notes
+                </div>
+                <p className="text-sm leading-relaxed text-[var(--case-ink)]">
+                  {vtuber.bio}
+                </p>
               </div>
             )}
 
-            <div className="flex-1 min-w-0">
-              <GlitchHeading as="h1" className="text-2xl font-bold text-vault-cream">{vtuber.name}</GlitchHeading>
-              {vtuber.handle && (
-                <p className="text-sm text-muted-foreground mt-0.5">{vtuber.handle}</p>
-              )}
-
-              {/* Constellation badge */}
-              {cluster && (
-                <div
-                  className="inline-flex items-center gap-1.5 mt-2 px-2.5 py-1 rounded-lg text-xs font-medium border"
-                  style={{ borderColor: cluster.color + '50', backgroundColor: cluster.color + '18', color: cluster.color }}
+            {vtuber.link && (
+              <div className="mt-4 flex flex-wrap gap-2">
+                <a
+                  href={vtuber.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-mono font-medium border border-[rgba(60,50,20,0.3)] text-[var(--case-ink-dim)] hover:text-[var(--case-ink)] hover:border-[rgba(60,50,20,0.5)] transition-colors bg-white/20"
                 >
-                  Filed under {cluster.tag}
-                </div>
-              )}
-            </div>
-            <div className="flex flex-col items-end gap-2 shrink-0">
-              <AddToCircleButton vtuberId={vtuber.id} vtuberName={vtuber.name} />
-              <ClaimProfileButton vtuberId={vtuber.id} vtuberName={vtuber.name} claimedBy={vtuber.claimed_by ?? null} />
-            </div>
+                  {isTwitch ? <Twitch className="h-3.5 w-3.5 text-purple-700" /> :
+                   isYoutube ? <Youtube className="h-3.5 w-3.5 text-red-700" /> :
+                   <ExternalLink className="h-3.5 w-3.5" />}
+                  {isTwitch ? 'TWITCH CHANNEL' : isYoutube ? 'YOUTUBE CHANNEL' : (vtuber.platform || 'CHANNEL').toUpperCase()}
+                </a>
+              </div>
+            )}
+          </CaseFolder>
+
+          <div className="flex items-center justify-between px-5 pb-1 -mt-1">
+            <span className="font-mono text-[9px] tracking-wide text-[var(--archive-text-dim)]">
+              {vibeTags.length > 0 ? `${vibeTags.length} TAG${vibeTags.length === 1 ? '' : 'S'} ON FILE` : 'NO TAGS ON FILE'}
+            </span>
+            <ClaimProfileButton
+              vtuberId={vtuber.id}
+              vtuberName={vtuber.name}
+              claimedBy={vtuber.claimed_by ?? null}
+            />
           </div>
-
-          {/* Bio */}
-          {vtuber.bio && (
-            <p className="text-sm text-muted-foreground mt-4 leading-relaxed">{vtuber.bio}</p>
-          )}
-
-          {/* Links */}
-          {vtuber.link && (
-            <div className="mt-4 flex flex-wrap gap-2">
-              <a
-                href={vtuber.link}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium border border-border text-muted-foreground hover:text-vault-cream hover:border-vault-bronze/40 transition-all"
-              >
-                {isTwitch ? <Twitch className="h-4 w-4 text-purple-400" /> :
-                 isYoutube ? <Youtube className="h-4 w-4 text-red-400" /> :
-                 <ExternalLink className="h-4 w-4" />}
-                {isTwitch ? 'Twitch' : isYoutube ? 'YouTube' : vtuber.platform ?? 'Channel'}
-              </a>
-            </div>
-          )}
         </DossierFrame>
 
         <VaultDivider />

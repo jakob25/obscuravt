@@ -1,3 +1,6 @@
+'use client'
+
+import { useState } from 'react'
 import { cn } from '@/lib/utils'
 
 /** Thin glitch/static strip — use instead of plain hr or border-only dividers */
@@ -11,31 +14,169 @@ export function VaultDivider({ className }: { className?: string }) {
   )
 }
 
-/** Character sheet / dossier framing for VTuber profiles */
+/**
+ * Subject dossier — the cold archive-terminal shell wrapping a warm
+ * aged case-folder. Used on VTuber profile pages.
+ *
+ * Backward compatible: existing callers passing only `stamp` / `children`
+ * / `className` render unchanged in structure, just with the real visual
+ * treatment instead of the flat gold-on-dark placeholder.
+ *
+ * New optional props:
+ *  - caseId: shown top-right of the archive header (e.g. "CASE NO. OVT-04471")
+ *  - accessLine: small cyan status line under the label (e.g. "ACCESS GRANTED")
+ *  - glitchable: shows a "RE-SCAN FILE" control that triggers the analog
+ *    static/tracking-bar/RGB-split transition. Off by default.
+ */
 export function DossierFrame({
   children,
   className,
   stamp,
+  caseId,
+  accessLine,
+  glitchable = false,
 }: {
   children: React.ReactNode
   className?: string
   stamp?: string
+  caseId?: string
+  accessLine?: string
+  glitchable?: boolean
+}) {
+  const [glitching, setGlitching] = useState(false)
+
+  const triggerGlitch = () => {
+    if (glitching) return
+    setGlitching(true)
+    setTimeout(() => setGlitching(false), 650)
+  }
+
+  return (
+    <div className={cn('archive-shell relative', glitching && 'is-glitching', className)}>
+      <div className="archive-scanlines" aria-hidden />
+      <div className="archive-static" aria-hidden />
+      <div className="archive-track" aria-hidden />
+
+      <div className="archive-header">
+        <div>
+          <div className="archive-label">{stamp ?? 'ObscuraVT · Subject Archive'}</div>
+          {accessLine && <span className="archive-access">{accessLine}</span>}
+        </div>
+        {caseId && <div className="archive-case-id">{caseId}</div>}
+      </div>
+
+      <div className="relative z-10">{children}</div>
+
+      {glitchable && (
+        <div className="archive-footer">
+          <span className="archive-hint">SIGNAL UNSTABLE</span>
+          <button
+            type="button"
+            onClick={triggerGlitch}
+            className="vault-btn-texture inline-flex items-center justify-center h-8 px-3 text-xs font-semibold tracking-wide border border-[var(--archive-cyan)] text-[var(--archive-cyan)] bg-transparent hover:bg-[rgba(63,198,214,0.12)] transition-colors"
+          >
+            RE-SCAN FILE
+          </button>
+        </div>
+      )}
+    </div>
+  )
+}
+
+/**
+ * The warm aged-paper case folder that sits inside a DossierFrame.
+ * Holds the photo slot, typewriter fields, optional classified stamp,
+ * and a coffee stain. Composition only — no data fetching.
+ */
+export function CaseFolder({
+  children,
+  className,
+  stampLabel,
+  stampSub,
+  showStain = true,
+}: {
+  children: React.ReactNode
+  className?: string
+  stampLabel?: string
+  stampSub?: string
+  showStain?: boolean
 }) {
   return (
-    <div className={cn('dossier-frame relative', className)}>
-      <div className="dossier-frame-tab" aria-hidden>
-        <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-vault-gold/70">
-          {stamp ?? 'Archive dossier'}
-        </span>
-      </div>
-      <div className="dossier-frame-body vault-grain vault-scanlines-subtle relative z-10">
-        {children}
+    <div className={cn('case-folder', className)}>
+      {stampLabel && (
+        <div className="case-stamp">
+          {stampLabel}
+          {stampSub && <div className="case-stamp-sub">{stampSub}</div>}
+        </div>
+      )}
+      {children}
+      {showStain && <div className="case-stain" aria-hidden />}
+    </div>
+  )
+}
+
+/** Polaroid-style avatar with a paperclip — the photo slot in a case folder */
+export function CasePhoto({
+  src,
+  alt,
+  caption,
+}: {
+  src?: string | null
+  alt: string
+  caption?: string
+}) {
+  return (
+    <div className="case-photo-slot">
+      <svg className="case-paperclip" viewBox="0 0 30 46" fill="none" aria-hidden>
+        <path
+          d="M9 6 C9 2.5 12 0.5 15.5 0.5 C19.5 0.5 22.5 3.5 22.5 8 L22.5 34 C22.5 38 19.5 41 15.5 41 C12 41 9.5 38.5 9.5 35 L9.5 14 C9.5 11.8 11 10.5 12.8 10.5 C14.6 10.5 15.8 11.8 15.8 13.5 L15.8 30"
+          stroke="#9a9a9a"
+          strokeWidth="2.2"
+          strokeLinecap="round"
+        />
+      </svg>
+      <div className="case-polaroid">
+        <div className="case-polaroid-photo">
+          {src ? (
+            <img src={src} alt={alt} />
+          ) : (
+            <div className="case-polaroid-fallback">{alt.charAt(0).toUpperCase()}</div>
+          )}
+        </div>
+        {caption && (
+          <div className="font-mono text-[10px] text-center mt-2 tracking-wide text-[var(--case-ink-dim)]">
+            {caption}
+          </div>
+        )}
       </div>
     </div>
   )
 }
 
-/** Betting slip / ticket — distinct from generic cards */
+/** A single typewriter-style KEY / value row inside a case folder */
+export function CaseField({
+  label,
+  value,
+  redacted = false,
+}: {
+  label: string
+  value?: React.ReactNode
+  redacted?: boolean
+}) {
+  return (
+    <div className="case-field-row">
+      <span className="case-field-key">{label}</span>
+      <span className="case-field-val">
+        {redacted ? (
+          <span className="case-redacted">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+        ) : (
+          value ?? '—'
+        )}
+      </span>
+    </div>
+  )
+}
+
 export function BetSlip({
   children,
   className,
