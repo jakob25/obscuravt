@@ -12,6 +12,7 @@ import {
 } from '@/components/vault/vault-surfaces'
 import { PageBackNav } from '@/components/vault/page-back-nav'
 import { ClaimProfileButton } from '@/components/vtuber/claim-profile-button'
+import { AddToCircleButton } from '@/components/vtuber/add-to-circle-button'
 import { VTuberEngagement } from '@/components/vtuber/vtuber-engagement'
 
 const supabase = createClient(
@@ -127,11 +128,14 @@ export default async function VTuberProfilePage({ params }: Props) {
             <span className="font-mono text-[9px] tracking-wide text-[var(--archive-text-dim)]">
               {vibeTags.length > 0 ? `${vibeTags.length} TAG${vibeTags.length === 1 ? '' : 'S'} ON FILE` : 'NO TAGS ON FILE'}
             </span>
-            <ClaimProfileButton
-              vtuberId={vtuber.id}
-              vtuberName={vtuber.name}
-              claimedBy={vtuber.claimed_by ?? null}
-            />
+            <div className="flex flex-col items-end gap-2 shrink-0">
+              <AddToCircleButton vtuberId={vtuber.id} vtuberName={vtuber.name} />
+              <ClaimProfileButton
+                vtuberId={vtuber.id}
+                vtuberName={vtuber.name}
+                claimedBy={vtuber.claimed_by ?? null}
+              />
+            </div>
           </div>
         </DossierFrame>
 
