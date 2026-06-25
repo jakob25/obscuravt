@@ -1,7 +1,46 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { cn } from '@/lib/utils'
+import { AnalogStaticCanvas } from '@/components/vault/analog-static-canvas'
+
+/** Random ambient signal bursts — no user trigger */
+function useRandomGlitch() {
+  const [active, setActive] = useState(false)
+  const [intensity, setIntensity] = useState(1)
+  const timers = useRef<ReturnType<typeof setTimeout>[]>([])
+
+  useEffect(() => {
+    const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    if (prefersReduced) return
+
+    const clearAll = () => {
+      timers.current.forEach(clearTimeout)
+      timers.current = []
+    }
+
+    const arm = (delayMs: number) => {
+      const id = setTimeout(() => {
+        const micro = Math.random() < 0.35
+        setIntensity(micro ? 0.35 + Math.random() * 0.3 : 0.65 + Math.random() * 0.35)
+        setActive(true)
+        const burstMs = micro ? 280 + Math.random() * 320 : 700 + Math.random() * 800
+        const offId = setTimeout(() => {
+          setActive(false)
+          arm(2200 + Math.random() * 6500)
+        }, burstMs)
+        timers.current.push(offId)
+      }, delayMs)
+      timers.current.push(id)
+    }
+
+    arm(1200 + Math.random() * 2800)
+
+    return clearAll
+  }, [])
+
+  return { active, intensity }
+}
 
 /** Thin glitch/static strip — use instead of plain hr or border-only dividers */
 export function VaultDivider({ className }: { className?: string }) {
@@ -25,8 +64,8 @@ export function VaultDivider({ className }: { className?: string }) {
  * New optional props:
  *  - caseId: shown top-right of the archive header (e.g. "CASE NO. OVT-04471")
  *  - accessLine: small cyan status line under the label (e.g. "ACCESS GRANTED")
- *  - glitchable: shows a "RE-SCAN FILE" control that triggers the analog
- *    static/tracking-bar/RGB-split transition. Off by default.
+ *
+ * Signal glitches fire randomly while the dossier is on screen (no button).
  */
 export function DossierFrame({
   children,
@@ -34,28 +73,33 @@ export function DossierFrame({
   stamp,
   caseId,
   accessLine,
-  glitchable = false,
 }: {
   children: React.ReactNode
   className?: string
   stamp?: string
   caseId?: string
   accessLine?: string
-  glitchable?: boolean
 }) {
-  const [glitching, setGlitching] = useState(false)
-
-  const triggerGlitch = () => {
-    if (glitching) return
-    setGlitching(true)
-    setTimeout(() => setGlitching(false), 650)
-  }
+  const { active: glitching, intensity } = useRandomGlitch()
 
   return (
-    <div className={cn('archive-shell relative', glitching && 'is-glitching', className)}>
+    <div
+      className={cn(
+        'archive-shell relative',
+        glitching && 'is-glitching',
+        glitching && intensity < 0.55 && 'is-glitching-micro',
+        className,
+      )}
+    >
       <div className="archive-scanlines" aria-hidden />
       <div className="archive-static" aria-hidden />
       <div className="archive-track" aria-hidden />
+      <div className="archive-track archive-track-2" aria-hidden />
+      <div className="archive-flash" aria-hidden />
+      <div className="archive-slice archive-slice-1" aria-hidden />
+      <div className="archive-slice archive-slice-2" aria-hidden />
+      <div className="archive-slice archive-slice-3" aria-hidden />
+      <AnalogStaticCanvas active={glitching} intensity={glitching ? intensity : 0} />
 
       <div className="archive-header">
         <div>
@@ -66,19 +110,6 @@ export function DossierFrame({
       </div>
 
       <div className="relative z-10">{children}</div>
-
-      {glitchable && (
-        <div className="archive-footer">
-          <span className="archive-hint">SIGNAL UNSTABLE</span>
-          <button
-            type="button"
-            onClick={triggerGlitch}
-            className="vault-btn-texture inline-flex items-center justify-center h-8 px-3 text-xs font-semibold tracking-wide border border-[var(--archive-cyan)] text-[var(--archive-cyan)] bg-transparent hover:bg-[rgba(63,198,214,0.12)] transition-colors"
-          >
-            RE-SCAN FILE
-          </button>
-        </div>
-      )}
     </div>
   )
 }

@@ -68,7 +68,6 @@ export default async function VTuberProfilePage({ params }: Props) {
           stamp="ObscuraVT · Subject Archive"
           caseId={`CASE NO. ${caseId}`}
           accessLine={vtuber.claimed_by ? '● VERIFIED SUBJECT' : '● UNCLAIMED FILE'}
-          glitchable
           className="mb-6"
         >
           <CaseFolder
