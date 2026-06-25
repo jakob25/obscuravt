@@ -59,6 +59,16 @@ interface ScheduleSlot {
   label: string | null
 }
 
+interface ScheduleProposal {
+  id: string
+  proposed_day: number
+  proposed_time: string
+  label: string | null
+  votes: number
+  dayLabel: string
+  created_by: string
+}
+
 const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
 
 function formatTime12h(time24: string) {
@@ -127,6 +137,7 @@ export function VTuberEngagement({ vtuberId, vtuberName, claimedBy }: Props) {
   const [cmdmiIdeas, setCmdmiIdeas] = useState<CmdmiIdea[]>([])
   const [predictions, setPredictions] = useState<StreamPrediction[]>([])
   const [schedule, setSchedule] = useState<ScheduleSlot[]>([])
+  const [scheduleProposals, setScheduleProposals] = useState<ScheduleProposal[]>([])
   const [loading, setLoading] = useState(true)
 
   const [memeUrl, setMemeUrl] = useState('')
@@ -135,6 +146,9 @@ export function VTuberEngagement({ vtuberId, vtuberName, claimedBy }: Props) {
   const [songTitle, setSongTitle] = useState('')
   const [songArtist, setSongArtist] = useState('')
   const [qaTitle, setQaTitle] = useState('')
+  const [voteDay, setVoteDay] = useState(0)
+  const [voteTime, setVoteTime] = useState('20:00')
+  const [voteLabel, setVoteLabel] = useState('')
   const [error, setError] = useState('')
 
   const loadMemes = useCallback(async () => {
@@ -188,6 +202,12 @@ export function VTuberEngagement({ vtuberId, vtuberName, claimedBy }: Props) {
     setSchedule(data.schedule ?? [])
   }, [vtuberId])
 
+  const loadScheduleVotes = useCallback(async () => {
+    const res = await fetch(`/api/schedule-votes?vtuberId=${encodeURIComponent(vtuberId)}`)
+    const data = await res.json()
+    setScheduleProposals(data.proposals ?? [])
+  }, [vtuberId])
+
   const loadAll = useCallback(async () => {
     setLoading(true)
     await Promise.all([
@@ -198,9 +218,10 @@ export function VTuberEngagement({ vtuberId, vtuberName, claimedBy }: Props) {
       loadCmdmi(),
       loadPredictions(),
       loadSchedule(),
+      loadScheduleVotes(),
     ])
     setLoading(false)
-  }, [loadMemes, loadFanArt, loadSessions, loadKaraoke, loadCmdmi, loadPredictions, loadSchedule])
+  }, [loadMemes, loadFanArt, loadSessions, loadKaraoke, loadCmdmi, loadPredictions, loadSchedule, loadScheduleVotes])
 
   useEffect(() => { loadAll() }, [loadAll])
 
@@ -232,6 +253,7 @@ export function VTuberEngagement({ vtuberId, vtuberName, claimedBy }: Props) {
   const hasGallery = memes.length > 0 || fanArt.length > 0
   const nextSchedule = useMemo(() => getNextScheduleSlot(schedule), [schedule])
   const hasSchedule = schedule.length > 0
+  const hasScheduleVotes = scheduleProposals.length > 0
 
   const hasActivity =
     !!activeCmdmi ||
@@ -239,6 +261,7 @@ export function VTuberEngagement({ vtuberId, vtuberName, claimedBy }: Props) {
     activePredictions.length > 0 ||
     hasQaActivity ||
     hasSchedule ||
+    hasScheduleVotes ||
     hasGallery
 
   const showPredictionsInline = activePredictions.length > 0
@@ -289,6 +312,40 @@ export function VTuberEngagement({ vtuberId, vtuberName, claimedBy }: Props) {
     if (!res.ok) { setError(data.error); return }
     setSongTitle(''); setSongArtist('')
     loadKaraoke()
+  }
+
+  const submitScheduleProposal = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!user) return
+    setError('')
+    const res = await fetch('/api/schedule-votes', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({
+        vtuberId,
+        proposedDay: voteDay,
+        proposedTime: voteTime,
+        label: voteLabel || null,
+      }),
+    })
+    const data = await res.json()
+    if (!res.ok) { setError(data.error); return }
+    setVoteLabel('')
+    loadScheduleVotes()
+  }
+
+  const voteForProposal = async (proposalId: string) => {
+    if (!user) return
+    const res = await fetch('/api/schedule-votes', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ proposalId }),
+    })
+    const data = await res.json()
+    if (!res.ok) { setError(data.error); return }
+    loadScheduleVotes()
   }
 
   const createQaSession = async () => {
@@ -411,6 +468,33 @@ export function VTuberEngagement({ vtuberId, vtuberName, claimedBy }: Props) {
                     Next: {DAYS[nextSchedule.day_of_week]} {formatTime12h(nextSchedule.start_time)} {nextSchedule.timezone}
                     {nextSchedule.label ? ` · ${nextSchedule.label}` : ''}
                   </p>
+                </ActivityBlock>
+              )}
+
+              {hasScheduleVotes && (
+                <ActivityBlock
+                  title="Schedule votes"
+                  meta="Fans proposing stream times"
+                  href={`/schedule?vtuber=${vtuberId}`}
+                >
+                  <ul className="space-y-2">
+                    {scheduleProposals.slice(0, 3).map(p => (
+                      <li key={p.id} className="flex items-center justify-between gap-2 text-sm">
+                        <span className="text-vault-cream truncate">
+                          {p.dayLabel} {formatTime12h(p.proposed_time)}
+                          {p.label ? ` · ${p.label}` : ''}
+                        </span>
+                        <button
+                          type="button"
+                          disabled={!user}
+                          onClick={() => voteForProposal(p.id)}
+                          className="text-xs text-vault-gold disabled:opacity-40 shrink-0"
+                        >
+                          ↑ {p.votes}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
                 </ActivityBlock>
               )}
 
@@ -624,13 +708,75 @@ export function VTuberEngagement({ vtuberId, vtuberName, claimedBy }: Props) {
                 </section>
               )}
 
+              <section className="space-y-3">
+                <h3 className="text-sm font-semibold text-vault-cream">Schedule votes</h3>
+                <p className="text-xs text-muted-foreground">
+                  Propose when {vtuberName} should stream. {isOwner ? 'Promote winners on the schedule page.' : 'Upvote your pick.'}
+                </p>
+                {user ? (
+                  <form onSubmit={submitScheduleProposal} className="space-y-2">
+                    <select
+                      value={voteDay}
+                      onChange={e => setVoteDay(Number(e.target.value))}
+                      className="w-full h-9 px-3 rounded-lg bg-muted/30 border border-border text-sm text-vault-cream"
+                    >
+                      {DAYS.map((d, i) => <option key={d} value={i}>{d}</option>)}
+                    </select>
+                    <div className="flex gap-2">
+                      <input
+                        type="time"
+                        value={voteTime}
+                        onChange={e => setVoteTime(e.target.value)}
+                        className="flex-1 h-9 px-3 rounded-lg bg-muted/30 border border-border text-sm text-vault-cream"
+                      />
+                      <input
+                        value={voteLabel}
+                        onChange={e => setVoteLabel(e.target.value)}
+                        placeholder="Label (optional)"
+                        className="flex-1 h-9 px-3 rounded-lg bg-muted/30 border border-border text-sm text-vault-cream"
+                      />
+                    </div>
+                    <button type="submit" className="h-9 px-4 rounded-lg bg-vault-gold text-vault-deep text-sm font-semibold">
+                      Propose time
+                    </button>
+                  </form>
+                ) : (
+                  <p className="text-xs text-muted-foreground">Sign in to propose or vote.</p>
+                )}
+                {scheduleProposals.length > 0 ? (
+                  <ul className="space-y-2">
+                    {scheduleProposals.map(p => (
+                      <li key={p.id} className="flex items-center justify-between gap-2 p-2 rounded-lg bg-muted/20 border border-border/50">
+                        <div className="min-w-0">
+                          <p className="text-sm text-vault-cream">
+                            {p.dayLabel} {formatTime12h(p.proposed_time)}
+                            {p.label ? ` · ${p.label}` : ''}
+                          </p>
+                          <p className="text-[10px] text-muted-foreground">by @{p.created_by}</p>
+                        </div>
+                        <button
+                          type="button"
+                          disabled={!user}
+                          onClick={() => voteForProposal(p.id)}
+                          className="text-xs text-vault-gold disabled:opacity-40 shrink-0 px-2 py-1 rounded border border-vault-bronze/30"
+                        >
+                          ↑ {p.votes}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-xs text-muted-foreground">No proposals yet — be first.</p>
+                )}
+                <Link href={`/schedule?vtuber=${vtuberId}`} className="text-xs text-vault-gold hover:underline">
+                  {isOwner ? 'Manage schedule & promote winners →' : 'View full schedule →'}
+                </Link>
+              </section>
+
               {!hasSchedule && (
                 <section className="space-y-2">
                   <h3 className="text-sm font-semibold text-vault-cream">Stream schedule</h3>
                   <p className="text-xs text-muted-foreground">No recurring slots posted yet.</p>
-                  <Link href={`/schedule?vtuber=${vtuberId}`} className="text-xs text-vault-gold hover:underline">
-                    View or set schedule →
-                  </Link>
                 </section>
               )}
             </div>

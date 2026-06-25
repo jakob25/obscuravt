@@ -23,7 +23,24 @@ interface ClaimedProfile {
   name: string
 }
 
+interface ScheduleProposal {
+  id: string
+  proposed_day: number
+  proposed_time: string
+  label: string | null
+  votes: number
+  dayLabel: string
+  created_by: string
+}
+
 const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+
+function formatTime12h(time24: string) {
+  const [h, m] = time24.split(':').map(Number)
+  const period = h >= 12 ? 'PM' : 'AM'
+  const hour = h % 12 || 12
+  return `${hour}:${String(m).padStart(2, '0')} ${period}`
+}
 
 function SchedulePageContent() {
   const { user } = useAuth()
@@ -32,6 +49,7 @@ function SchedulePageContent() {
   const vtuberId = searchParams.get('vtuber') ?? ''
 
   const [schedule, setSchedule] = useState<ScheduleSlot[]>([])
+  const [proposals, setProposals] = useState<ScheduleProposal[]>([])
   const [claimedProfiles, setClaimedProfiles] = useState<ClaimedProfile[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
@@ -63,9 +81,14 @@ function SchedulePageContent() {
   const load = useCallback(async () => {
     if (!vtuberId) { setLoading(false); return }
     setLoading(true)
-    const res = await fetch(`/api/schedule?vtuberId=${encodeURIComponent(vtuberId)}`)
-    const data = await res.json()
-    setSchedule(data.schedule ?? [])
+    const [schedRes, votesRes] = await Promise.all([
+      fetch(`/api/schedule?vtuberId=${encodeURIComponent(vtuberId)}`),
+      fetch(`/api/schedule-votes?vtuberId=${encodeURIComponent(vtuberId)}`),
+    ])
+    const schedData = await schedRes.json()
+    const votesData = await votesRes.json()
+    setSchedule(schedData.schedule ?? [])
+    setProposals(votesData.proposals ?? [])
     setLoading(false)
   }, [vtuberId])
 
@@ -104,6 +127,32 @@ function SchedulePageContent() {
     if (!confirm('Remove this stream time?')) return
     await fetch(`/api/schedule?id=${id}`, { method: 'DELETE' })
     load()
+  }
+
+  const promoteProposal = async (p: ScheduleProposal) => {
+    if (!user || !vtuberId) return
+    setSubmitting(true)
+    setError('')
+    try {
+      const res = await fetch('/api/schedule', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          vtuberId,
+          dayOfWeek: p.proposed_day,
+          startTime: p.proposed_time,
+          timezone: 'EST',
+          label: p.label || `Fan vote (${p.votes})`,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error)
+      load()
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to promote proposal')
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   const sorted = [...schedule].sort((a, b) => a.day_of_week - b.day_of_week)
@@ -207,6 +256,34 @@ function SchedulePageContent() {
 
       {!loading && vtuberId && sorted.length === 0 && (
         <p className="text-muted-foreground text-sm text-center py-8">No scheduled times yet.</p>
+      )}
+
+      {isOwner && proposals.length > 0 && (
+        <div className="mb-6">
+          <h2 className="text-sm font-semibold text-vault-cream mb-2">Fan proposals — promote to schedule</h2>
+          <div className="space-y-2">
+            {proposals.slice(0, 5).map(p => (
+              <VaultPanel key={p.id} className="p-4 flex items-center justify-between gap-4">
+                <div>
+                  <div className="font-medium text-vault-cream">
+                    {p.dayLabel} {formatTime12h(p.proposed_time)}
+                    {p.label && <span className="text-vault-gold"> · {p.label}</span>}
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    {p.votes} vote{p.votes === 1 ? '' : 's'} · @{p.created_by}
+                  </div>
+                </div>
+                <button
+                  onClick={() => promoteProposal(p)}
+                  disabled={submitting}
+                  className="text-xs px-3 py-1.5 rounded-lg bg-vault-gold text-vault-deep font-semibold disabled:opacity-50 shrink-0"
+                >
+                  Promote
+                </button>
+              </VaultPanel>
+            ))}
+          </div>
+        </div>
       )}
 
       <div className="space-y-2">
