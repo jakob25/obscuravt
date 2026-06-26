@@ -7,8 +7,9 @@ import { VaultFrame } from '@/components/vault/vault-frame'
 import { GalleryWall, GalleryWallItem } from '@/components/vault/vault-surfaces'
 import { ImageUploadField } from '@/components/common/image-upload-field'
 import { Progress } from '@/components/ui/progress'
-import { Plus } from 'lucide-react'
+import { Plus, Check, X } from 'lucide-react'
 import { StreamPredictions } from '@/components/vtuber/stream-predictions'
+import { useOwnsVtuber } from '@/hooks/use-owns-vtuber'
 import type { StreamPrediction } from '@/lib/stream-predictions'
 
 interface Props {
@@ -124,9 +125,17 @@ function ActivityBlock({
   )
 }
 
+function OwnerChip({ label }: { label: string }) {
+  return (
+    <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded border border-vault-gold/40 text-vault-gold font-mono">
+      {label}
+    </span>
+  )
+}
+
 export function VTuberEngagement({ vtuberId, vtuberName, claimedBy }: Props) {
   const { user } = useAuth()
-  const isOwner = user?.username === claimedBy
+  const { owns: isOwner } = useOwnsVtuber(vtuberId, claimedBy)
 
   const [memes, setMemes] = useState<Meme[]>([])
   const [fanArt, setFanArt] = useState<FanArtPiece[]>([])
@@ -249,7 +258,7 @@ export function VTuberEngagement({ vtuberId, vtuberName, claimedBy }: Props) {
     [sessions],
   )
 
-  const hasQaActivity = !!openQaSession && questions.length > 0
+  const hasQaActivity = !!openQaSession
   const hasGallery = memes.length > 0 || fanArt.length > 0
   const nextSchedule = useMemo(() => getNextScheduleSlot(schedule), [schedule])
   const hasSchedule = schedule.length > 0
@@ -348,6 +357,71 @@ export function VTuberEngagement({ vtuberId, vtuberName, claimedBy }: Props) {
     loadScheduleVotes()
   }
 
+  const upvoteQuestion = async (questionId: string) => {
+    if (!user) return
+    const res = await fetch('/api/qa', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ action: 'upvote', questionId }),
+    })
+    const data = await res.json()
+    if (!res.ok) { setError(data.error); return }
+    if (activeSession) loadQuestions(activeSession)
+  }
+
+  const markAnswered = async (questionId: string) => {
+    if (!isOwner) return
+    const res = await fetch('/api/qa', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ action: 'answer', questionId }),
+    })
+    const data = await res.json()
+    if (!res.ok) { setError(data.error); return }
+    if (activeSession) loadQuestions(activeSession)
+  }
+
+  const closeQaSession = async (sessionId: string) => {
+    if (!isOwner) return
+    const res = await fetch('/api/qa', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ action: 'close', sessionId }),
+    })
+    const data = await res.json()
+    if (!res.ok) { setError(data.error); return }
+    loadSessions()
+  }
+
+  const upvoteKaraoke = async (requestId: string) => {
+    if (!user) return
+    const res = await fetch('/api/karaoke', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ requestId, upvote: true }),
+    })
+    const data = await res.json()
+    if (!res.ok) { setError(data.error); return }
+    loadKaraoke()
+  }
+
+  const updateKaraokeStatus = async (requestId: string, status: 'queued' | 'done' | 'rejected') => {
+    if (!isOwner) return
+    const res = await fetch('/api/karaoke', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ requestId, status }),
+    })
+    const data = await res.json()
+    if (!res.ok) { setError(data.error); return }
+    loadKaraoke()
+  }
+
   const createQaSession = async () => {
     if (!isOwner || !qaTitle.trim()) return
     const res = await fetch('/api/qa', {
@@ -374,7 +448,16 @@ export function VTuberEngagement({ vtuberId, vtuberName, claimedBy }: Props) {
 
   return (
     <VaultFrame className="p-6 mb-6">
-      <h2 className="text-sm font-semibold text-vault-cream mb-4">Fan corner — {vtuberName}</h2>
+      <div className="flex items-center justify-between gap-2 mb-4">
+        <h2 className="text-sm font-semibold text-vault-cream">Fan corner — {vtuberName}</h2>
+        {isOwner && <OwnerChip label="Your dossier" />}
+      </div>
+
+      {isOwner && (
+        <p className="text-xs text-muted-foreground mb-3 border-l-2 border-vault-gold/50 pl-3">
+          Open a Q&A session, queue karaoke requests, or post a stream prediction — fans in your Circle get notified.
+        </p>
+      )}
 
       {error && <p className="text-xs text-red-400 mb-3">{error}</p>}
 
@@ -413,10 +496,35 @@ export function VTuberEngagement({ vtuberId, vtuberName, claimedBy }: Props) {
                   meta={`${pendingKaraoke.length} request${pendingKaraoke.length === 1 ? '' : 's'} waiting`}
                 >
                   <ul className="space-y-2">
-                    {pendingKaraoke.slice(0, 3).map(k => (
-                      <li key={k.id} className="flex justify-between gap-2 text-sm">
-                        <span className="text-vault-cream truncate">{k.song_title}{k.artist ? ` — ${k.artist}` : ''}</span>
-                        <span className="text-xs text-muted-foreground shrink-0">{k.status} · ↑{k.upvotes}</span>
+                    {pendingKaraoke.slice(0, 5).map(k => (
+                      <li key={k.id} className="flex items-center justify-between gap-2 p-2 rounded-lg border border-border/50 bg-muted/20">
+                        <div className="min-w-0">
+                          <p className="text-sm text-vault-cream truncate">{k.song_title}{k.artist ? ` — ${k.artist}` : ''}</p>
+                          <p className="text-[10px] text-muted-foreground">@{k.requested_by} · {k.status}</p>
+                        </div>
+                        <div className="flex items-center gap-1 shrink-0">
+                          <button
+                            type="button"
+                            disabled={!user}
+                            onClick={() => upvoteKaraoke(k.id)}
+                            className="text-xs text-vault-gold px-2 py-1 rounded border border-vault-bronze/30 disabled:opacity-40"
+                          >
+                            ↑ {k.upvotes}
+                          </button>
+                          {isOwner && (
+                            <>
+                              {k.status === 'pending' && (
+                                <button type="button" onClick={() => updateKaraokeStatus(k.id, 'queued')} className="text-[10px] px-1.5 py-1 rounded bg-vault-gold/20 text-vault-gold">Queue</button>
+                              )}
+                              {k.status === 'queued' && (
+                                <button type="button" onClick={() => updateKaraokeStatus(k.id, 'done')} className="text-[10px] px-1.5 py-1 rounded bg-emerald-500/20 text-emerald-400">Done</button>
+                              )}
+                              <button type="button" onClick={() => updateKaraokeStatus(k.id, 'rejected')} className="text-[10px] px-1 py-1 rounded text-red-400 hover:bg-red-500/10" title="Reject">
+                                <X className="h-3 w-3" />
+                              </button>
+                            </>
+                          )}
+                        </div>
                       </li>
                     ))}
                   </ul>
@@ -441,20 +549,66 @@ export function VTuberEngagement({ vtuberId, vtuberName, claimedBy }: Props) {
 
               {hasQaActivity && openQaSession && (
                 <ActivityBlock
-                  title="Q&A"
+                  title="Q&A live"
                   meta={`${openQaSession.title} · ${questions.length} question${questions.length === 1 ? '' : 's'}`}
                 >
-                  <ul className="space-y-2">
-                    {questions.slice(0, 4).map(q => (
-                      <li key={q.id} className="flex justify-between gap-2 p-2 rounded-lg border border-border/60 bg-muted/20">
-                        <div className="min-w-0">
-                          <p className="text-sm text-vault-cream line-clamp-2">{q.question}</p>
-                          <p className="text-[10px] text-muted-foreground mt-0.5">@{q.asked_by}{q.answered ? ' · answered' : ''}</p>
-                        </div>
-                        <span className="text-xs text-vault-gold shrink-0">↑{q.upvotes}</span>
-                      </li>
-                    ))}
-                  </ul>
+                  {isOwner && (
+                    <div className="flex items-center justify-between mb-2">
+                      <OwnerChip label="Owner controls" />
+                      <button
+                        type="button"
+                        onClick={() => closeQaSession(openQaSession.id)}
+                        className="text-[10px] px-2 py-1 rounded border border-red-500/30 text-red-400 hover:bg-red-500/10"
+                      >
+                        Close session
+                      </button>
+                    </div>
+                  )}
+                  {questions.length === 0 ? (
+                    <p className="text-xs text-muted-foreground">Session open — be the first to ask.</p>
+                  ) : (
+                    <ul className="space-y-2">
+                      {questions.slice(0, 6).map(q => (
+                        <li key={q.id} className={`flex items-start justify-between gap-2 p-2 rounded-lg border bg-muted/20 ${q.answered ? 'border-emerald-500/30 opacity-70' : 'border-border/60'}`}>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm text-vault-cream line-clamp-2">{q.question}</p>
+                            <p className="text-[10px] text-muted-foreground mt-0.5">@{q.asked_by}{q.answered ? ' · answered' : ''}</p>
+                          </div>
+                          <div className="flex items-center gap-1 shrink-0">
+                            <button
+                              type="button"
+                              disabled={!user || q.answered}
+                              onClick={() => upvoteQuestion(q.id)}
+                              className="text-xs text-vault-gold px-2 py-1 rounded border border-vault-bronze/30 disabled:opacity-40"
+                            >
+                              ↑ {q.upvotes}
+                            </button>
+                            {isOwner && !q.answered && (
+                              <button
+                                type="button"
+                                onClick={() => markAnswered(q.id)}
+                                className="text-[10px] px-1.5 py-1 rounded bg-emerald-500/20 text-emerald-400 flex items-center gap-0.5"
+                                title="Mark answered"
+                              >
+                                <Check className="h-3 w-3" />
+                              </button>
+                            )}
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  {user && !isOwner && activeSession && (
+                    <form onSubmit={submitQuestion} className="flex gap-2 mt-3">
+                      <input
+                        value={newQuestion}
+                        onChange={e => setNewQuestion(e.target.value)}
+                        placeholder="Ask a question…"
+                        className="flex-1 h-8 px-3 rounded-lg bg-muted/30 border border-border text-sm text-vault-cream"
+                      />
+                      <button type="submit" className="h-8 px-3 rounded-lg bg-vault-gold text-vault-deep text-xs font-semibold">Ask</button>
+                    </form>
+                  )}
                 </ActivityBlock>
               )}
 
@@ -623,8 +777,11 @@ export function VTuberEngagement({ vtuberId, vtuberName, claimedBy }: Props) {
 
               {!hasQaActivity && (
                 <section className="space-y-3">
-                  <h3 className="text-sm font-semibold text-vault-cream">Q&A</h3>
-                  {isOwner && (
+                  <div className="flex items-center justify-between gap-2">
+                    <h3 className="text-sm font-semibold text-vault-cream">Q&A</h3>
+                    {isOwner && <OwnerChip label="Owner" />}
+                  </div>
+                  {isOwner ? (
                     <div className="flex gap-2">
                       <input
                         value={qaTitle}
@@ -637,69 +794,82 @@ export function VTuberEngagement({ vtuberId, vtuberName, claimedBy }: Props) {
                         onClick={createQaSession}
                         className="h-9 px-3 rounded-lg bg-vault-gold text-vault-deep text-sm font-semibold flex items-center gap-1"
                       >
-                        <Plus className="h-3.5 w-3.5" />Open
+                        <Plus className="h-3.5 w-3.5" />Open session
                       </button>
                     </div>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">No open Q&A right now. Check back during streams.</p>
                   )}
-                  {sessions.length > 0 && (
-                    <select
-                      value={activeSession ?? ''}
-                      onChange={e => setActiveSession(e.target.value)}
-                      className="w-full h-9 px-3 rounded-lg bg-muted/30 border border-border text-sm text-vault-cream"
-                    >
-                      {sessions.map(s => (
-                        <option key={s.id} value={s.id}>{s.title} ({s.status})</option>
-                      ))}
-                    </select>
-                  )}
-                  {user && activeSession && (
-                    <form onSubmit={submitQuestion} className="flex gap-2">
-                      <input
-                        value={newQuestion}
-                        onChange={e => setNewQuestion(e.target.value)}
-                        placeholder="Ask a question…"
-                        className="flex-1 h-9 px-3 rounded-lg bg-muted/30 border border-border text-sm text-vault-cream"
-                      />
-                      <button type="submit" className="h-9 px-4 rounded-lg bg-vault-gold text-vault-deep text-sm font-semibold">
-                        Ask
-                      </button>
-                    </form>
-                  )}
-                  {sessions.length === 0 && (
-                    <p className="text-xs text-muted-foreground">No Q&A sessions yet.</p>
+                  {sessions.filter(s => s.status === 'closed').length > 0 && (
+                    <p className="text-xs text-muted-foreground">{sessions.filter(s => s.status === 'closed').length} past session(s) on file.</p>
                   )}
                 </section>
               )}
 
-              {pendingKaraoke.length === 0 && (
-                <section className="space-y-3">
+              <section className="space-y-3">
+                <div className="flex items-center justify-between gap-2">
                   <h3 className="text-sm font-semibold text-vault-cream">Karaoke</h3>
-                  {user ? (
-                    <form onSubmit={submitKaraoke} className="flex flex-col gap-2 sm:flex-row sm:items-end">
-                      <input
-                        value={songTitle}
-                        onChange={e => setSongTitle(e.target.value)}
-                        placeholder="Song title"
-                        className="flex-1 h-9 px-3 rounded-lg bg-muted/30 border border-border text-sm text-vault-cream"
-                      />
-                      <input
-                        value={songArtist}
-                        onChange={e => setSongArtist(e.target.value)}
-                        placeholder="Artist"
-                        className="flex-1 h-9 px-3 rounded-lg bg-muted/30 border border-border text-sm text-vault-cream"
-                      />
-                      <button type="submit" className="h-9 px-4 rounded-lg bg-vault-gold text-vault-deep text-sm font-semibold">
-                        Request
-                      </button>
-                    </form>
-                  ) : (
-                    <p className="text-xs text-muted-foreground">Sign in to request a song.</p>
-                  )}
-                  {karaoke.length === 0 && (
-                    <p className="text-xs text-muted-foreground">Queue is empty.</p>
-                  )}
-                </section>
-              )}
+                  {isOwner && pendingKaraoke.length > 0 && <OwnerChip label="Manage queue" />}
+                </div>
+                {user ? (
+                  <form onSubmit={submitKaraoke} className="flex flex-col gap-2 sm:flex-row sm:items-end">
+                    <input
+                      value={songTitle}
+                      onChange={e => setSongTitle(e.target.value)}
+                      placeholder="Song title"
+                      className="flex-1 h-9 px-3 rounded-lg bg-muted/30 border border-border text-sm text-vault-cream"
+                    />
+                    <input
+                      value={songArtist}
+                      onChange={e => setSongArtist(e.target.value)}
+                      placeholder="Artist"
+                      className="flex-1 h-9 px-3 rounded-lg bg-muted/30 border border-border text-sm text-vault-cream"
+                    />
+                    <button type="submit" className="h-9 px-4 rounded-lg bg-vault-gold text-vault-deep text-sm font-semibold">
+                      Request
+                    </button>
+                  </form>
+                ) : (
+                  <p className="text-xs text-muted-foreground">Sign in to request a song.</p>
+                )}
+                {karaoke.length > 0 ? (
+                  <ul className="space-y-2">
+                    {karaoke.map(k => (
+                      <li key={k.id} className={`flex items-center justify-between gap-2 p-2 rounded-lg border ${k.status === 'done' || k.status === 'rejected' ? 'border-border/30 opacity-50' : 'border-border/50 bg-muted/20'}`}>
+                        <div className="min-w-0">
+                          <p className="text-sm text-vault-cream truncate">{k.song_title}{k.artist ? ` — ${k.artist}` : ''}</p>
+                          <p className="text-[10px] text-muted-foreground">@{k.requested_by} · {k.status}</p>
+                        </div>
+                        <div className="flex items-center gap-1 shrink-0">
+                          {(k.status === 'pending' || k.status === 'queued') && (
+                            <button
+                              type="button"
+                              disabled={!user}
+                              onClick={() => upvoteKaraoke(k.id)}
+                              className="text-xs text-vault-gold px-2 py-1 rounded border border-vault-bronze/30 disabled:opacity-40"
+                            >
+                              ↑ {k.upvotes}
+                            </button>
+                          )}
+                          {isOwner && k.status === 'pending' && (
+                            <button type="button" onClick={() => updateKaraokeStatus(k.id, 'queued')} className="text-[10px] px-1.5 py-1 rounded bg-vault-gold/20 text-vault-gold">Queue</button>
+                          )}
+                          {isOwner && k.status === 'queued' && (
+                            <button type="button" onClick={() => updateKaraokeStatus(k.id, 'done')} className="text-[10px] px-1.5 py-1 rounded bg-emerald-500/20 text-emerald-400">Done</button>
+                          )}
+                          {isOwner && (k.status === 'pending' || k.status === 'queued') && (
+                            <button type="button" onClick={() => updateKaraokeStatus(k.id, 'rejected')} className="p-1 text-red-400 hover:bg-red-500/10 rounded">
+                              <X className="h-3 w-3" />
+                            </button>
+                          )}
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-xs text-muted-foreground">Queue is empty.</p>
+                )}
+              </section>
 
               {!showPredictionsInline && (
                 <section className="space-y-3">
