@@ -13,6 +13,7 @@ import {
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/lib/auth-context'
 import { ProfileSwitcher } from '@/components/profile/profile-switcher'
+import { NavRgbGlitch } from '@/components/vault/nav-rgb-glitch'
 
 const ADMINS = ['jakob25', 'admin']
 
@@ -55,7 +56,7 @@ export function Navbar() {
   }, [user])
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border/50 bg-vault-deep/95 backdrop-blur supports-[backdrop-filter]:bg-vault-deep/80">
+    <NavRgbGlitch>
       <nav className="container mx-auto flex h-16 items-center justify-between px-4">
 
         {/* Logo */}
@@ -265,6 +266,6 @@ export function Navbar() {
           </div>
         </div>
       )}
-    </header>
+    </NavRgbGlitch>
   )
 }

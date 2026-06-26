@@ -883,6 +883,142 @@
   95% { opacity: 0; }
 }
 
+/* ── Navbar RGB chromatic split (broadcast HUD) ── */
+.nav-rgb-shell {
+  position: relative;
+  isolation: isolate;
+}
+
+.nav-rgb-tear,
+.nav-rgb-scan {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  z-index: 0;
+}
+
+.nav-rgb-tear-a {
+  background: linear-gradient(90deg, transparent 0%, rgba(255, 34, 68, 0.35) 48%, transparent 52%);
+  mix-blend-mode: screen;
+}
+
+.nav-rgb-tear-b {
+  background: linear-gradient(90deg, transparent 0%, rgba(34, 204, 255, 0.3) 52%, transparent 56%);
+  mix-blend-mode: screen;
+}
+
+.nav-rgb-scan {
+  background: linear-gradient(180deg, transparent 45%, rgba(200, 230, 255, 0.25) 50%, transparent 55%);
+  height: 2px;
+  top: 50%;
+  bottom: auto;
+}
+
+.nav-rgb-shell > *:not(.nav-rgb-tear):not(.nav-rgb-scan) {
+  position: relative;
+  z-index: 1;
+}
+
+.nav-rgb-glitching {
+  animation: navRgbSplit 0.14s steps(2) 3;
+}
+
+.nav-rgb-glitching-micro {
+  animation: navRgbSplit 0.1s steps(2) 2;
+}
+
+.nav-rgb-glitching .nav-rgb-tear-a {
+  animation: navRgbTearA 0.35s steps(1) 1;
+}
+
+.nav-rgb-glitching .nav-rgb-tear-b {
+  animation: navRgbTearB 0.35s steps(1) 1;
+}
+
+.nav-rgb-glitching:not(.nav-rgb-glitching-micro) .nav-rgb-scan {
+  animation: navRgbScanPass 0.45s ease-out 1;
+}
+
+@keyframes navRgbSplit {
+  0%, 100% {
+    transform: translate(0, 0);
+    filter: none;
+  }
+  25% {
+    transform: translate(calc(-4px * var(--nav-glitch-intensity, 0.5)), 0);
+    filter: drop-shadow(calc(5px * var(--nav-glitch-intensity, 0.5)) 0 0 rgba(255, 34, 68, 0.85))
+            drop-shadow(calc(-5px * var(--nav-glitch-intensity, 0.5)) 0 0 rgba(34, 204, 255, 0.85));
+  }
+  50% {
+    transform: translate(calc(6px * var(--nav-glitch-intensity, 0.5)), 0);
+    filter: drop-shadow(calc(-7px * var(--nav-glitch-intensity, 0.5)) 0 0 #ff2244)
+            drop-shadow(calc(6px * var(--nav-glitch-intensity, 0.5)) 0 0 #22ccff);
+  }
+  75% {
+    transform: translate(calc(-3px * var(--nav-glitch-intensity, 0.5)), 0);
+    filter: drop-shadow(calc(4px * var(--nav-glitch-intensity, 0.5)) 0 0 rgba(255, 34, 68, 0.7))
+            drop-shadow(calc(-4px * var(--nav-glitch-intensity, 0.5)) 0 0 rgba(34, 204, 255, 0.7));
+  }
+}
+
+@keyframes navRgbTearA {
+  0%, 100% { opacity: 0; transform: translateX(0); }
+  15% { opacity: 0.9; transform: translateX(-12px); }
+  30% { opacity: 0; transform: translateX(8px); }
+  55% { opacity: 0.75; transform: translateX(-6px); }
+  70% { opacity: 0; }
+}
+
+@keyframes navRgbTearB {
+  0%, 100% { opacity: 0; transform: translateX(0); }
+  20% { opacity: 0.85; transform: translateX(14px); }
+  40% { opacity: 0; transform: translateX(-10px); }
+  65% { opacity: 0.7; transform: translateX(7px); }
+  80% { opacity: 0; }
+}
+
+@keyframes navRgbScanPass {
+  0% { opacity: 0; top: 0; }
+  20% { opacity: 0.6; }
+  100% { opacity: 0; top: 100%; }
+}
+
+/* Your Circle widget — scan-line only (no RGB) */
+.vault-scanline-header {
+  position: relative;
+  overflow: hidden;
+}
+
+.vault-scanline-header::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(63, 198, 214, 0.45), transparent);
+  top: -100%;
+  pointer-events: none;
+  animation: circleHeaderScan 6s ease-in-out infinite;
+}
+
+@keyframes circleHeaderScan {
+  0%, 85%, 100% { top: -100%; opacity: 0; }
+  90% { opacity: 0.7; }
+  95% { top: 120%; opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nav-rgb-glitching,
+  .nav-rgb-glitching-micro,
+  .nav-rgb-glitching .nav-rgb-tear-a,
+  .nav-rgb-glitching .nav-rgb-tear-b,
+  .nav-rgb-glitching .nav-rgb-scan,
+  .vault-scanline-header::after {
+    animation: none;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .archive-shell.is-glitching,
   .signal-interference.is-glitching,

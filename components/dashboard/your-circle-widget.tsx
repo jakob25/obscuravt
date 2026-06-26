@@ -217,7 +217,7 @@ export function YourCircleWidget() {
 
   return (
     <section className="vault-panel md:col-span-2">
-      <div className="flex items-center justify-between mb-4">
+      <div className="vault-scanline-header flex items-center justify-between mb-4 pb-1">
         <h2 className="text-lg font-bold text-vault-cream">Your Circle</h2>
         <span className="text-xs text-muted-foreground">{oshis.length} oshi{oshis.length === 1 ? '' : 's'}</span>
       </div>

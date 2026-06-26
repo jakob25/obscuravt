@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 
-export type GlitchPreset = 'viewport' | 'surface' | 'hero' | 'dossier'
+export type GlitchPreset = 'viewport' | 'surface' | 'hero' | 'dossier' | 'nav'
 
 interface PresetConfig {
   microChance: number
@@ -50,6 +50,15 @@ const PRESETS: Record<GlitchPreset, PresetConfig> = {
     fullBurst: [500, 900],
     microIntensity: [0.25, 0.45],
     fullIntensity: [0.45, 0.7],
+  },
+  nav: {
+    microChance: 0.72,
+    initialDelay: [3000, 8000],
+    interval: [8000, 18000],
+    microBurst: [120, 280],
+    fullBurst: [350, 600],
+    microIntensity: [0.3, 0.5],
+    fullIntensity: [0.5, 0.65],
   },
 }
 
