@@ -64,6 +64,7 @@ export default async function VTuberProfilePage({ params }: Props) {
 
         <PageBackNav fallbackHref="/discover" label="Back to Star Map" className="mb-8" />
 
+        {/* === TOP: Subject Header Dossier === */}
         <DossierFrame
           stamp="ObscuraVT · Subject Archive"
           caseId={`CASE NO. ${caseId}`}
@@ -76,7 +77,7 @@ export default async function VTuberProfilePage({ params }: Props) {
           >
             {/* True two-column layout to properly fill the aged paper */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-x-8 gap-y-6">
-              {/* Left column: Photo + structured fields (compact & professional) */}
+              {/* Left column: Photo + structured fields */}
               <div className="lg:col-span-5">
                 <div className="flex items-start gap-5">
                   <CasePhoto
@@ -99,7 +100,7 @@ export default async function VTuberProfilePage({ params }: Props) {
                 </div>
               </div>
 
-              {/* Right column: Prominent Field Notes — now actually fills the beige space */}
+              {/* Right column: Field Notes */}
               <div className="lg:col-span-7">
                 {vtuber.bio ? (
                   <div>
@@ -116,7 +117,6 @@ export default async function VTuberProfilePage({ params }: Props) {
                   </div>
                 )}
 
-                {/* Channel link stays with the notes */}
                 {vtuber.link && (
                   <div className="mt-4">
                     <a
@@ -151,54 +151,77 @@ export default async function VTuberProfilePage({ params }: Props) {
           </div>
         </DossierFrame>
 
-        <VaultDivider />
+        {/* === LOWER HALF: Tall continuation dossier that encompasses everything === */}
+        <DossierFrame
+          stamp="ObscuraVT · Case Evidence & Engagement Log"
+          caseId={`CASE NO. ${caseId}`}
+          accessLine="● FIELD REPORTS & COMMUNITY ACTIVITY"
+          className="mt-2"
+        >
+          <CaseFolder showStain={false}>
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+              {/* Vibe Tags */}
+              {vibeTags.length > 0 && (
+                <div className="lg:col-span-4">
+                  <div className="mb-2 font-mono text-[10px] uppercase tracking-[0.08em] text-[var(--case-ink-dim)]">
+                    VIBE TAGS ON FILE
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {vibeTags.map(tagId => {
+                      const t = tagMap[tagId]
+                      if (!t) return null
+                      return (
+                        <span
+                          key={tagId}
+                          className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border"
+                          style={{
+                            borderColor: (t.color ?? '#888') + '50',
+                            backgroundColor: (t.color ?? '#888') + '15',
+                            color: t.color ?? '#888',
+                          }}
+                        >
+                          {t.tag}
+                        </span>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {vibeTags.length > 0 && (
-            <VaultFrame className="rounded-sm p-6">
-              <h2 className="text-sm font-semibold text-vault-cream mb-3 font-mono uppercase tracking-wider">
-                Vibe tags
-              </h2>
-              <div className="flex flex-wrap gap-2">
-                {vibeTags.map(tagId => {
-                  const t = tagMap[tagId]
-                  if (!t) return null
-                  return (
-                    <span
-                      key={tagId}
-                      className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border"
-                      style={{
-                        borderColor: (t.color ?? '#888') + '50',
-                        backgroundColor: (t.color ?? '#888') + '15',
-                        color: t.color ?? '#888',
-                      }}
-                    >
-                      {t.tag}
-                    </span>
-                  )
-                })}
+              {/* Main Engagement Area — now inside the dossier */}
+              <div className={vibeTags.length > 0 ? 'lg:col-span-8' : 'lg:col-span-12'}>
+                <div className="mb-2 font-mono text-[10px] uppercase tracking-[0.08em] text-[var(--case-ink-dim)]">
+                  FAN CORNER — ENGAGEMENT RECORD
+                </div>
+                <VTuberEngagement 
+                  vtuberId={vtuber.id} 
+                  vtuberName={vtuber.name} 
+                  claimedBy={vtuber.claimed_by ?? null} 
+                />
               </div>
-            </VaultFrame>
-          )}
 
-          <div className={vibeTags.length > 0 ? 'md:col-span-2 lg:col-span-2' : 'md:col-span-2 lg:col-span-3'}>
-            <VTuberEngagement vtuberId={vtuber.id} vtuberName={vtuber.name} claimedBy={vtuber.claimed_by ?? null} />
-            
-          </div>
-
-          <VaultFrame className="rounded-sm p-5 flex flex-col justify-between gap-4 h-full">
-            <div>
-              <p className="text-sm font-medium text-vault-cream">Tag check</p>
-              <p className="text-xs text-muted-foreground mt-0.5">Confirm or challenge what&apos;s on file.</p>
+              {/* Tag Validator — small but inside the case file */}
+              <div className="lg:col-span-12 mt-2 pt-4 border-t border-[rgba(60,50,20,0.18)]">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                  <div className="flex-1">
+                    <div className="font-mono text-[10px] uppercase tracking-[0.08em] text-[var(--case-ink-dim)]">
+                      TAG VALIDATION
+                    </div>
+                    <p className="text-sm text-[var(--case-ink)] mt-0.5">
+                      Confirm or challenge the tags currently on file for this subject.
+                    </p>
+                  </div>
+                  <Link
+                    href="/tag-validator"
+                    className="vault-btn-texture inline-flex items-center justify-center h-9 px-5 bg-vault-gold text-vault-deep text-sm font-semibold whitespace-nowrap"
+                  >
+                    OPEN TAG VALIDATOR
+                  </Link>
+                </div>
+              </div>
             </div>
-            <Link
-              href="/tag-validator"
-              className="vault-btn-texture flex-shrink-0 inline-flex items-center justify-center h-9 px-4 bg-vault-gold text-vault-deep text-sm font-semibold"
-            >
-              Open validator
-            </Link>
-          </VaultFrame>
-        </div>
+          </CaseFolder>
+        </DossierFrame>
 
       </div>
     </div>
