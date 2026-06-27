@@ -17,7 +17,7 @@ export function ClaimProfileButton({ vtuberId, vtuberName, claimedBy }: Props) {
   const [message, setMessage] = useState('')
 
   const role = normalizeRole(user?.role ?? null)
-  const canClaim = user && (role === 'VTuber' || role === 'Creator') && !claimedBy
+  const canClaim = user && role === 'VTuber' && !claimedBy
 
   if (!user) return null
   if (claimedBy === user.username) {
