@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { createClient } from '@supabase/supabase-js'
-import { Upload, X, Loader2 } from 'lucide-react'
+import { Upload, X, Loader2, CheckCircle2 } from 'lucide-react'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -154,7 +154,7 @@ export function VTuberSubmitForm({ onSuccess, onCancel }: VTuberSubmitFormProps)
   if (success) {
     return (
       <div className="text-center py-8">
-        <div className="text-6xl mb-4">🎉</div>
+        <CheckCircle2 className="h-14 w-14 text-vault-gold mx-auto mb-4" />
         <h3 className="text-xl font-semibold text-vault-cream mb-2">Submitted for review!</h3>
         <p className="text-muted-foreground">Your VTuber will appear on the maps once approved.</p>
       </div>

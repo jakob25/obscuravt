@@ -3,12 +3,15 @@
 import { useState, useCallback } from 'react'
 import { useBets } from '@/hooks/use-data'
 import { useAuth } from '@/lib/auth-context'
-import { Trophy, Clock, TrendingUp, CheckCircle, AlertCircle, Loader2, ChevronDown, ChevronUp, Vote } from 'lucide-react'
+import { Clock, CheckCircle, AlertCircle, Loader2, Vote } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import type { Bet, BetOption } from '@/lib/types'
+import { BetSlip } from '@/components/vault/vault-surfaces'
+import { GlitchHeading } from '@/components/vault/glitch-heading'
+import { VaultDivider } from '@/components/vault/vault-surfaces'
 
 // —— Per-bet interactive card ————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————’
 
@@ -78,9 +81,8 @@ function BetCard({ bet, onUpdate }: { bet: Bet; onUpdate: () => void }) {
   }
 
   return (
-    <div className="vault-card rounded-xl overflow-hidden">
-      {/* Card header */}
-      <div className="p-5">
+    <BetSlip>
+      <div>
         <div className="flex items-start justify-between gap-2 mb-3">
           <h3 className="font-semibold text-vault-cream text-sm leading-snug">{bet.title}</h3>
           <Badge className={`text-xs shrink-0 ${
@@ -166,8 +168,7 @@ function BetCard({ bet, onUpdate }: { bet: Bet; onUpdate: () => void }) {
                     : 'bg-vault-gold/20 hover:bg-vault-gold/30 text-vault-gold border border-vault-gold/30'
                 }`}
               >
-                <Trophy className="h-3.5 w-3.5 mr-1" />
-                {mode === 'place' ? 'Cancel' : 'Place Bet'}
+                {mode === 'place' ? 'Cancel' : 'Place bet'}
               </Button>
             )}
             {(isOpen || isClosed) && (
@@ -188,7 +189,7 @@ function BetCard({ bet, onUpdate }: { bet: Bet; onUpdate: () => void }) {
 
         {!user && (isOpen || isClosed) && (
           <p className="text-xs text-muted-foreground text-center">
-            <a href="/login" className="text-vault-gold hover:underline">Sign in</a> to place bets and vote
+            <a href="/login" className="text-vault-gold hover:underline">Sign in</a> to wager and vote
           </p>
         )}
       </div>
@@ -266,7 +267,7 @@ function BetCard({ bet, onUpdate }: { bet: Bet; onUpdate: () => void }) {
           </Button>
         </div>
       )}
-    </div>
+    </BetSlip>
   )
 }
 
@@ -284,10 +285,7 @@ export default function BetsPage() {
   if (loading) {
     return (
       <div className="container mx-auto px-4 py-8">
-        <div className="flex items-center gap-3 mb-6">
-          <Trophy className="h-6 w-6 text-vault-gold" />
-          <h1 className="text-2xl font-bold text-vault-cream">VTuberBets</h1>
-        </div>
+        <GlitchHeading as="h1" className="text-2xl font-bold text-vault-cream mb-6">VTuberBets</GlitchHeading>
         <div className="grid md:grid-cols-2 gap-4">
           {[1, 2, 3, 4].map(i => (
             <div key={i} className="vault-card rounded-xl p-5 h-52 animate-pulse bg-muted/20" />
@@ -299,27 +297,24 @@ export default function BetsPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="flex items-center gap-3 mb-2">
-        <Trophy className="h-6 w-6 text-vault-gold" />
-        <h1 className="text-2xl font-bold text-vault-cream">VTuberBets</h1>
-      </div>
-      <p className="text-sm text-muted-foreground mb-8">
-        Spend scraps predicting what happens on stream. Vote on outcomes to resolve bets and earn your share.
+      <GlitchHeading as="h1" className="text-2xl font-bold text-vault-cream mb-2">VTuberBets</GlitchHeading>
+      <p className="text-sm text-muted-foreground mb-4">
+        Wager scraps on stream chaos. Vote when it&apos;s over. Collect when you called it.
       </p>
+      <VaultDivider className="mb-8" />
 
       {bets.length === 0 && (
         <p className="text-muted-foreground text-center py-20">
-          No bets yet — use the + button to create one!
+          Empty board. Hit + and start a wager.
         </p>
       )}
 
       {/* Open bets */}
       {openBets.length > 0 && (
         <section className="mb-10">
-          <h2 className="text-base font-semibold text-vault-cream mb-4 flex items-center gap-2">
-            <TrendingUp className="h-4 w-4 text-vault-gold" />
-            Open Bets
-            <span className="text-xs font-normal text-muted-foreground">({openBets.length})</span>
+          <h2 className="text-base font-semibold text-vault-cream mb-4">
+            Open slips
+            <span className="text-xs font-normal text-muted-foreground ml-2">({openBets.length})</span>
           </h2>
           <div className="grid md:grid-cols-2 gap-4">
             {openBets.map(bet => (
@@ -332,13 +327,12 @@ export default function BetsPage() {
       {/* Needs voting */}
       {closedBets.length > 0 && (
         <section className="mb-10">
-          <h2 className="text-base font-semibold text-vault-cream mb-2 flex items-center gap-2">
-            <Vote className="h-4 w-4 text-vault-gold" />
-            Needs Your Vote
-            <span className="text-xs font-normal text-muted-foreground">({closedBets.length})</span>
+          <h2 className="text-base font-semibold text-vault-cream mb-2">
+            Needs your vote
+            <span className="text-xs font-normal text-muted-foreground ml-2">({closedBets.length})</span>
           </h2>
           <p className="text-xs text-muted-foreground mb-4">
-            These bets have ended — vote on what actually happened to trigger resolution.
+            Stream&apos;s done. Tell us what actually happened.
           </p>
           <div className="grid md:grid-cols-2 gap-4">
             {closedBets.map(bet => (
@@ -356,7 +350,8 @@ export default function BetsPage() {
           </h2>
           <div className="grid md:grid-cols-2 gap-4 opacity-60">
             {resolvedBets.map(bet => (
-              <div key={bet.id} className="vault-card rounded-xl p-5">
+              <BetSlip key={bet.id} className="opacity-90">
+                <div>
                 <div className="flex items-start justify-between gap-2 mb-2">
                   <h3 className="font-medium text-vault-cream text-sm">{bet.title}</h3>
                   <Badge variant="secondary" className="text-xs shrink-0">Resolved</Badge>
@@ -379,7 +374,8 @@ export default function BetsPage() {
                     )
                   })}
                 </div>
-              </div>
+                </div>
+              </BetSlip>
             ))}
           </div>
         </section>

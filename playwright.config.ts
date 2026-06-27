@@ -3,7 +3,7 @@ import { defineConfig, devices } from '@playwright/test';
 // Testing env support: override with PLAYWRIGHT_BASE_URL=http://localhost:3000 for local dev testing
 // (after `pnpm dev`). Global auth bypass is only for the production Vercel preview.
 const isLocal = (process.env.PLAYWRIGHT_BASE_URL || '').includes('localhost');
-const baseURL = process.env.PLAYWRIGHT_BASE_URL || 'https://vtvault-v2-jakob25s-projects.vercel.app';
+const baseURL = process.env.PLAYWRIGHT_BASE_URL || 'https://obscuravt-git-staging-jakob25s-projects.vercel.app';
 
 export default defineConfig({
   testDir: './tests',

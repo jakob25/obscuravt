@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/auth-context'
 
+
 export default function LoginPage() {
   const { login, register } = useAuth()
   const router = useRouter()
@@ -198,7 +199,7 @@ export default function LoginPage() {
       <div className="vl-page">
         <div className="vl-card">
           <div className="vl-title">ObscuraVT</div>
-          <div className="vl-honor">Created in honor of Spindra Popaly</div>
+          <div className="vl-honor">For the creators the algorithm doesn&apos;t want you to see · In honor of Spindra Popaly</div>
 
           <div className="vl-lock">
             <svg className="vl-svg" viewBox="0 0 460 460" xmlns="http://www.w3.org/2000/svg">

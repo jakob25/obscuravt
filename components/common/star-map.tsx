@@ -5,6 +5,7 @@ import { zoom, zoomIdentity, ZoomTransform, D3ZoomEvent } from 'd3-zoom'
 import { select } from 'd3-selection'
 import { useRouter } from 'next/navigation'
 import { useStarMapData, getVTubersByConstellationLive } from '@/hooks/use-star-map-data'
+import { AnalogStaticCanvas } from '@/components/vault/analog-static-canvas'
 import type { VTuber, Constellation } from '@/lib/types'
 
 interface StarPosition {
@@ -496,13 +497,11 @@ export function StarMap() {
 
   return (
     <div ref={containerRef} className="relative w-full h-full min-h-[500px] bg-[#020408] overflow-hidden">
-      <video
-        autoPlay loop muted playsInline
-        className="absolute inset-0 w-full h-full object-cover pointer-events-none"
-        style={{ zIndex: 0, opacity: 0.15, mixBlendMode: 'screen' }}
-      >
-        <source src="/vhs-static.mp4" type="video/mp4" />
-      </video>
+      <AnalogStaticCanvas
+        active
+        intensity={0.35}
+        className="absolute inset-0 w-full h-full pointer-events-none opacity-[0.12] mix-blend-screen"
+      />
       <canvas
         ref={canvasRef}
         width={dimensions.width}

@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
       username,
       password_hash,
       coins: 100, // starting coins
-      role: 'user',
+      role: null,
     })
 
   if (error) {

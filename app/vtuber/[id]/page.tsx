@@ -1,7 +1,16 @@
 import { notFound } from 'next/navigation'
 import { createClient } from '@supabase/supabase-js'
 import Link from 'next/link'
-import { ExternalLink, Twitch, Youtube, ArrowLeft, Tag } from 'lucide-react'
+import { ExternalLink, Twitch, Youtube } from 'lucide-react'
+import {
+  DossierFrame,
+  CaseFolder,
+  CasePhoto,
+  CaseField,
+} from '@/components/vault/vault-surfaces'
+import { PageBackNav } from '@/components/vault/page-back-nav'
+import { ClaimProfileButton } from '@/components/vtuber/claim-profile-button'
+import { AddToCircleButton } from '@/components/vtuber/add-to-circle-button'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -27,10 +36,6 @@ export default async function VTuberProfilePage({ params }: Props) {
     notFound()
   }
 
-  // Use custom avatar if available, otherwise show initial
-  const hasCustomAvatar = !!vtuber.avatar_url
-
-  // Fetch canonical tag names for display
   const tags: string[] = vtuber.tags ?? []
   const { data: canonicalTags } = await supabase
     .from('canonical_tags')
@@ -41,123 +46,183 @@ export default async function VTuberProfilePage({ params }: Props) {
 
   const clusterTag = tags.find(t => t.startsWith('clust_'))
   const cluster = clusterTag ? tagMap[clusterTag] : null
-  const vibeTags = tags.filter(t => t.startsWith('vibe_') || t.startsWith('cont_'))
 
   const platform = (vtuber.platform ?? '').toLowerCase()
   const isTwitch = platform.includes('twitch')
   const isYoutube = platform.includes('youtube')
 
+  const caseId = `OVT-${String(vtuber.id).replace(/[^a-zA-Z0-9]/g, '').slice(-5).toUpperCase().padStart(5, '0')}`
+
+  // Fetch active CMDI goal
+  const { data: activeCmdiGoal } = await supabase
+    .from('cmdi_goals')
+    .select('*')
+    .eq('vtuber_id', id)
+    .eq('status', 'active')
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .single()
+
+  // Fetch open bets for this specific VTuber
+  const { data: openBets } = await supabase
+    .from('bets')
+    .select('id, title, option_a, option_b, status')
+    .eq('vtuber_id', id)
+    .eq('status', 'open')
+    .order('created_at', { ascending: false })
+    .limit(3)
+
   return (
     <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-8 max-w-2xl">
+      <div className="container mx-auto px-4 py-8 max-w-6xl">
 
-        {/* Back */}
-        <Link href="/discover" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-vault-cream mb-8 transition-colors">
-          <ArrowLeft className="h-4 w-4" />
-          Back to Discover
-        </Link>
+        <PageBackNav fallbackHref="/discover" label="Back to Star Map" className="mb-8" />
 
-        {/* Header card */}
-        <div className="vault-card rounded-2xl p-6 mb-6">
-          <div className="flex items-start gap-4">
-            {/* Avatar */}
-            {hasCustomAvatar ? (
-              <img
-                src={vtuber.avatar_url}
-                alt={vtuber.name}
-                className="h-16 w-16 rounded-xl object-cover flex-shrink-0 border border-white/10"
+        <div className="archive-shell rounded-lg overflow-hidden border-2 border-[#1e3a4a]">
+          
+          {/* Header */}
+          <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-[#1e3a4a]">
+            <div>
+              <div className="text-[#4fc9d6] text-[10px] tracking-[0.18em] mono">OBSCURAVT • SUBJECT ARCHIVE</div>
+              <div className="text-[#4fd6a8] text-[9px] tracking-[0.1em]">{vtuber.claimed_by ? '● VERIFIED SUBJECT' : '● UNCLAIMED FILE'}</div>
+            </div>
+            <div className="text-[#5a8a99] text-[10px] mono tracking-[0.08em]">CASE NO. {caseId}</div>
+          </div>
+
+          <div className="case-folder p-7">
+            
+            {/* Top Action Buttons */}
+            <div className="flex flex-wrap gap-2 mb-6">
+              <Link 
+                href={`/vtuber/${id}/fan-corner`}
+                className="px-4 py-1.5 text-xs border border-[#5a4f2e] hover:bg-[#5a4f2e] hover:text-[#e9dfc4] transition-colors"
+              >
+                FAN CORNER
+              </Link>
+              <AddToCircleButton vtuberId={vtuber.id} vtuberName={vtuber.name} />
+              <ClaimProfileButton 
+                vtuberId={vtuber.id} 
+                vtuberName={vtuber.name} 
+                claimedBy={vtuber.claimed_by ?? null} 
               />
-            ) : (
-              <div
-                className="h-16 w-16 rounded-xl flex-shrink-0 flex items-center justify-center text-2xl font-bold text-vault-deep"
-                style={{ background: cluster?.color ?? '#d4a574' }}
-              >
-                {vtuber.name.charAt(0)}
-              </div>
-            )}
+            </div>
 
-            <div className="flex-1 min-w-0">
-              <h1 className="text-2xl font-bold text-vault-cream">{vtuber.name}</h1>
-              {vtuber.handle && (
-                <p className="text-sm text-muted-foreground mt-0.5">{vtuber.handle}</p>
-              )}
-
-              {/* Constellation badge */}
-              {cluster && (
-                <div
-                  className="inline-flex items-center gap-1.5 mt-2 px-2.5 py-1 rounded-lg text-xs font-medium border"
-                  style={{ borderColor: cluster.color + '50', backgroundColor: cluster.color + '18', color: cluster.color }}
-                >
-                  Constellation {cluster.tag}
+            {/* Subject Info */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-8">
+              <div className="lg:col-span-5 flex gap-5">
+                <CasePhoto
+                  src={vtuber.avatar_url}
+                  alt={vtuber.name}
+                  caption="FIG. 1 — SUBJECT"
+                />
+                <div className="flex-1 min-w-0 font-mono pt-1">
+                  <CaseField label="CODENAME" value={vtuber.name} />
+                  <CaseField label="HANDLE" value={vtuber.handle || undefined} />
+                  <CaseField
+                    label="CLUSTER"
+                    value={cluster ? `FILED UNDER ${cluster.tag.toUpperCase()}` : undefined}
+                  />
+                  <CaseField
+                    label="PLATFORM"
+                    value={isTwitch ? 'TWITCH' : isYoutube ? 'YOUTUBE' : vtuber.platform || undefined}
+                  />
                 </div>
+              </div>
+
+              <div className="lg:col-span-7">
+                <div className="font-mono text-[10px] uppercase tracking-[0.1em] text-[var(--case-ink-dim)] mb-1.5">
+                  FIELD NOTES
+                </div>
+                <p className="text-[13.5px] leading-relaxed text-[var(--case-ink)]">
+                  {vtuber.bio || 'No field notes on file.'}
+                </p>
+                {vtuber.link && (
+                  <div className="mt-4">
+                    <a
+                      href={vtuber.link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 px-4 py-1.5 text-xs font-mono font-medium border border-[rgba(60,50,20,0.35)] text-[var(--case-ink-dim)] hover:text-[var(--case-ink)] hover:border-[rgba(60,50,20,0.55)] transition-colors bg-white/10"
+                    >
+                      {isTwitch ? <Twitch className="h-3.5 w-3.5 text-purple-700" /> :
+                       isYoutube ? <Youtube className="h-3.5 w-3.5 text-red-700" /> :
+                       <ExternalLink className="h-3.5 w-3.5" />}
+                      {isTwitch ? 'OPEN TWITCH CHANNEL' : isYoutube ? 'OPEN YOUTUBE CHANNEL' : (vtuber.platform || 'CHANNEL').toUpperCase()}
+                    </a>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Chat Made Me Do It */}
+            <div className="mb-8 border-t border-[#5a4f2e]/30 pt-6">
+              <div className="section-label mb-2">CHAT MADE ME DO IT</div>
+              
+              {activeCmdiGoal ? (
+                <div className="bg-[#0d0d14] border border-[#143544] rounded p-4">
+                  <div className="flex justify-between text-sm mb-2">
+                    <span>{activeCmdiGoal.title}</span>
+                    <span className="text-[#d4a843] font-medium">
+                      {Math.round((activeCmdiGoal.current_progress / activeCmdiGoal.target) * 100)}%
+                    </span>
+                  </div>
+                  <div className="h-2 bg-[#143544] rounded mb-1">
+                    <div 
+                      className="h-2 bg-[#d4a843] rounded transition-all" 
+                      style={{ width: `${Math.min((activeCmdiGoal.current_progress / activeCmdiGoal.target) * 100, 100)}%` }}
+                    />
+                  </div>
+                  <div className="text-xs text-[#5a4f2e]">
+                    {activeCmdiGoal.current_progress} / {activeCmdiGoal.target} scraps funded
+                  </div>
+                </div>
+              ) : (
+                <Link 
+                  href={`/vtuber/${id}/fan-corner#submit`}
+                  className="px-5 py-2.5 text-sm border border-[#d4a843] text-[#d4a843] hover:bg-[#d4a843] hover:text-[#0d0d14] transition-colors font-medium"
+                >
+                  + SUBMIT IDEA
+                </Link>
               )}
             </div>
-          </div>
 
-          {/* Bio */}
-          {vtuber.bio && (
-            <p className="text-sm text-muted-foreground mt-4 leading-relaxed">{vtuber.bio}</p>
-          )}
+            {/* Schedule LEFT + Bets RIGHT (Bets now dynamic per VTuber) */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="bg-[#e9dfc4] border border-[#5a4f2e]/30 rounded p-4">
+                <div className="section-label mb-1">SCHEDULE / LAST STREAM</div>
+                <div className="text-sm">Next: Sunday 8:00 PM<br /><span className="text-xs text-[#5a4f2e]">or view last stream VOD</span></div>
+              </div>
 
-          {/* Links */}
-          {vtuber.link && (
-            <div className="mt-4 flex flex-wrap gap-2">
-              <a
-                href={vtuber.link}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium border border-border text-muted-foreground hover:text-vault-cream hover:border-vault-bronze/40 transition-all"
-              >
-                {isTwitch ? <Twitch className="h-4 w-4 text-purple-400" /> :
-                 isYoutube ? <Youtube className="h-4 w-4 text-red-400" /> :
-                 <ExternalLink className="h-4 w-4" />}
-                {isTwitch ? 'Twitch' : isYoutube ? 'YouTube' : vtuber.platform ?? 'Channel'}
-              </a>
+              {/* Bets - now shows real open bets for this specific VTuber */}
+              <div className="bg-[#e9dfc4] border border-[#5a4f2e]/30 rounded p-4">
+                <div className="section-label mb-2">BETS</div>
+                
+                {openBets && openBets.length > 0 ? (
+                  <div className="space-y-2">
+                    {openBets.map((bet) => (
+                      <div key={bet.id} className="text-sm">
+                        <div className="font-medium">{bet.title}</div>
+                        <div className="text-xs text-[#5a4f2e]">
+                          {bet.option_a} vs {bet.option_b}
+                        </div>
+                      </div>
+                    ))}
+                    <Link 
+                      href={`/vtuber/${id}/bets`}
+                      className="inline-block mt-1 text-xs text-[#d4a843] hover:underline"
+                    >
+                      View all open bets →
+                    </Link>
+                  </div>
+                ) : (
+                  <div className="text-sm text-[#5a4f2e]">
+                    No open bets right now.
+                  </div>
+                )}
+              </div>
             </div>
-          )}
-        </div>
 
-        {/* Vibe tags */}
-        {vibeTags.length > 0 && (
-          <div className="vault-card rounded-2xl p-6 mb-6">
-            <h2 className="text-sm font-semibold text-vault-cream mb-3 flex items-center gap-2">
-              <Tag className="h-4 w-4 text-vault-gold" />
-              Vibes & Content
-            </h2>
-            <div className="flex flex-wrap gap-2">
-              {vibeTags.map(tagId => {
-                const t = tagMap[tagId]
-                if (!t) return null
-                return (
-                  <span
-                    key={tagId}
-                    className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border"
-                    style={{
-                      borderColor: (t.color ?? '#888') + '50',
-                      backgroundColor: (t.color ?? '#888') + '15',
-                      color: t.color ?? '#888',
-                    }}
-                  >
-                    {t.tag}
-                  </span>
-                )
-              })}
-            </div>
           </div>
-        )}
-
-        {/* Tag validator CTA */}
-        <div className="vault-card rounded-2xl p-5 flex items-center justify-between gap-4">
-          <div>
-            <p className="text-sm font-medium text-vault-cream">Know this VTuber?</p>
-            <p className="text-xs text-muted-foreground mt-0.5">Help the community by validating their tags.</p>
-          </div>
-          <Link
-            href="/tag-validator"
-            className="flex-shrink-0 inline-flex items-center justify-center h-9 px-4 rounded-lg bg-vault-gold text-vault-deep text-sm font-semibold"
-          >
-            Validate Tags
-          </Link>
         </div>
 
       </div>

@@ -1,2 +1,2 @@
-# TODO: Original content from root run-tests.sh
-# Moved to tests/ folder
+#!/bin/bash
+exec "$(dirname "$0")/../scripts/run-tests.sh" "$@"

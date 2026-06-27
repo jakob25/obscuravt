@@ -2,9 +2,11 @@
 
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/lib/auth-context'
-import { ShoppingBag, Check, Loader2, AlertCircle, Coins, Tag } from 'lucide-react'
+import { Check, Loader2, AlertCircle, Coins, Tag } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
+import { GlitchHeading } from '@/components/vault/glitch-heading'
+import { VaultDivider, VaultPanel } from '@/components/vault/vault-surfaces'
 
 interface ShopItem {
   id: string
@@ -21,9 +23,9 @@ interface OwnedItem {
 }
 
 const TYPE_LABELS: Record<string, string> = {
-  title: '🏷️ Title',
-  badge: '🔰 Badge',
-  frame: '🖼️ Frame',
+  title: 'Title',
+  badge: 'Badge',
+  frame: 'Frame',
 }
 
 export default function ShopPage() {
@@ -77,10 +79,7 @@ export default function ShopPage() {
   return (
     <div className="container mx-auto px-4 py-8 max-w-3xl">
       <div className="flex items-center justify-between mb-2">
-        <div className="flex items-center gap-3">
-          <ShoppingBag className="h-6 w-6 text-vault-gold" />
-          <h1 className="text-2xl font-bold text-vault-cream">Shop</h1>
-        </div>
+        <GlitchHeading as="h1" className="text-2xl font-bold text-vault-cream">Shop</GlitchHeading>
         {user && (
           <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-vault-gold/10 border border-vault-gold/30">
             <Coins className="h-4 w-4 text-vault-gold" />
@@ -90,17 +89,18 @@ export default function ShopPage() {
         )}
       </div>
 
-      <p className="text-sm text-muted-foreground mb-8">
-        Spend your Vault Scraps on titles and cosmetics. Earn more by winning bets.
+      <p className="text-sm text-muted-foreground mb-4">
+        Burn scraps on titles and flex. Win bets to restock.
       </p>
+      <VaultDivider className="mb-8" />
 
       {!user && (
-        <div className="vault-card rounded-xl p-6 text-center mb-6">
-          <p className="text-muted-foreground mb-3">Sign in to buy items</p>
+        <VaultPanel className="p-6 text-center mb-6">
+          <p className="text-muted-foreground mb-3">Sign in to spend scraps</p>
           <Button asChild className="bg-vault-gold hover:bg-vault-amber text-vault-deep font-semibold">
             <Link href="/login">Sign In</Link>
           </Button>
-        </div>
+        </VaultPanel>
       )}
 
       {loading ? (
@@ -109,7 +109,7 @@ export default function ShopPage() {
             <div key={i}>
               <div className="h-5 w-24 bg-muted/30 rounded mb-3 animate-pulse" />
               <div className="grid sm:grid-cols-2 gap-3">
-                {[1, 2, 3].map(j => <div key={j} className="vault-card rounded-xl p-5 h-28 animate-pulse bg-muted/20" />)}
+                {[1, 2, 3].map(j => <div key={j} className="vault-panel p-5 h-28 animate-pulse bg-muted/20" />)}
               </div>
             </div>
           ))}
@@ -129,9 +129,9 @@ export default function ShopPage() {
                   const msg = message?.id === item.id ? message : null
 
                   return (
-                    <div
+                    <VaultPanel
                       key={item.id}
-                      className={`vault-card rounded-xl p-5 flex flex-col gap-3 transition-all ${
+                      className={`p-5 flex flex-col gap-3 transition-all ${
                         isOwned ? 'border-vault-gold/30 bg-vault-gold/5' : ''
                       }`}
                     >
@@ -195,7 +195,7 @@ export default function ShopPage() {
                           </Button>
                         )
                       )}
-                    </div>
+                    </VaultPanel>
                   )
                 })}
               </div>
@@ -203,7 +203,7 @@ export default function ShopPage() {
           ))}
 
           {items.length === 0 && (
-            <p className="text-center text-muted-foreground py-12">Shop is empty — check back soon!</p>
+            <p className="text-center text-muted-foreground py-12">Shelves empty. Restock incoming.</p>
           )}
         </div>
       )}

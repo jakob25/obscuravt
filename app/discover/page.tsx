@@ -4,7 +4,8 @@ import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { StarMap } from '@/components/common/star-map'
 import { NicheMap } from '@/components/common/niche-map'
-import { Sparkles, BookOpen } from 'lucide-react'
+import { Sparkles, BookOpen, Compass } from 'lucide-react'
+
 
 type MapMode = 'vibe' | 'niche'
 
@@ -23,13 +24,13 @@ function FirstTimerBanner() {
     <div className="absolute bottom-4 left-4 z-30 max-w-sm pointer-events-auto">
       <div className="bg-black/80 border border-white/10 rounded-xl px-4 py-3 backdrop-blur-sm">
         <div className="flex items-start gap-3">
-          <span className="text-lg flex-shrink-0">🧭</span>
+          <Compass className="h-5 w-5 text-vault-gold flex-shrink-0" />
           <div>
             <p className="text-sm font-medium text-white">
-              Scroll to zoom in — click any cluster to explore it.
+              Scroll to zoom. Click a cluster. Find your people.
             </p>
             <p className="text-xs text-white/50 mt-0.5">
-              Constellations are personality types, not genres.
+              Personality constellations — not genre buckets.
             </p>
           </div>
           <button

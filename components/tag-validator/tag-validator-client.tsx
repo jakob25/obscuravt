@@ -2,9 +2,10 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '@/lib/auth-context'
-import { supabase } from '@/lib/supabase'
-import { CheckCircle, XCircle, SkipForward, Zap, Trophy } from 'lucide-react'
+import { CheckCircle, XCircle, SkipForward } from 'lucide-react'
 import Link from 'next/link'
+import { VaultPanel, VaultDivider } from '@/components/vault/vault-surfaces'
+import { GlitchHeading } from '@/components/vault/glitch-heading'
 
 interface VTuber {
   id: string
@@ -26,9 +27,10 @@ interface QueueItem {
   tag: CanonicalTag
 }
 
-const SCRAPS_PER_VOTE = 10
+const STREAK_TARGET = 10
+const STREAK_BONUS = 100
 
-export default function TagValidatorPage() {
+export function TagValidatorClient() {
   const { user } = useAuth()
   const [queue, setQueue] = useState<QueueItem[]>([])
   const [current, setCurrent] = useState<QueueItem | null>(null)
@@ -36,87 +38,69 @@ export default function TagValidatorPage() {
   const [voting, setVoting] = useState(false)
   const [sessionScore, setSessionScore] = useState(0)
   const [sessionVotes, setSessionVotes] = useState(0)
-  const [feedback, setFeedback] = useState<'yes' | 'no' | 'skip' | null>(null)
+  const [streak, setStreak] = useState(0)
+  const [feedback, setFeedback] = useState<'confirm' | 'challenge' | 'skip' | null>(null)
+  const [error, setError] = useState('')
 
   const buildQueue = useCallback(async () => {
-    // Fetch all approved vtubers
-    const { data: vtubers } = await supabase
-      .from('vtubers')
-      .select('id, name, bio, tags')
-      .eq('approved', true)
+    if (!user) return
+    setLoading(true)
+    setError('')
 
-    // Fetch all canonical tags that could be applied (vibe + content categories)
-    const { data: canonicalTags } = await supabase
-      .from('canonical_tags')
-      .select('id, tag, category, color, description')
-      .in('category', ['vibe', 'content', 'cluster'])
-
-    if (!vtubers || !canonicalTags) return
-
-    // Fetch tags this user has already voted on
-    const { data: alreadyVoted } = user
-      ? await supabase
-          .from('vtuber_tag_votes')
-          .select('vtuber_id, tag')
-          .eq('username', user.username)
-      : { data: [] }
-
-    const voted = new Set((alreadyVoted ?? []).map(r => `${r.vtuber_id}:${r.tag}`))
-
-    // Build queue: pair each vtuber with tags they DON'T have yet and haven't been voted on
-    const items: QueueItem[] = []
-    for (const vtuber of vtubers) {
-      const currentTags = vtuber.tags ?? []
-      for (const tag of canonicalTags) {
-        const key = `${vtuber.id}:${tag.id}`
-        if (!voted.has(key)) {
-          items.push({ vtuber, tag })
-        }
+    try {
+      const res = await fetch('/api/tag-validator')
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        throw new Error(data.error || 'Failed to load queue')
       }
+      const data = await res.json()
+      const items: QueueItem[] = data.queue ?? []
+      setQueue(items)
+      setCurrent(items[0] ?? null)
+      setStreak(data.streak ?? 0)
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to load queue')
+      setQueue([])
+      setCurrent(null)
+    } finally {
+      setLoading(false)
     }
-
-    // Shuffle
-    for (let i = items.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [items[i], items[j]] = [items[j], items[i]]
-    }
-
-    setQueue(items.slice(0, 50)) // cap at 50 per session
-    setCurrent(items[0] ?? null)
-    setLoading(false)
   }, [user])
 
   useEffect(() => {
     buildQueue()
   }, [buildQueue])
 
-  const vote = async (vote: 1 | -1 | 0) => {
+  const vote = async (voteValue: 1 | -1 | 0) => {
     if (!current || voting) return
     setVoting(true)
-    setFeedback(vote === 1 ? 'yes' : vote === -1 ? 'no' : 'skip')
+    setFeedback(voteValue === 1 ? 'confirm' : voteValue === -1 ? 'challenge' : 'skip')
 
-    if (vote !== 0 && user) {
-      // Write vote to DB
-      await supabase.from('vtuber_tag_votes').insert({
-        id: crypto.randomUUID(),
-        vtuber_id: current.vtuber.id,
-        tag: current.tag.id,
-        tag_type: current.tag.category,
-        vote,
-        profile_id: user.username,
-        username: user.username,
-        voted_at: new Date().toISOString(),
-      })
+    if (user) {
+      try {
+        const res = await fetch('/api/tag-validator', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            vtuberId: current.vtuber.id,
+            tagId: current.tag.id,
+            vote: voteValue,
+          }),
+        })
 
-      // Award scraps
-      await supabase.rpc('add_scraps', { username: user.username, amount: SCRAPS_PER_VOTE })
-        .catch(() => {}) // non-fatal if RPC doesn't exist yet
-
-      setSessionScore(s => s + SCRAPS_PER_VOTE)
-      setSessionVotes(v => v + 1)
+        if (res.ok) {
+          const data = await res.json()
+          if (data.scrapsAwarded > 0) {
+            setSessionScore(s => s + data.scrapsAwarded)
+          }
+          setStreak(data.streak ?? 0)
+          if (voteValue !== 0) setSessionVotes(v => v + 1)
+        }
+      } catch {
+        // Non-fatal — still advance queue
+      }
     }
 
-    // Advance queue after brief feedback flash
     setTimeout(() => {
       setFeedback(null)
       setQueue(q => {
@@ -131,16 +115,15 @@ export default function TagValidatorPage() {
   if (!user) {
     return (
       <div className="min-h-[70vh] flex items-center justify-center p-4">
-        <div className="vault-card rounded-2xl p-8 max-w-sm w-full text-center">
-          <Zap className="h-10 w-10 text-vault-gold mx-auto mb-4" />
-          <h1 className="text-xl font-bold text-vault-cream mb-2">Tag Validator</h1>
+        <VaultPanel className="p-8 max-w-sm w-full text-center">
+          <GlitchHeading as="h2" className="text-xl font-bold text-vault-cream mb-2">Tag Validator</GlitchHeading>
           <p className="text-muted-foreground text-sm mb-6">
-            Sign in to validate tags and earn scraps. Your votes shape the Vault.
+            Sign in. Judge tags. Get paid in scraps. The Archive runs on your taste.
           </p>
           <Link href="/login" className="inline-flex items-center justify-center w-full h-10 rounded-lg bg-vault-gold text-vault-deep font-semibold text-sm">
             Sign In
           </Link>
-        </div>
+        </VaultPanel>
       </div>
     )
   }
@@ -153,23 +136,38 @@ export default function TagValidatorPage() {
     )
   }
 
+  if (error) {
+    return (
+      <div className="min-h-[70vh] flex items-center justify-center p-4">
+        <VaultPanel className="p-8 max-w-sm w-full text-center">
+          <p className="text-sm text-red-400 mb-4">{error}</p>
+          <button
+            onClick={buildQueue}
+            className="inline-flex items-center justify-center w-full h-10 rounded-lg bg-vault-gold text-vault-deep font-semibold text-sm"
+          >
+            Retry
+          </button>
+        </VaultPanel>
+      </div>
+    )
+  }
+
   if (!current) {
     return (
       <div className="min-h-[70vh] flex items-center justify-center p-4">
-        <div className="vault-card rounded-2xl p-8 max-w-sm w-full text-center">
-          <Trophy className="h-10 w-10 text-vault-gold mx-auto mb-4" />
-          <h1 className="text-xl font-bold text-vault-cream mb-2">Queue complete!</h1>
+        <VaultPanel className="p-8 max-w-sm w-full text-center">
+          <GlitchHeading as="h2" className="text-xl font-bold text-vault-cream mb-2">Queue cleared</GlitchHeading>
           <p className="text-muted-foreground text-sm mb-2">
-            You voted on {sessionVotes} tags this session.
+            {sessionVotes} tags judged this session. Not bad.
           </p>
-          <p className="text-vault-gold font-semibold mb-6">+{sessionScore} scraps earned</p>
+          <p className="text-vault-gold font-semibold mb-6">+{sessionScore} scraps</p>
           <button
             onClick={() => { setLoading(true); buildQueue() }}
             className="inline-flex items-center justify-center w-full h-10 rounded-lg bg-vault-gold text-vault-deep font-semibold text-sm"
           >
             Load more
           </button>
-        </div>
+        </VaultPanel>
       </div>
     )
   }
@@ -178,26 +176,24 @@ export default function TagValidatorPage() {
 
   return (
     <div className="min-h-[70vh] flex flex-col items-center justify-center p-4 gap-6">
-
-      {/* Session stats */}
-      <div className="flex items-center gap-4 text-xs text-muted-foreground">
+      <div className="flex items-center gap-4 text-xs text-muted-foreground flex-wrap justify-center">
         <span>{queue.length} left in queue</span>
         <span className="text-vault-gold font-medium">+{sessionScore} scraps this session</span>
+        <span className="px-2.5 py-1 rounded-full border border-vault-gold/30 text-vault-gold font-semibold">
+          Streak {streak}/{STREAK_TARGET}
+        </span>
       </div>
 
-      {/* Card */}
-      <div className={`vault-card rounded-2xl p-6 w-full max-w-md transition-all duration-200 ${
-        feedback === 'yes' ? 'border-green-500/60 bg-green-500/5' :
-        feedback === 'no' ? 'border-red-500/60 bg-red-500/5' : ''
+      <VaultPanel className={`p-6 w-full max-w-md transition-all duration-200 ${
+        feedback === 'confirm' ? 'border-green-500/60 bg-green-500/5' :
+        feedback === 'challenge' ? 'border-red-500/60 bg-red-500/5' : ''
       }`}>
-        {/* VTuber info */}
         <div className="mb-6">
           <p className="text-xs text-muted-foreground mb-1">VTuber</p>
           <h2 className="text-xl font-bold text-vault-cream">{current.vtuber.name}</h2>
           {current.vtuber.bio && (
             <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{current.vtuber.bio}</p>
           )}
-          {/* Current tags */}
           {(current.vtuber.tags ?? []).length > 0 && (
             <div className="flex flex-wrap gap-1 mt-3">
               {current.vtuber.tags.slice(0, 6).map(t => (
@@ -209,10 +205,8 @@ export default function TagValidatorPage() {
           )}
         </div>
 
-        {/* Divider */}
-        <div className="border-t border-border my-4" />
+        <VaultDivider className="my-4" />
 
-        {/* Tag being evaluated */}
         <div className="mb-6">
           <p className="text-xs text-muted-foreground mb-2">Does this tag fit?</p>
           <div
@@ -226,17 +220,18 @@ export default function TagValidatorPage() {
           )}
         </div>
 
-        {/* Vote buttons */}
         <div className="flex gap-3">
           <button
+            type="button"
             onClick={() => vote(-1)}
             disabled={voting}
             className="flex-1 flex items-center justify-center gap-2 h-12 rounded-xl border border-red-500/30 text-red-400 hover:bg-red-500/10 hover:border-red-500/60 transition-all font-medium disabled:opacity-50"
           >
             <XCircle className="h-5 w-5" />
-            No
+            Challenge
           </button>
           <button
+            type="button"
             onClick={() => vote(0)}
             disabled={voting}
             className="flex items-center justify-center gap-1 h-12 px-4 rounded-xl border border-border text-muted-foreground hover:text-vault-cream hover:border-vault-bronze/40 transition-all text-sm disabled:opacity-50"
@@ -245,18 +240,19 @@ export default function TagValidatorPage() {
             Skip
           </button>
           <button
+            type="button"
             onClick={() => vote(1)}
             disabled={voting}
             className="flex-1 flex items-center justify-center gap-2 h-12 rounded-xl border border-green-500/30 text-green-400 hover:bg-green-500/10 hover:border-green-500/60 transition-all font-medium disabled:opacity-50"
           >
             <CheckCircle className="h-5 w-5" />
-            Yes
+            Confirm
           </button>
         </div>
-      </div>
+      </VaultPanel>
 
       <p className="text-xs text-muted-foreground text-center">
-        {SCRAPS_PER_VOTE} scraps per vote · Skip costs nothing · Your votes apply automatically
+        {STREAK_BONUS} scraps every {STREAK_TARGET} in a row · Skip kills the streak
       </p>
     </div>
   )
