@@ -53,7 +53,7 @@ export default async function VTuberProfilePage({ params }: Props) {
 
   const caseId = `OVT-${String(vtuber.id).replace(/[^a-zA-Z0-9]/g, '').slice(-5).toUpperCase().padStart(5, '0')}`
 
-  // Fetch active CMDI goal for this VTuber
+  // Fetch active CMDI goal
   const { data: activeCmdiGoal } = await supabase
     .from('cmdi_goals')
     .select('*')
@@ -63,7 +63,14 @@ export default async function VTuberProfilePage({ params }: Props) {
     .limit(1)
     .single()
 
-  const hasActiveCmdiGoal = !!activeCmdiGoal
+  // Fetch open bets for this specific VTuber
+  const { data: openBets } = await supabase
+    .from('bets')
+    .select('id, title, option_a, option_b, status')
+    .eq('vtuber_id', id)
+    .eq('status', 'open')
+    .order('created_at', { ascending: false })
+    .limit(3)
 
   return (
     <div className="min-h-screen bg-background">
@@ -147,12 +154,11 @@ export default async function VTuberProfilePage({ params }: Props) {
               </div>
             </div>
 
-            {/* Chat Made Me Do It - now connected to real DB data */}
+            {/* Chat Made Me Do It */}
             <div className="mb-8 border-t border-[#5a4f2e]/30 pt-6">
               <div className="section-label mb-2">CHAT MADE ME DO IT</div>
               
-              {hasActiveCmdiGoal && activeCmdiGoal ? (
-                // IF there is an active goal
+              {activeCmdiGoal ? (
                 <div className="bg-[#0d0d14] border border-[#143544] rounded p-4">
                   <div className="flex justify-between text-sm mb-2">
                     <span>{activeCmdiGoal.title}</span>
@@ -171,7 +177,6 @@ export default async function VTuberProfilePage({ params }: Props) {
                   </div>
                 </div>
               ) : (
-                // ELSE: No active goal - show submit button
                 <Link 
                   href={`/vtuber/${id}/fan-corner#submit`}
                   className="px-5 py-2.5 text-sm border border-[#d4a843] text-[#d4a843] hover:bg-[#d4a843] hover:text-[#0d0d14] transition-colors font-medium"
@@ -181,15 +186,39 @@ export default async function VTuberProfilePage({ params }: Props) {
               )}
             </div>
 
-            {/* Schedule LEFT + Bets RIGHT */}
+            {/* Schedule LEFT + Bets RIGHT (Bets now dynamic per VTuber) */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="bg-[#e9dfc4] border border-[#5a4f2e]/30 rounded p-4">
                 <div className="section-label mb-1">SCHEDULE / LAST STREAM</div>
                 <div className="text-sm">Next: Sunday 8:00 PM<br /><span className="text-xs text-[#5a4f2e]">or view last stream VOD</span></div>
               </div>
+
+              {/* Bets - now shows real open bets for this specific VTuber */}
               <div className="bg-[#e9dfc4] border border-[#5a4f2e]/30 rounded p-4">
-                <div className="section-label mb-1">BETS</div>
-                <div className="text-sm">Current open bets on this VTuber →</div>
+                <div className="section-label mb-2">BETS</div>
+                
+                {openBets && openBets.length > 0 ? (
+                  <div className="space-y-2">
+                    {openBets.map((bet) => (
+                      <div key={bet.id} className="text-sm">
+                        <div className="font-medium">{bet.title}</div>
+                        <div className="text-xs text-[#5a4f2e]">
+                          {bet.option_a} vs {bet.option_b}
+                        </div>
+                      </div>
+                    ))}
+                    <Link 
+                      href={`/vtuber/${id}/bets`}
+                      className="inline-block mt-1 text-xs text-[#d4a843] hover:underline"
+                    >
+                      View all open bets →
+                    </Link>
+                  </div>
+                ) : (
+                  <div className="text-sm text-[#5a4f2e]">
+                    No open bets right now.
+                  </div>
+                )}
               </div>
             </div>
 
