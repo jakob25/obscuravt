@@ -72,7 +72,7 @@ export default function FanCornerPage() {
 
           <div className="case-folder p-7">
             
-            {/* Gallery - now connected to memes table per VTuber */}
+            {/* Gallery */}
             <div className="mb-8">
               <div className="flex justify-between items-center mb-3">
                 <div className="section-label">GALLERY</div>
@@ -81,12 +81,12 @@ export default function FanCornerPage() {
                 </Link>
               </div>
               <div className="text-sm text-[#5a4f2e] italic">
-                Fan memes and art for this VTuber will appear here (connected to memes table).
+                Fan memes and art for this VTuber will appear here.
               </div>
             </div>
 
             {/* Clips */}
-            <div className="mb-10">
+            <div className="mb-8">
               <div className="flex justify-between items-center mb-3">
                 <div className="section-label">CLIPS</div>
                 <Link href={`/clips?vtuber=${vtuberId}`} className="text-xs px-3 py-1 border border-[#5a4f2e]">
@@ -94,7 +94,20 @@ export default function FanCornerPage() {
                 </Link>
               </div>
               <div className="text-sm text-[#5a4f2e] italic">
-                Clips for this VTuber will appear here (connected to edited_clips table).
+                Clips for this VTuber will appear here.
+              </div>
+            </div>
+
+            {/* Karaoke Requests - wired per VTuber */}
+            <div className="mb-8">
+              <div className="flex justify-between items-center mb-3">
+                <div className="section-label">KARAOKE REQUESTS</div>
+                <Link href={`/karaoke?vtuber=${vtuberId}`} className="text-xs px-3 py-1 border border-[#5a4f2e]">
+                  MORE →
+                </Link>
+              </div>
+              <div className="text-sm text-[#5a4f2e] italic">
+                Karaoke requests for this VTuber will appear here (connected to karaoke_requests table).
               </div>
             </div>
 
