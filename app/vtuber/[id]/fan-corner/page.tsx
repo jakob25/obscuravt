@@ -15,8 +15,18 @@ export default function FanCornerPage() {
           
           {/* Header */}
           <div className="px-5 pt-4 pb-3 border-b border-[#1e3a4a]">
-            <div className="text-[#4fc9d6] text-[10px] tracking-[0.18em] mono">OBSCURAVT · CASE EVIDENCE</div>
-            <div className="text-[#4fd6a8] text-[9px] tracking-[0.1em] mt-0.5">PAMU — COMMUNITY ARCHIVE</div>
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-[#4fc9d6] text-[10px] tracking-[0.18em] mono">OBSCURAVT · CASE EVIDENCE</div>
+                <div className="text-[#4fd6a8] text-[9px] tracking-[0.1em] mt-0.5">PAMU — COMMUNITY ARCHIVE</div>
+              </div>
+              <Link 
+                href={`/vtuber/${vtuberId}`}
+                className="text-xs px-3 py-1 border border-[#5a4f2e] hover:bg-[#5a4f2e] hover:text-[#e9dfc4]"
+              >
+                ← Back to Profile
+              </Link>
+            </div>
           </div>
 
           <div className="case-folder p-7">

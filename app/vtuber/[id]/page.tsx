@@ -2,7 +2,6 @@ import { notFound } from 'next/navigation'
 import { createClient } from '@supabase/supabase-js'
 import Link from 'next/link'
 import { ExternalLink, Twitch, Youtube } from 'lucide-react'
-import { VaultFrame } from '@/components/vault/vault-frame'
 import {
   DossierFrame,
   CaseFolder,
@@ -54,8 +53,9 @@ export default async function VTuberProfilePage({ params }: Props) {
 
   const caseId = `OVT-${String(vtuber.id).replace(/[^a-zA-Z0-9]/g, '').slice(-5).toUpperCase().padStart(5, '0')}`
 
-  // TODO: Replace with real data fetching for active CMDI goal
-  const hasActiveGoal = true // temporary for demo
+  // TODO: Replace with real CMDI goal fetching
+  // For now we simulate: if vtuber has active goal data in future, set this dynamically
+  const hasActiveCmdiGoal = false // change to true to test progress bar state
 
   return (
     <div className="min-h-screen bg-background">
@@ -77,7 +77,7 @@ export default async function VTuberProfilePage({ params }: Props) {
           <div className="case-folder p-7">
             
             {/* Top Action Buttons */}
-            <div className="flex gap-2 mb-6">
+            <div className="flex flex-wrap gap-2 mb-6">
               <Link 
                 href={`/vtuber/${id}/fan-corner`}
                 className="px-4 py-1.5 text-xs border border-[#5a4f2e] hover:bg-[#5a4f2e] hover:text-[#e9dfc4] transition-colors"
@@ -139,11 +139,12 @@ export default async function VTuberProfilePage({ params }: Props) {
               </div>
             </div>
 
-            {/* Chat Made Me Do It - if/then logic */}
+            {/* Chat Made Me Do It - if/then/else logic */}
             <div className="mb-8 border-t border-[#5a4f2e]/30 pt-6">
               <div className="section-label mb-2">CHAT MADE ME DO IT</div>
               
-              {hasActiveGoal ? (
+              {hasActiveCmdiGoal ? (
+                // IF active goal
                 <div className="bg-[#0d0d14] border border-[#143544] rounded p-4">
                   <div className="flex justify-between text-sm mb-2">
                     <span>Stream Idea: "Cozy ASMR reading stream"</span>
@@ -155,12 +156,13 @@ export default async function VTuberProfilePage({ params }: Props) {
                   <div className="text-xs text-[#5a4f2e]">42 / 65 scraps funded</div>
                 </div>
               ) : (
-                <Link 
-                  href={`/vtuber/${id}/fan-corner#submit`}
+                // ELSE: No active goal
+                <button 
+                  onClick={() => alert('Submit idea modal would open here (to be connected to CMDI form)')}
                   className="px-5 py-2.5 text-sm border border-[#d4a843] text-[#d4a843] hover:bg-[#d4a843] hover:text-[#0d0d14] transition-colors font-medium"
                 >
                   + SUBMIT IDEA
-                </Link>
+                </button>
               )}
             </div>
 
