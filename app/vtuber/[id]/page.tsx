@@ -8,12 +8,10 @@ import {
   CaseFolder,
   CasePhoto,
   CaseField,
-  VaultDivider,
 } from '@/components/vault/vault-surfaces'
 import { PageBackNav } from '@/components/vault/page-back-nav'
 import { ClaimProfileButton } from '@/components/vtuber/claim-profile-button'
 import { AddToCircleButton } from '@/components/vtuber/add-to-circle-button'
-import { VTuberEngagement } from '@/components/vtuber/vtuber-engagement'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -49,14 +47,15 @@ export default async function VTuberProfilePage({ params }: Props) {
 
   const clusterTag = tags.find(t => t.startsWith('clust_'))
   const cluster = clusterTag ? tagMap[clusterTag] : null
-  const vibeTags = tags.filter(t => t.startsWith('vibe_') || t.startsWith('cont_'))
 
   const platform = (vtuber.platform ?? '').toLowerCase()
   const isTwitch = platform.includes('twitch')
   const isYoutube = platform.includes('youtube')
 
-  // Short case ID derived from the row id — stable, not random per render
   const caseId = `OVT-${String(vtuber.id).replace(/[^a-zA-Z0-9]/g, '').slice(-5).toUpperCase().padStart(5, '0')}`
+
+  // TODO: Replace with real data fetching for active CMDI goal
+  const hasActiveGoal = true // temporary for demo
 
   return (
     <div className="min-h-screen bg-background">
@@ -64,59 +63,64 @@ export default async function VTuberProfilePage({ params }: Props) {
 
         <PageBackNav fallbackHref="/discover" label="Back to Star Map" className="mb-8" />
 
-        {/* === TOP: Subject Header Dossier === */}
-        <DossierFrame
-          stamp="ObscuraVT · Subject Archive"
-          caseId={`CASE NO. ${caseId}`}
-          accessLine={vtuber.claimed_by ? '● VERIFIED SUBJECT' : '● UNCLAIMED FILE'}
-          className="mb-6"
-        >
-          <CaseFolder
-            stampLabel={vtuber.claimed_by ? 'VERIFIED' : 'UNCLAIMED'}
-            stampSub={cluster?.tag ?? undefined}
-          >
-            {/* True two-column layout to properly fill the aged paper */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-x-8 gap-y-6">
-              {/* Left column: Photo + structured fields */}
-              <div className="lg:col-span-5">
-                <div className="flex items-start gap-5">
-                  <CasePhoto
-                    src={vtuber.avatar_url}
-                    alt={vtuber.name}
-                    caption="FIG. 1 — SUBJECT"
+        <div className="archive-shell rounded-lg overflow-hidden border-2 border-[#1e3a4a]">
+          
+          {/* Header */}
+          <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-[#1e3a4a]">
+            <div>
+              <div className="text-[#4fc9d6] text-[10px] tracking-[0.18em] mono">OBSCURAVT • SUBJECT ARCHIVE</div>
+              <div className="text-[#4fd6a8] text-[9px] tracking-[0.1em]">{vtuber.claimed_by ? '● VERIFIED SUBJECT' : '● UNCLAIMED FILE'}</div>
+            </div>
+            <div className="text-[#5a8a99] text-[10px] mono tracking-[0.08em]">CASE NO. {caseId}</div>
+          </div>
+
+          <div className="case-folder p-7">
+            
+            {/* Top Action Buttons */}
+            <div className="flex gap-2 mb-6">
+              <Link 
+                href={`/vtuber/${id}/fan-corner`}
+                className="px-4 py-1.5 text-xs border border-[#5a4f2e] hover:bg-[#5a4f2e] hover:text-[#e9dfc4] transition-colors"
+              >
+                FAN CORNER
+              </Link>
+              <AddToCircleButton vtuberId={vtuber.id} vtuberName={vtuber.name} />
+              <ClaimProfileButton 
+                vtuberId={vtuber.id} 
+                vtuberName={vtuber.name} 
+                claimedBy={vtuber.claimed_by ?? null} 
+              />
+            </div>
+
+            {/* Subject Info */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-8">
+              <div className="lg:col-span-5 flex gap-5">
+                <CasePhoto
+                  src={vtuber.avatar_url}
+                  alt={vtuber.name}
+                  caption="FIG. 1 — SUBJECT"
+                />
+                <div className="flex-1 min-w-0 font-mono pt-1">
+                  <CaseField label="CODENAME" value={vtuber.name} />
+                  <CaseField label="HANDLE" value={vtuber.handle || undefined} />
+                  <CaseField
+                    label="CLUSTER"
+                    value={cluster ? `FILED UNDER ${cluster.tag.toUpperCase()}` : undefined}
                   />
-                  <div className="flex-1 min-w-0 font-mono pt-1">
-                    <CaseField label="CODENAME" value={vtuber.name} />
-                    <CaseField label="HANDLE" value={vtuber.handle || undefined} />
-                    <CaseField
-                      label="CLUSTER"
-                      value={cluster ? `FILED UNDER ${cluster.tag.toUpperCase()}` : undefined}
-                    />
-                    <CaseField
-                      label="PLATFORM"
-                      value={isTwitch ? 'TWITCH' : isYoutube ? 'YOUTUBE' : vtuber.platform || undefined}
-                    />
-                  </div>
+                  <CaseField
+                    label="PLATFORM"
+                    value={isTwitch ? 'TWITCH' : isYoutube ? 'YOUTUBE' : vtuber.platform || undefined}
+                  />
                 </div>
               </div>
 
-              {/* Right column: Field Notes */}
               <div className="lg:col-span-7">
-                {vtuber.bio ? (
-                  <div>
-                    <div className="font-mono text-[10px] uppercase tracking-[0.1em] text-[var(--case-ink-dim)] mb-1.5">
-                      FIELD NOTES
-                    </div>
-                    <p className="text-[13.5px] leading-relaxed text-[var(--case-ink)]">
-                      {vtuber.bio}
-                    </p>
-                  </div>
-                ) : (
-                  <div className="text-[var(--case-ink-dim)] text-sm italic">
-                    No field notes on file.
-                  </div>
-                )}
-
+                <div className="font-mono text-[10px] uppercase tracking-[0.1em] text-[var(--case-ink-dim)] mb-1.5">
+                  FIELD NOTES
+                </div>
+                <p className="text-[13.5px] leading-relaxed text-[var(--case-ink)]">
+                  {vtuber.bio || 'No field notes on file.'}
+                </p>
                 {vtuber.link && (
                   <div className="mt-4">
                     <a
@@ -134,94 +138,46 @@ export default async function VTuberProfilePage({ params }: Props) {
                 )}
               </div>
             </div>
-          </CaseFolder>
 
-          <div className="flex items-center justify-between px-5 pb-1 -mt-1">
-            <span className="font-mono text-[9px] tracking-wide text-[var(--archive-text-dim)]">
-              {vibeTags.length > 0 ? `${vibeTags.length} TAG${vibeTags.length === 1 ? '' : 'S'} ON FILE` : 'NO TAGS ON FILE'}
-            </span>
-            <div className="flex flex-col items-end gap-2 shrink-0">
-              <AddToCircleButton vtuberId={vtuber.id} vtuberName={vtuber.name} />
-              <ClaimProfileButton
-                vtuberId={vtuber.id}
-                vtuberName={vtuber.name}
-                claimedBy={vtuber.claimed_by ?? null}
-              />
-            </div>
-          </div>
-        </DossierFrame>
-
-        {/* === LOWER HALF: Tall continuation dossier that encompasses everything === */}
-        <DossierFrame
-          stamp="ObscuraVT · Case Evidence & Engagement Log"
-          caseId={`CASE NO. ${caseId}`}
-          accessLine="● FIELD REPORTS & COMMUNITY ACTIVITY"
-          className="mt-2"
-        >
-          <CaseFolder showStain={false}>
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-              {/* Vibe Tags */}
-              {vibeTags.length > 0 && (
-                <div className="lg:col-span-4">
-                  <div className="mb-2 font-mono text-[10px] uppercase tracking-[0.08em] text-[var(--case-ink-dim)]">
-                    VIBE TAGS ON FILE
+            {/* Chat Made Me Do It - if/then logic */}
+            <div className="mb-8 border-t border-[#5a4f2e]/30 pt-6">
+              <div className="section-label mb-2">CHAT MADE ME DO IT</div>
+              
+              {hasActiveGoal ? (
+                <div className="bg-[#0d0d14] border border-[#143544] rounded p-4">
+                  <div className="flex justify-between text-sm mb-2">
+                    <span>Stream Idea: "Cozy ASMR reading stream"</span>
+                    <span className="text-[#d4a843] font-medium">68%</span>
                   </div>
-                  <div className="flex flex-wrap gap-2">
-                    {vibeTags.map(tagId => {
-                      const t = tagMap[tagId]
-                      if (!t) return null
-                      return (
-                        <span
-                          key={tagId}
-                          className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border"
-                          style={{
-                            borderColor: (t.color ?? '#888') + '50',
-                            backgroundColor: (t.color ?? '#888') + '15',
-                            color: t.color ?? '#888',
-                          }}
-                        >
-                          {t.tag}
-                        </span>
-                      )
-                    })}
+                  <div className="h-2 bg-[#143544] rounded mb-1">
+                    <div className="h-2 w-[68%] bg-[#d4a843] rounded"></div>
                   </div>
+                  <div className="text-xs text-[#5a4f2e]">42 / 65 scraps funded</div>
                 </div>
+              ) : (
+                <Link 
+                  href={`/vtuber/${id}/fan-corner#submit`}
+                  className="px-5 py-2.5 text-sm border border-[#d4a843] text-[#d4a843] hover:bg-[#d4a843] hover:text-[#0d0d14] transition-colors font-medium"
+                >
+                  + SUBMIT IDEA
+                </Link>
               )}
+            </div>
 
-              {/* Main Engagement Area — now inside the dossier */}
-              <div className={vibeTags.length > 0 ? 'lg:col-span-8' : 'lg:col-span-12'}>
-                <div className="mb-2 font-mono text-[10px] uppercase tracking-[0.08em] text-[var(--case-ink-dim)]">
-                  FAN CORNER — ENGAGEMENT RECORD
-                </div>
-                <VTuberEngagement 
-                  vtuberId={vtuber.id} 
-                  vtuberName={vtuber.name} 
-                  claimedBy={vtuber.claimed_by ?? null} 
-                />
+            {/* Schedule LEFT + Bets RIGHT */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="bg-[#e9dfc4] border border-[#5a4f2e]/30 rounded p-4">
+                <div className="section-label mb-1">SCHEDULE / LAST STREAM</div>
+                <div className="text-sm">Next: Sunday 8:00 PM<br /><span className="text-xs text-[#5a4f2e]">or view last stream VOD</span></div>
               </div>
-
-              {/* Tag Validator — small but inside the case file */}
-              <div className="lg:col-span-12 mt-2 pt-4 border-t border-[rgba(60,50,20,0.18)]">
-                <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-                  <div className="flex-1">
-                    <div className="font-mono text-[10px] uppercase tracking-[0.08em] text-[var(--case-ink-dim)]">
-                      TAG VALIDATION
-                    </div>
-                    <p className="text-sm text-[var(--case-ink)] mt-0.5">
-                      Confirm or challenge the tags currently on file for this subject.
-                    </p>
-                  </div>
-                  <Link
-                    href="/tag-validator"
-                    className="vault-btn-texture inline-flex items-center justify-center h-9 px-5 bg-vault-gold text-vault-deep text-sm font-semibold whitespace-nowrap"
-                  >
-                    OPEN TAG VALIDATOR
-                  </Link>
-                </div>
+              <div className="bg-[#e9dfc4] border border-[#5a4f2e]/30 rounded p-4">
+                <div className="section-label mb-1">BETS</div>
+                <div className="text-sm">Current open bets on this VTuber →</div>
               </div>
             </div>
-          </CaseFolder>
-        </DossierFrame>
+
+          </div>
+        </div>
 
       </div>
     </div>
