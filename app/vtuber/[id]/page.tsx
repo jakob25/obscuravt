@@ -74,56 +74,66 @@ export default async function VTuberProfilePage({ params }: Props) {
             stampLabel={vtuber.claimed_by ? 'VERIFIED' : 'UNCLAIMED'}
             stampSub={cluster?.tag ?? undefined}
           >
-            {/* Top row: Photo + compact fields (tight, professional) */}
-            <div className="flex flex-col lg:flex-row items-start gap-6 lg:gap-8">
-              <CasePhoto
-                src={vtuber.avatar_url}
-                alt={vtuber.name}
-                caption="FIG. 1 — SUBJECT"
-              />
+            {/* True two-column layout to properly fill the aged paper */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-x-8 gap-y-6">
+              {/* Left column: Photo + structured fields (compact & professional) */}
+              <div className="lg:col-span-5">
+                <div className="flex items-start gap-5">
+                  <CasePhoto
+                    src={vtuber.avatar_url}
+                    alt={vtuber.name}
+                    caption="FIG. 1 — SUBJECT"
+                  />
+                  <div className="flex-1 min-w-0 font-mono pt-1">
+                    <CaseField label="CODENAME" value={vtuber.name} />
+                    <CaseField label="HANDLE" value={vtuber.handle || undefined} />
+                    <CaseField
+                      label="CLUSTER"
+                      value={cluster ? `FILED UNDER ${cluster.tag.toUpperCase()}` : undefined}
+                    />
+                    <CaseField
+                      label="PLATFORM"
+                      value={isTwitch ? 'TWITCH' : isYoutube ? 'YOUTUBE' : vtuber.platform || undefined}
+                    />
+                  </div>
+                </div>
+              </div>
 
-              <div className="flex-1 min-w-0 font-mono">
-                <CaseField label="CODENAME" value={vtuber.name} />
-                <CaseField label="HANDLE" value={vtuber.handle || undefined} />
-                <CaseField
-                  label="CLUSTER"
-                  value={cluster ? `FILED UNDER ${cluster.tag.toUpperCase()}` : undefined}
-                />
-                <CaseField
-                  label="PLATFORM"
-                  value={isTwitch ? 'TWITCH' : isYoutube ? 'YOUTUBE' : vtuber.platform || undefined}
-                />
+              {/* Right column: Prominent Field Notes — now actually fills the beige space */}
+              <div className="lg:col-span-7">
+                {vtuber.bio ? (
+                  <div>
+                    <div className="font-mono text-[10px] uppercase tracking-[0.1em] text-[var(--case-ink-dim)] mb-1.5">
+                      FIELD NOTES
+                    </div>
+                    <p className="text-[13.5px] leading-relaxed text-[var(--case-ink)]">
+                      {vtuber.bio}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="text-[var(--case-ink-dim)] text-sm italic">
+                    No field notes on file.
+                  </div>
+                )}
+
+                {/* Channel link stays with the notes */}
+                {vtuber.link && (
+                  <div className="mt-4">
+                    <a
+                      href={vtuber.link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 px-4 py-1.5 text-xs font-mono font-medium border border-[rgba(60,50,20,0.35)] text-[var(--case-ink-dim)] hover:text-[var(--case-ink)] hover:border-[rgba(60,50,20,0.55)] transition-colors bg-white/10"
+                    >
+                      {isTwitch ? <Twitch className="h-3.5 w-3.5 text-purple-700" /> :
+                       isYoutube ? <Youtube className="h-3.5 w-3.5 text-red-700" /> :
+                       <ExternalLink className="h-3.5 w-3.5" />}
+                      {isTwitch ? 'OPEN TWITCH CHANNEL' : isYoutube ? 'OPEN YOUTUBE CHANNEL' : (vtuber.platform || 'CHANNEL').toUpperCase()}
+                    </a>
+                  </div>
+                )}
               </div>
             </div>
-
-            {/* Field Notes — now prominent and fills horizontal space better */}
-            {vtuber.bio && (
-              <div className="mt-6 pt-5 border-t border-[rgba(60,50,20,0.18)]">
-                <div className="font-mono text-[11px] uppercase tracking-[0.08em] text-[var(--case-ink-dim)] mb-2">
-                  FIELD NOTES
-                </div>
-                <p className="text-[13px] leading-relaxed text-[var(--case-ink)] max-w-prose">
-                  {vtuber.bio}
-                </p>
-              </div>
-            )}
-
-            {/* Channel link — clean, dossier-appropriate */}
-            {vtuber.link && (
-              <div className="mt-5">
-                <a
-                  href={vtuber.link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 px-4 py-1.5 text-xs font-mono font-medium border border-[rgba(60,50,20,0.35)] text-[var(--case-ink-dim)] hover:text-[var(--case-ink)] hover:border-[rgba(60,50,20,0.55)] transition-colors bg-white/10"
-                >
-                  {isTwitch ? <Twitch className="h-3.5 w-3.5 text-purple-700" /> :
-                   isYoutube ? <Youtube className="h-3.5 w-3.5 text-red-700" /> :
-                   <ExternalLink className="h-3.5 w-3.5" />}
-                  {isTwitch ? 'OPEN TWITCH CHANNEL' : isYoutube ? 'OPEN YOUTUBE CHANNEL' : (vtuber.platform || 'CHANNEL').toUpperCase()}
-                </a>
-              </div>
-            )}
           </CaseFolder>
 
           <div className="flex items-center justify-between px-5 pb-1 -mt-1">
@@ -173,6 +183,7 @@ export default async function VTuberProfilePage({ params }: Props) {
 
           <div className={vibeTags.length > 0 ? 'md:col-span-2 lg:col-span-2' : 'md:col-span-2 lg:col-span-3'}>
             <VTuberEngagement vtuberId={vtuber.id} vtuberName={vtuber.name} claimedBy={vtuber.claimed_by ?? null} />
+            
           </div>
 
           <VaultFrame className="rounded-sm p-5 flex flex-col justify-between gap-4 h-full">
