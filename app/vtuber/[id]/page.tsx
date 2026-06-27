@@ -74,7 +74,8 @@ export default async function VTuberProfilePage({ params }: Props) {
             stampLabel={vtuber.claimed_by ? 'VERIFIED' : 'UNCLAIMED'}
             stampSub={cluster?.tag ?? undefined}
           >
-            <div className="flex items-start gap-5">
+            {/* Top row: Photo + compact fields (tight, professional) */}
+            <div className="flex flex-col lg:flex-row items-start gap-6 lg:gap-8">
               <CasePhoto
                 src={vtuber.avatar_url}
                 alt={vtuber.name}
@@ -95,29 +96,31 @@ export default async function VTuberProfilePage({ params }: Props) {
               </div>
             </div>
 
+            {/* Field Notes — now prominent and fills horizontal space better */}
             {vtuber.bio && (
-              <div className="mt-5">
-                <div className="font-mono text-[11px] uppercase tracking-wide text-[var(--case-ink-dim)] mb-1.5">
-                  Field Notes
+              <div className="mt-6 pt-5 border-t border-[rgba(60,50,20,0.18)]">
+                <div className="font-mono text-[11px] uppercase tracking-[0.08em] text-[var(--case-ink-dim)] mb-2">
+                  FIELD NOTES
                 </div>
-                <p className="text-sm leading-relaxed text-[var(--case-ink)]">
+                <p className="text-[13px] leading-relaxed text-[var(--case-ink)] max-w-prose">
                   {vtuber.bio}
                 </p>
               </div>
             )}
 
+            {/* Channel link — clean, dossier-appropriate */}
             {vtuber.link && (
-              <div className="mt-4 flex flex-wrap gap-2">
+              <div className="mt-5">
                 <a
                   href={vtuber.link}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-mono font-medium border border-[rgba(60,50,20,0.3)] text-[var(--case-ink-dim)] hover:text-[var(--case-ink)] hover:border-[rgba(60,50,20,0.5)] transition-colors bg-white/20"
+                  className="inline-flex items-center gap-2 px-4 py-1.5 text-xs font-mono font-medium border border-[rgba(60,50,20,0.35)] text-[var(--case-ink-dim)] hover:text-[var(--case-ink)] hover:border-[rgba(60,50,20,0.55)] transition-colors bg-white/10"
                 >
                   {isTwitch ? <Twitch className="h-3.5 w-3.5 text-purple-700" /> :
                    isYoutube ? <Youtube className="h-3.5 w-3.5 text-red-700" /> :
                    <ExternalLink className="h-3.5 w-3.5" />}
-                  {isTwitch ? 'TWITCH CHANNEL' : isYoutube ? 'YOUTUBE CHANNEL' : (vtuber.platform || 'CHANNEL').toUpperCase()}
+                  {isTwitch ? 'OPEN TWITCH CHANNEL' : isYoutube ? 'OPEN YOUTUBE CHANNEL' : (vtuber.platform || 'CHANNEL').toUpperCase()}
                 </a>
               </div>
             )}
