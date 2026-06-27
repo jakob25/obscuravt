@@ -88,7 +88,7 @@ export default function FanCornerPage() {
               </div>
             </div>
 
-            {/* Clips */}
+            {/* Clips - now dynamic per VTuber (placeholder for real data) */}
             <div className="mb-10">
               <div className="flex justify-between items-center mb-3">
                 <div className="section-label">CLIPS</div>
@@ -96,11 +96,8 @@ export default function FanCornerPage() {
                   MORE →
                 </Link>
               </div>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                <div className="aspect-video bg-[#0d0d14] border border-[#143544] rounded"></div>
-                <div className="aspect-video bg-[#0d0d14] border border-[#143544] rounded"></div>
-                <div className="aspect-video bg-[#0d0d14] border border-[#143544] rounded"></div>
-                <div className="aspect-video bg-[#0d0d14] border border-[#143544] rounded"></div>
+              <div className="text-sm text-[#5a4f2e] italic">
+                Clips for this VTuber will appear here (connected to edited_clips table).
               </div>
             </div>
 
