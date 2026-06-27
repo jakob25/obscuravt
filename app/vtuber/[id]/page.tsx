@@ -53,9 +53,17 @@ export default async function VTuberProfilePage({ params }: Props) {
 
   const caseId = `OVT-${String(vtuber.id).replace(/[^a-zA-Z0-9]/g, '').slice(-5).toUpperCase().padStart(5, '0')}`
 
-  // TODO: Replace with real CMDI goal fetching
-  // For now we simulate: if vtuber has active goal data in future, set this dynamically
-  const hasActiveCmdiGoal = false // change to true to test progress bar state
+  // Fetch active CMDI goal for this VTuber
+  const { data: activeCmdiGoal } = await supabase
+    .from('cmdi_goals')
+    .select('*')
+    .eq('vtuber_id', id)
+    .eq('status', 'active')
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .single()
+
+  const hasActiveCmdiGoal = !!activeCmdiGoal
 
   return (
     <div className="min-h-screen bg-background">
@@ -139,30 +147,37 @@ export default async function VTuberProfilePage({ params }: Props) {
               </div>
             </div>
 
-            {/* Chat Made Me Do It - if/then/else logic */}
+            {/* Chat Made Me Do It - now connected to real DB data */}
             <div className="mb-8 border-t border-[#5a4f2e]/30 pt-6">
               <div className="section-label mb-2">CHAT MADE ME DO IT</div>
               
-              {hasActiveCmdiGoal ? (
-                // IF active goal
+              {hasActiveCmdiGoal && activeCmdiGoal ? (
+                // IF there is an active goal
                 <div className="bg-[#0d0d14] border border-[#143544] rounded p-4">
                   <div className="flex justify-between text-sm mb-2">
-                    <span>Stream Idea: "Cozy ASMR reading stream"</span>
-                    <span className="text-[#d4a843] font-medium">68%</span>
+                    <span>{activeCmdiGoal.title}</span>
+                    <span className="text-[#d4a843] font-medium">
+                      {Math.round((activeCmdiGoal.current_progress / activeCmdiGoal.target) * 100)}%
+                    </span>
                   </div>
                   <div className="h-2 bg-[#143544] rounded mb-1">
-                    <div className="h-2 w-[68%] bg-[#d4a843] rounded"></div>
+                    <div 
+                      className="h-2 bg-[#d4a843] rounded transition-all" 
+                      style={{ width: `${Math.min((activeCmdiGoal.current_progress / activeCmdiGoal.target) * 100, 100)}%` }}
+                    />
                   </div>
-                  <div className="text-xs text-[#5a4f2e]">42 / 65 scraps funded</div>
+                  <div className="text-xs text-[#5a4f2e]">
+                    {activeCmdiGoal.current_progress} / {activeCmdiGoal.target} scraps funded
+                  </div>
                 </div>
               ) : (
-                // ELSE: No active goal
-                <button 
-                  onClick={() => alert('Submit idea modal would open here (to be connected to CMDI form)')}
+                // ELSE: No active goal - show submit button
+                <Link 
+                  href={`/vtuber/${id}/fan-corner#submit`}
                   className="px-5 py-2.5 text-sm border border-[#d4a843] text-[#d4a843] hover:bg-[#d4a843] hover:text-[#0d0d14] transition-colors font-medium"
                 >
                   + SUBMIT IDEA
-                </button>
+                </Link>
               )}
             </div>
 
