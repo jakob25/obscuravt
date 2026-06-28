@@ -98,7 +98,7 @@ export default function FanCornerPage() {
               </div>
             </div>
 
-            {/* Karaoke Requests - wired per VTuber */}
+            {/* Karaoke Requests */}
             <div className="mb-8">
               <div className="flex justify-between items-center mb-3">
                 <div className="section-label">KARAOKE REQUESTS</div>
@@ -107,7 +107,7 @@ export default function FanCornerPage() {
                 </Link>
               </div>
               <div className="text-sm text-[#5a4f2e] italic">
-                Karaoke requests for this VTuber will appear here (connected to karaoke_requests table).
+                Karaoke requests for this VTuber will appear here.
               </div>
             </div>
 
@@ -135,7 +135,7 @@ export default function FanCornerPage() {
                       required
                       value={formData.title}
                       onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                      className="w-full bg-[#0d0d14] border border-[#143544] rounded px-4 py-2 text-sm focus:outline-none focus:border-[#d4a843]"
+                      className="w-full bg-[#e9dfc4] border border-[#5a4f2e]/40 rounded px-4 py-2 text-sm focus:outline-none focus:border-[#d4a843]"
                       placeholder="Cozy ASMR reading stream"
                     />
                   </div>
@@ -145,7 +145,7 @@ export default function FanCornerPage() {
                     <textarea
                       value={formData.description}
                       onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                      className="w-full bg-[#0d0d14] border border-[#143544] rounded px-4 py-2 text-sm h-24 focus:outline-none focus:border-[#d4a843]"
+                      className="w-full bg-[#e9dfc4] border border-[#5a4f2e]/40 rounded px-4 py-2 text-sm h-24 focus:outline-none focus:border-[#d4a843]"
                       placeholder="Describe your idea..."
                     />
                   </div>
