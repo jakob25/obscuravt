@@ -154,6 +154,18 @@ export default async function VTuberProfilePage({ params }: Props) {
               </div>
             </div>
 
+            {/* Social Links - added in the dead space right of photo (2x2 grid) */}
+            <div className="mt-3 grid grid-cols-2 gap-1.5">
+              {vtuber.link && (
+                <a href={vtuber.link} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-1.5 px-2.5 py-1 text-[10px] border border-[#5a4f2e]/40 rounded hover:bg-[#d4a843]/10 transition-colors">
+                  <Twitch className="h-3 w-3" /> Twitch
+                </a>
+              )}
+              <a href="#" className="flex items-center justify-center gap-1.5 px-2.5 py-1 text-[10px] border border-[#5a4f2e]/40 rounded hover:bg-[#d4a843]/10 transition-colors opacity-70">YouTube</a>
+              <a href="#" className="flex items-center justify-center gap-1.5 px-2.5 py-1 text-[10px] border border-[#5a4f2e]/40 rounded hover:bg-[#d4a843]/10 transition-colors opacity-70">𝕏</a>
+              <a href="#" className="flex items-center justify-center gap-1.5 px-2.5 py-1 text-[10px] border border-[#5a4f2e]/40 rounded hover:bg-[#d4a843]/10 transition-colors opacity-70">TikTok</a>
+            </div>
+
             {/* Chat Made Me Do It */}
             <div className="mb-8 border-t border-[#5a4f2e]/30 pt-6">
               <div className="section-label mb-2">CHAT MADE ME DO IT</div>
