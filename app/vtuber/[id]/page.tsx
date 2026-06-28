@@ -79,7 +79,7 @@ export default async function VTuberProfilePage({ params }: Props) {
         <PageBackNav fallbackHref="/discover" label="Back to Star Map" className="mb-8" />
 
         <div className="archive-shell rounded-lg overflow-hidden border-2 border-[#1e3a4a]">
-          
+
           {/* Header */}
           <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-[#1e3a4a]">
             <div>
@@ -154,6 +154,18 @@ export default async function VTuberProfilePage({ params }: Props) {
               </div>
             </div>
 
+            {/* Social Links - added in the dead space right of photo (2x2 grid) */}
+            <div className="mt-3 grid grid-cols-2 gap-1.5">
+              {vtuber.link && (
+                <a href={vtuber.link} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-1.5 px-2.5 py-1 text-[10px] border border-[#5a4f2e]/40 rounded hover:bg-[#d4a843]/10 transition-colors">
+                  <Twitch className="h-3 w-3" /> Twitch
+                </a>
+              )}
+              <a href="#" className="flex items-center justify-center gap-1.5 px-2.5 py-1 text-[10px] border border-[#5a4f2e]/40 rounded hover:bg-[#d4a843]/10 transition-colors opacity-70">YouTube</a>
+              <a href="#" className="flex items-center justify-center gap-1.5 px-2.5 py-1 text-[10px] border border-[#5a4f2e]/40 rounded hover:bg-[#d4a843]/10 transition-colors opacity-70">𝕏</a>
+              <a href="#" className="flex items-center justify-center gap-1.5 px-2.5 py-1 text-[10px] border border-[#5a4f2e]/40 rounded hover:bg-[#d4a843]/10 transition-colors opacity-70">TikTok</a>
+            </div>
+
             {/* Chat Made Me Do It */}
             <div className="mb-8 border-t border-[#5a4f2e]/30 pt-6">
               <div className="section-label mb-2">CHAT MADE ME DO IT</div>
@@ -186,14 +198,14 @@ export default async function VTuberProfilePage({ params }: Props) {
               )}
             </div>
 
-            {/* Schedule LEFT + Bets RIGHT (Bets now dynamic per VTuber) */}
+            {/* Schedule LEFT + Bets RIGHT */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="bg-[#e9dfc4] border border-[#5a4f2e]/30 rounded p-4">
                 <div className="section-label mb-1">SCHEDULE / LAST STREAM</div>
                 <div className="text-sm">Next: Sunday 8:00 PM<br /><span className="text-xs text-[#5a4f2e]">or view last stream VOD</span></div>
               </div>
 
-              {/* Bets - now shows real open bets for this specific VTuber */}
+              {/* Bets - real data per VTuber */}
               <div className="bg-[#e9dfc4] border border-[#5a4f2e]/30 rounded p-4">
                 <div className="section-label mb-2">BETS</div>
                 
