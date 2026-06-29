@@ -5,11 +5,19 @@ import { parseFavoriteVtubers } from '@/lib/community-overlap'
 
 async function safeCount(
   table: string,
-  build: (q: ReturnType<typeof import('@/lib/supabase').supabaseAdmin.from>) => ReturnType<typeof import('@/lib/supabase').supabaseAdmin.from>,
+  filters: Array<[string, string | boolean]> = [],
+  gte?: [string, string],
 ): Promise<number> {
   try {
     const { supabaseAdmin } = await import('@/lib/supabase')
-    const { count, error } = await build(supabaseAdmin.from(table).select('*', { count: 'exact', head: true }))
+    let query = supabaseAdmin.from(table).select('*', { count: 'exact', head: true })
+    for (const [column, value] of filters) {
+      query = query.eq(column, value)
+    }
+    if (gte) {
+      query = query.gte(gte[0], gte[1])
+    }
+    const { count, error } = await query
     if (error) return 0
     return count ?? 0
   } catch {
@@ -56,19 +64,19 @@ export async function GET(req: NextRequest) {
     predictionsOpen,
     clipsTotal,
   ] = await Promise.all([
-    safeCount('cmdmi_ideas', q => q.eq('profile_id', profileId)),
-    safeCount('cmdmi_goals', q => q.eq('profile_id', profileId).eq('status', 'active')),
-    safeCount('cmdmi_goals', q => q.eq('profile_id', profileId).eq('status', 'funded')),
-    safeCount('memes', q => q.eq('vtuber_id', profileId)),
-    safeCount('memes', q => q.eq('vtuber_id', profileId).gte('created_at', since7)),
-    safeCount('fan_art', q => q.eq('vtuber_id', profileId).eq('reported', false)),
-    safeCount('karaoke_requests', q => q.eq('vtuber_id', profileId).eq('status', 'pending')),
-    safeCount('karaoke_requests', q => q.eq('vtuber_id', profileId).eq('status', 'queued')),
-    safeCount('karaoke_requests', q => q.eq('vtuber_id', profileId).eq('status', 'done')),
-    safeCount('qa_sessions', q => q.eq('vtuber_id', profileId).eq('status', 'open')),
-    safeCount('schedule_votes', q => q.eq('vtuber_id', profileId)),
-    safeCount('stream_predictions', q => q.eq('vtuber_id', profileId).eq('status', 'open')),
-    safeCount('clips', q => q.eq('vtuber_id', profileId)),
+    safeCount('cmdmi_ideas', [['profile_id', profileId]]),
+    safeCount('cmdmi_goals', [['profile_id', profileId], ['status', 'active']]),
+    safeCount('cmdmi_goals', [['profile_id', profileId], ['status', 'funded']]),
+    safeCount('memes', [['vtuber_id', profileId]]),
+    safeCount('memes', [['vtuber_id', profileId]], ['created_at', since7]),
+    safeCount('fan_art', [['vtuber_id', profileId], ['reported', false]]),
+    safeCount('karaoke_requests', [['vtuber_id', profileId], ['status', 'pending']]),
+    safeCount('karaoke_requests', [['vtuber_id', profileId], ['status', 'queued']]),
+    safeCount('karaoke_requests', [['vtuber_id', profileId], ['status', 'done']]),
+    safeCount('qa_sessions', [['vtuber_id', profileId], ['status', 'open']]),
+    safeCount('schedule_votes', [['vtuber_id', profileId]]),
+    safeCount('stream_predictions', [['vtuber_id', profileId], ['status', 'open']]),
+    safeCount('clips', [['vtuber_id', profileId]]),
   ])
 
   let qaQuestionCount = 0
