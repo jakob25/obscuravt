@@ -48,7 +48,7 @@ export default function HelpPage() {
         <PageBackNav fallbackHref="/" />
 
         <div className="mb-6 mt-4">
-          <GlitchHeading as="h1" className="text-2xl md:text-3xl font-bold text-vault-cream">
+          <GlitchHeading as="h1" variant="case" className="text-2xl md:text-3xl font-bold text-vault-cream">
             How ObscuraVT Works
           </GlitchHeading>
           <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground">
@@ -62,7 +62,7 @@ export default function HelpPage() {
           {HELP_SECTIONS.map(section => (
             <VaultPanel key={section.id} className="p-5 md:p-6">
               <div id={section.id} className="scroll-mt-24" />
-              <h2 className="mb-1 text-lg font-bold text-vault-cream">{section.title}</h2>
+              <h2 className="mb-1 text-lg font-bold text-vault-cream font-govt tracking-wide">{section.title}</h2>
               <p className="mb-4 text-xs text-muted-foreground">
                 {section.items.length} questions
               </p>

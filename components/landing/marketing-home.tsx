@@ -125,7 +125,7 @@ export function MarketingHome() {
         <div className="container relative mx-auto px-4 py-14 md:py-20">
           <VaultFrame className="mx-auto max-w-5xl p-8 md:p-12">
             <div className="flex flex-col items-center text-center">
-              <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-vault-gold/25 bg-vault-gold/8 px-4 py-1.5 text-xs font-medium tracking-wide text-vault-gold">
+              <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-vault-gold/25 bg-vault-gold/8 px-4 py-1.5 text-xs font-stamp font-medium tracking-widest text-vault-gold uppercase">
                 <Sparkles className="h-3.5 w-3.5" />
                 ObscuraVT — Find Your Oshi
               </div>

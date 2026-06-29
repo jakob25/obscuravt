@@ -79,7 +79,7 @@ export default function ShopPage() {
   return (
     <div className="container mx-auto px-4 py-8 max-w-3xl">
       <div className="flex items-center justify-between mb-2">
-        <GlitchHeading as="h1" className="text-2xl font-bold text-vault-cream">Shop</GlitchHeading>
+        <GlitchHeading as="h1" variant="archive" className="text-2xl font-bold text-vault-cream">Shop</GlitchHeading>
         {user && (
           <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-vault-gold/10 border border-vault-gold/30">
             <Coins className="h-4 w-4 text-vault-gold" />

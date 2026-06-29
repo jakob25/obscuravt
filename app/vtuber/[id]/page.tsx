@@ -103,7 +103,7 @@ export default async function VTuberProfilePage({ params }: Props) {
           {/* Header */}
           <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-[#1e3a4a]">
             <div>
-              <div className="text-[#4fc9d6] text-[10px] tracking-[0.18em] mono">OBSCURAVT • SUBJECT ARCHIVE</div>
+              <div className="text-[#4fc9d6] text-[10px] tracking-[0.18em] font-govt uppercase">OBSCURAVT • SUBJECT ARCHIVE</div>
               <div className="text-[#4fd6a8] text-[9px] tracking-[0.1em]">{vtuber.claimed_by ? '● VERIFIED SUBJECT' : '● UNCLAIMED FILE'}</div>
             </div>
             <div className="text-[#5a8a99] text-[10px] mono tracking-[0.08em]">CASE NO. {caseId}</div>

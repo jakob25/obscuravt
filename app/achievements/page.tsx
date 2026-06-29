@@ -40,7 +40,7 @@ export default function AchievementsPage() {
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-3xl">
-      <GlitchHeading as="h1" className="text-2xl font-bold text-vault-cream mb-1">Achievements</GlitchHeading>
+      <GlitchHeading as="h1" variant="archive" className="text-2xl font-bold text-vault-cream mb-1">Achievements</GlitchHeading>
       <p className="text-sm text-muted-foreground mb-2">Bragging rights with scrap bonuses attached.</p>
       {user && (
         <p className="text-sm text-muted-foreground mb-4">{badges.length}/{achievements.length} earned</p>
@@ -61,7 +61,7 @@ export default function AchievementsPage() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
                     <h3 className="font-semibold text-vault-cream">{a.name}</h3>
-                    {earned && <span className="text-xs text-vault-gold">✓ Earned</span>}
+                    {earned && <span className="text-xs text-vault-gold font-archive tracking-wide">✓ Earned</span>}
                   </div>
                   <p className="text-xs text-muted-foreground mb-2">{a.description}</p>
                   {a.reward_coins > 0 && (

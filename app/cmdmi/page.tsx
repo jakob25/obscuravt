@@ -125,7 +125,7 @@ function CmdmiPageContent() {
     <div className="container mx-auto px-4 py-8 max-w-2xl">
       <PageBackNav fallbackHref={profileId ? `/vtuber/${profileId}` : '/discover'} />
       <div className="mb-6">
-        <GlitchHeading as="h1" className="text-2xl font-bold text-vault-cream mb-1">
+        <GlitchHeading as="h1" variant="case" className="text-2xl font-bold text-vault-cream mb-1">
           Chat Made Me Do It
         </GlitchHeading>
         <p className="text-muted-foreground text-sm">

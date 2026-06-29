@@ -60,9 +60,10 @@ export default function AdminPage() {
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-3xl">
+      <p className="text-xs font-stamp tracking-widest text-red-400/90 uppercase mb-2">Classified — Vault Operations</p>
       <div className="flex items-center gap-3 mb-6">
         <Shield className="h-6 w-6 text-vault-gold" />
-        <GlitchHeading as="h1" className="text-2xl font-bold text-vault-cream">Admin Panel</GlitchHeading>
+        <GlitchHeading as="h1" variant="case" className="text-2xl font-bold text-vault-cream">Admin Panel</GlitchHeading>
       </div>
 
       {error && <p className="text-sm text-red-400 mb-4">{error}</p>}

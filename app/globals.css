@@ -45,11 +45,53 @@
   --vault-amber: #c9872a;
   --vault-bronze: #8b6914;
   --vault-cream: #f0e8d0;
+
+  /* Archive custom fonts (woff2 in public/fonts) */
+  --font-govt: 'Govt Agent BB', var(--font-space-grotesk), 'Space Grotesk', sans-serif;
+  --font-govt-italic: 'Govt Agent BB Italic', 'Govt Agent BB', var(--font-space-grotesk), sans-serif;
+  --font-archive: 'Archive Stamp', var(--font-space-grotesk), sans-serif;
+  --font-stamp: 'Top Secret Stamp', var(--font-space-grotesk), sans-serif;
+}
+
+@font-face {
+  font-family: 'Govt Agent BB';
+  src: url('/fonts/govt-agent-bb.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Govt Agent BB Italic';
+  src: url('/fonts/govt-agent-bb-italic.woff2') format('woff2');
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Archive Stamp';
+  src: url('/fonts/archive-stamp.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Top Secret Stamp';
+  src: url('/fonts/top-secret-stamp.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
 }
 
 @theme inline {
   --font-sans: var(--font-space-grotesk), 'Space Grotesk', sans-serif;
   --font-mono: var(--font-geist-mono), 'Geist Mono', monospace;
+  --font-govt: var(--font-govt);
+  --font-govt-italic: var(--font-govt-italic);
+  --font-archive: var(--font-archive);
+  --font-stamp: var(--font-stamp);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -115,6 +157,21 @@
   [aria-disabled="true"] {
     cursor: not-allowed;
   }
+}
+
+/* Archive font utilities */
+.font-govt {
+  font-family: var(--font-govt);
+}
+.font-govt-italic {
+  font-family: var(--font-govt-italic);
+  font-style: italic;
+}
+.font-archive {
+  font-family: var(--font-archive);
+}
+.font-stamp {
+  font-family: var(--font-stamp);
 }
 
 /* VTVault utility classes */
