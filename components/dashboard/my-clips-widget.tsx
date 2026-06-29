@@ -58,7 +58,12 @@ export function MyClipsWidget() {
       {loading ? (
         <div className="p-4 space-y-2">{[1, 2].map(i => <div key={i} className="h-10 rounded animate-pulse bg-muted/30" />)}</div>
       ) : !stats || stats.total_clips === 0 ? (
-        <p className="p-4 text-sm text-muted-foreground">No clips submitted yet. Share a raw moment from the vault.</p>
+        <div className="p-4">
+          <p className="text-sm text-muted-foreground mb-2">No clips submitted yet.</p>
+          <Link href="/clips" className="text-xs text-vault-gold hover:underline font-medium">
+            Browse clips or submit one with a timestamp →
+          </Link>
+        </div>
       ) : (
         <>
           <div className="grid grid-cols-3 gap-px bg-border">

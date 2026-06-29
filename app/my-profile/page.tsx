@@ -11,6 +11,30 @@ import { GlitchHeading } from '@/components/vault/glitch-heading'
 import { ProfileSwitcher } from '@/components/profile/profile-switcher'
 import { StatCard, VaultDivider, VaultPanel } from '@/components/vault/vault-surfaces'
 import Link from 'next/link'
+import type { NotificationType } from '@/lib/notifications'
+
+interface ScrapTx {
+  id: string
+  amount: number
+  balance_after: number
+  kind: string
+  note: string
+  created_at: string
+}
+
+const NOTIF_LABELS: Record<NotificationType, string> = {
+  cmdmi_selected: 'CMDI idea selected',
+  cmdmi_funded: 'CMDI goal funded',
+  cmdmi_new: 'New CMDI activity',
+  bet_voting: 'Bet voting phase',
+  bet_won: 'Bet wins',
+  bet_lost: 'Bet losses',
+  achievement: 'Achievements',
+  qa_open: 'Q&A sessions',
+  karaoke_open: 'Karaoke queue',
+  schedule_vote: 'Schedule votes',
+  meme_new: 'New memes',
+}
 
 export default function MyProfilePage() {
   const { user, logout, refreshUser } = useAuth()
@@ -19,6 +43,9 @@ export default function MyProfilePage() {
   const [dailyMsg, setDailyMsg] = useState('')
   const [claiming, setClaiming] = useState(false)
   const [claimedProfiles, setClaimedProfiles] = useState<Array<{ id: string; name: string }>>([])
+  const [ledger, setLedger] = useState<ScrapTx[]>([])
+  const [ledgerNote, setLedgerNote] = useState('')
+  const [notifPrefs, setNotifPrefs] = useState<Record<string, boolean> | null>(null)
 
   useEffect(() => {
     if (!user) { router.push('/login'); return }
@@ -30,7 +57,29 @@ export default function MyProfilePage() {
       .then(r => r.ok ? r.json() : null)
       .then(data => setClaimedProfiles(data?.profiles ?? []))
       .catch(() => setClaimedProfiles([]))
+    fetch('/api/scraps/ledger', { credentials: 'include' })
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (data?.migrationRequired) setLedgerNote('Run migration 010 on Supabase to enable the ledger.')
+        else setLedger(data?.transactions ?? [])
+      })
+      .catch(() => {})
+    fetch('/api/notification-prefs', { credentials: 'include' })
+      .then(r => r.ok ? r.json() : null)
+      .then(data => setNotifPrefs(data?.prefs ?? null))
+      .catch(() => {})
   }, [user, router])
+
+  const toggleNotif = async (type: NotificationType, enabled: boolean) => {
+    const res = await fetch('/api/notification-prefs', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ type, enabled }),
+    })
+    const data = await res.json()
+    if (res.ok) setNotifPrefs(data.prefs)
+  }
 
   if (!user) return null
 
@@ -144,6 +193,48 @@ export default function MyProfilePage() {
               ))}
             </div>
             <Link href="/creator" className="text-xs text-vault-gold hover:underline mt-3 inline-block">Creator dashboard →</Link>
+          </VaultPanel>
+        )}
+
+        <VaultPanel className="md:col-span-2 lg:col-span-4">
+          <h2 className="font-bold text-vault-cream mb-3">Vault Scraps ledger</h2>
+          {ledgerNote ? (
+            <p className="text-sm text-muted-foreground">{ledgerNote}</p>
+          ) : ledger.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No transactions yet. Claim daily bonus or place a bet to start.</p>
+          ) : (
+            <ul className="divide-y divide-border text-sm max-h-64 overflow-y-auto">
+              {ledger.map(tx => (
+                <li key={tx.id} className="py-2 flex justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-vault-cream capitalize">{tx.kind.replace(/_/g, ' ')}</p>
+                    <p className="text-xs text-muted-foreground truncate">{tx.note || new Date(tx.created_at).toLocaleString()}</p>
+                  </div>
+                  <span className={`tabular-nums font-medium shrink-0 ${tx.amount >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                    {tx.amount >= 0 ? '+' : ''}{tx.amount.toLocaleString()}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </VaultPanel>
+
+        {notifPrefs && (
+          <VaultPanel className="md:col-span-2 lg:col-span-4">
+            <h2 className="font-bold text-vault-cream mb-3">Notification preferences</h2>
+            <div className="grid sm:grid-cols-2 gap-2">
+              {(Object.keys(NOTIF_LABELS) as NotificationType[]).map(type => (
+                <label key={type} className="flex items-center justify-between gap-2 text-sm py-1.5">
+                  <span className="text-muted-foreground">{NOTIF_LABELS[type]}</span>
+                  <input
+                    type="checkbox"
+                    checked={notifPrefs[type] !== false}
+                    onChange={e => toggleNotif(type, e.target.checked)}
+                    className="accent-vault-gold"
+                  />
+                </label>
+              ))}
+            </div>
           </VaultPanel>
         )}
 

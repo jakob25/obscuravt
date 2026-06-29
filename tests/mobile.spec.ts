@@ -46,6 +46,25 @@ test('login page is usable on mobile', async ({ page }) => {
   expect(box?.width).toBeGreaterThan(100)
 })
 
+test('marketing home is usable on mobile', async ({ page }) => {
+  await page.goto('/')
+  await page.waitForLoadState('networkidle')
+  const signIn = page.getByRole('link', { name: /sign in/i }).first()
+  await expect(signIn).toBeVisible()
+  const bodyWidth = await page.evaluate(() => document.body.scrollWidth)
+  const viewportWidth = await page.evaluate(() => window.innerWidth)
+  expect(bodyWidth).toBeLessThanOrEqual(viewportWidth + 5)
+})
+
+test('help page is usable on mobile', async ({ page }) => {
+  await page.goto('/help')
+  await page.waitForLoadState('networkidle')
+  await expect(page.getByText(/getting started/i)).toBeVisible()
+  const bodyWidth = await page.evaluate(() => document.body.scrollWidth)
+  const viewportWidth = await page.evaluate(() => window.innerWidth)
+  expect(bodyWidth).toBeLessThanOrEqual(viewportWidth + 5)
+})
+
 test('bets page is readable on mobile', async ({ page }) => {
   await page.goto('/bets')
   await page.waitForLoadState('networkidle')

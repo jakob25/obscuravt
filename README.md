@@ -38,8 +38,15 @@ Run migrations in order in your Supabase SQL editor:
 3. `db/migrations/003-tag-validator.sql` — tag validation streaks
 4. `db/migrations/004-vault-uploads-storage.sql` — storage bucket policies
 5. `db/migrations/005-notifications-and-tag-streak.sql` — notification types, tag streak
+6. `db/migrations/006-cmdi-goals.sql` through `008-clips.sql` — CMDI, bets, clips
+7. `db/migrations/009-notification-prefs.sql` — per-type notification toggles + admin audit log
+8. `db/migrations/010-scrap-transactions.sql` — Vault Scraps ledger
 
 `db/supabase-schema.sql` is a legacy stub; use the numbered migrations above for staging/prod.
+
+### RLS and service role
+
+API routes use `SUPABASE_SERVICE_ROLE_KEY` via `supabaseAdmin` — they bypass Row Level Security intentionally for server-side writes (bets, scraps, notifications). Client-side reads use the anon key where applicable. Do not expose the service role key to the browser. Review Supabase RLS policies on `users`, `bets`, and `notifications` before production: anon should read public tables only; writes go through Next.js API routes.
 
 **Your Circle** depends on `users.favorite_vtubers` (comma-separated VTuber IDs). **Schedule votes** require migration `002` (`schedule_votes` table).
 

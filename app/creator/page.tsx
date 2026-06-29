@@ -39,6 +39,7 @@ export default function CreatorDashboardPage() {
   const router = useRouter()
   const [profiles, setProfiles] = useState<ClaimedProfile[]>([])
   const [activeId, setActiveId] = useState<string | null>(null)
+  const [claimRows, setClaimRows] = useState<Array<{ vtuberId: string; name: string; status: string; claimedAt?: string; reason?: string }>>([])
 
   const role = normalizeRole(user?.role ?? null)
   const allowed = role === 'VTuber' || role === 'Creator'
@@ -48,13 +49,14 @@ export default function CreatorDashboardPage() {
     if (!user) { router.push('/login'); return }
     if (!allowed) { router.push('/'); return }
 
-    fetch('/api/profiles/claimed', { credentials: 'include' })
-      .then(r => r.ok ? r.json() : null)
-      .then(data => {
-        setProfiles(data?.profiles ?? [])
-        setActiveId(data?.activeId ?? data?.profiles?.[0]?.id ?? null)
-      })
-      .catch(() => {})
+    Promise.all([
+      fetch('/api/profiles/claimed', { credentials: 'include' }).then(r => r.ok ? r.json() : null),
+      fetch('/api/claim-status', { credentials: 'include' }).then(r => r.ok ? r.json() : null),
+    ]).then(([claimedData, statusData]) => {
+      setProfiles(claimedData?.profiles ?? [])
+      setActiveId(claimedData?.activeId ?? claimedData?.profiles?.[0]?.id ?? null)
+      setClaimRows(statusData?.profiles ?? [])
+    }).catch(() => {})
   }, [user, loading, allowed, router])
 
   if (loading || !user || !allowed) return null
@@ -100,11 +102,24 @@ export default function CreatorDashboardPage() {
             )}
           </div>
         ) : (
-          <p className="text-sm text-vault-cream">
-            No claimed profiles yet.{' '}
-            <Link href="/discover" className="text-vault-gold hover:underline">Discover VTubers</Link>
-            {' '}and claim yours from their profile page.
-          </p>
+          <div className="space-y-3">
+            <p className="text-sm text-vault-cream">
+              No claimed profiles yet.{' '}
+              <Link href="/discover" className="text-vault-gold hover:underline">Discover VTubers</Link>
+              {' '}and claim yours from their dossier, or{' '}
+              <Link href="/nominator" className="text-vault-gold hover:underline">nominate yourself</Link>.
+            </p>
+            {claimRows.length > 0 && (
+              <ul className="text-xs text-muted-foreground space-y-1">
+                {claimRows.map(row => (
+                  <li key={row.vtuberId}>
+                    <Link href={`/vtuber/${row.vtuberId}`} className="text-vault-cream hover:text-vault-gold">{row.name}</Link>
+                    {' '}— claimed {new Date(row.claimedAt as string).toLocaleDateString()}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
         )}
       </VaultFrame>
 

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/session'
 import { DAILY_BONUS } from '@/lib/db-constants'
 import { isValidRole } from '@/lib/roles'
+import { recordScrapTransaction } from '@/lib/scrap-ledger'
 
 export async function GET(
   _req: NextRequest,
@@ -67,8 +68,10 @@ export async function PATCH(
       }
     }
 
-    update.coins = user.coins + DAILY_BONUS
+    const newBalance = user.coins + DAILY_BONUS
+    update.coins = newBalance
     update.last_bonus = now.toISOString()
+    await recordScrapTransaction(username, DAILY_BONUS, newBalance, 'daily_bonus', null, 'Daily bonus')
   }
 
   const { error } = await supabaseAdmin

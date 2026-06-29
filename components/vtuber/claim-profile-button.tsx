@@ -1,23 +1,25 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { useAuth } from '@/lib/auth-context'
 import { normalizeRole } from '@/lib/roles'
-import { ShieldCheck } from 'lucide-react'
+import { ShieldCheck, Clock, AlertCircle } from 'lucide-react'
 
 interface Props {
   vtuberId: string
   vtuberName: string
   claimedBy: string | null
+  approved?: boolean
 }
 
-export function ClaimProfileButton({ vtuberId, vtuberName, claimedBy }: Props) {
+export function ClaimProfileButton({ vtuberId, vtuberName, claimedBy, approved = true }: Props) {
   const { user } = useAuth()
   const [status, setStatus] = useState<'idle' | 'loading' | 'done' | 'error'>('idle')
   const [message, setMessage] = useState('')
 
   const role = normalizeRole(user?.role ?? null)
-  const canClaim = user && role === 'VTuber' && !claimedBy
+  const canClaim = user && role === 'VTuber' && !claimedBy && approved
 
   if (!user) return null
   if (claimedBy === user.username) {
@@ -27,7 +29,25 @@ export function ClaimProfileButton({ vtuberId, vtuberName, claimedBy }: Props) {
       </p>
     )
   }
-  if (claimedBy) return null
+  if (claimedBy) {
+    return (
+      <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+        <ShieldCheck className="h-3.5 w-3.5" /> Claimed by @{claimedBy}
+      </p>
+    )
+  }
+  if (!approved) {
+    return (
+      <div className="flex flex-col items-end gap-1 text-right">
+        <p className="text-xs text-amber-400 flex items-center gap-1.5">
+          <Clock className="h-3.5 w-3.5" /> Pending admin approval
+        </p>
+        <Link href="/nominator" className="text-[10px] text-vault-gold hover:underline">
+          Nomination status →
+        </Link>
+      </div>
+    )
+  }
   if (!canClaim) return null
 
   const claim = async () => {
@@ -43,7 +63,7 @@ export function ClaimProfileButton({ vtuberId, vtuberName, claimedBy }: Props) {
       const data = await res.json()
       if (!res.ok) throw new Error(data.error ?? 'Claim failed')
       setStatus('done')
-      setMessage(`Claimed ${vtuberName}!`)
+      setMessage(`Claimed ${vtuberName}! Open Creator Dashboard to manage it.`)
     } catch (err: unknown) {
       setStatus('error')
       setMessage(err instanceof Error ? err.message : 'Claim failed')
@@ -62,7 +82,13 @@ export function ClaimProfileButton({ vtuberId, vtuberName, claimedBy }: Props) {
         {status === 'loading' ? 'Claiming…' : status === 'done' ? 'Claimed' : 'Claim Profile'}
       </button>
       {message && (
-        <p className={`text-xs ${status === 'error' ? 'text-red-400' : 'text-vault-gold'}`}>{message}</p>
+        <p className={`text-xs max-w-[220px] text-right ${status === 'error' ? 'text-red-400 flex items-center gap-1 justify-end' : 'text-vault-gold'}`}>
+          {status === 'error' && <AlertCircle className="h-3 w-3 shrink-0" />}
+          {message}
+        </p>
+      )}
+      {status === 'done' && (
+        <Link href="/creator" className="text-[10px] text-vault-gold hover:underline">Creator dashboard →</Link>
       )}
     </div>
   )

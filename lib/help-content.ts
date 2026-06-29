@@ -143,6 +143,50 @@ export const HELP_SECTIONS: HelpSection[] = [
     ],
   },
   {
+    id: 'bets-and-predictions',
+    title: 'Bets and Predictions',
+    items: [
+      {
+        q: 'How do community bets work?',
+        a: 'Open a bet, pick an outcome, and wager Vault Scraps. When wagering closes, fans vote on what actually happened. When enough votes agree, winners split the pool (minus a small house cut).',
+      },
+      {
+        q: 'What is the voting phase?',
+        a: 'After wagering, bets move to voting. Head to the Bets page, open "Needs your vote", select the correct outcome, and submit. Your vote helps resolve the slip for everyone who wagered.',
+      },
+      {
+        q: 'Stream predictions on dossiers',
+        a: 'Each dossier can host stream-specific prediction bets tied to that creator. They show up in Your Circle and work like global bets — scraps in, vote to resolve.',
+      },
+      {
+        q: 'Can I lose all my scraps?',
+        a: 'Wagers are spent when you place them. If your option loses, those scraps are gone — but daily bonuses, tag validation streaks, and winning bets help you recover.',
+      },
+    ],
+  },
+  {
+    id: 'vault-scraps',
+    title: 'Vault Scraps',
+    items: [
+      {
+        q: 'How do I earn Vault Scraps?',
+        a: 'Claim the daily bonus on My Profile (+250), validate tags (10-streak pays), win bets, unlock achievements, and stay active in community features.',
+      },
+      {
+        q: 'What can I spend scraps on?',
+        a: 'Bets, Chat Made Me Do It pledges, and shop cosmetics (titles, badges, frames). Scraps never leave ObscuraVT — they circulate inside the archive.',
+      },
+      {
+        q: 'Where is my transaction history?',
+        a: 'My Profile shows a scraps ledger after migration 010 — daily bonuses, shop purchases, pledges, and bet activity in one list.',
+      },
+      {
+        q: 'Do creators get paid in scraps?',
+        a: 'No. Scraps are fan-side engagement currency. The goal is to drive attention and clips back to creators\' real channels, not replace platform revenue.',
+      },
+    ],
+  },
+  {
     id: 'stream-resources',
     title: 'Stream Resources',
     items: [

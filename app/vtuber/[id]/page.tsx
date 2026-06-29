@@ -123,7 +123,8 @@ export default async function VTuberProfilePage({ params }: Props) {
               <ClaimProfileButton 
                 vtuberId={vtuber.id} 
                 vtuberName={vtuber.name} 
-                claimedBy={vtuber.claimed_by ?? null} 
+                claimedBy={vtuber.claimed_by ?? null}
+                approved={vtuber.approved !== false}
               />
             </div>
 

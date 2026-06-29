@@ -56,7 +56,7 @@ export interface Bet {
   description: string;
   vtuberId?: string;
   options: BetOption[];
-  status: 'open' | 'closed' | 'resolved';
+  status: 'open' | 'voting' | 'closed' | 'resolved';
   endsAt: string;
   createdAt: string;
 }

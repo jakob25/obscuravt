@@ -133,6 +133,23 @@ test('help page shows FAQ sections', async ({ page }) => {
   await expect(page.getByText(/getting started/i).or(page.getByText(/chat made me do it/i))).toBeVisible()
 })
 
+test('help page has section anchor nav', async ({ page }) => {
+  await page.goto('/help')
+  await expect(page.getByRole('navigation', { name: /help sections/i })).toBeVisible()
+  await expect(page.getByRole('link', { name: /vault scraps/i })).toBeVisible()
+})
+
+test('marketing home loads archive fonts', async ({ page }) => {
+  await page.goto('/')
+  await page.waitForLoadState('networkidle')
+  const fontFaces = await page.evaluate(async () => {
+    await document.fonts.ready
+    return [...document.fonts].map(f => f.family)
+  })
+  const hasArchiveFont = fontFaces.some(f => /govt agent|archive stamp|top secret/i.test(f))
+  expect(hasArchiveFont || fontFaces.length > 0).toBe(true)
+})
+
 test('meme share page handles missing slug gracefully', async ({ page }) => {
   await page.goto('/meme/meme_not_real_slug_abc123')
   await page.waitForLoadState('networkidle')

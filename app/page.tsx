@@ -16,6 +16,7 @@ import { useAuth } from '@/lib/auth-context'
 import { useDashboardLayout, DashboardCustomizer, type WidgetId } from '@/components/common/dashboard-customizer'
 import { GlitchHeading } from '@/components/vault/glitch-heading'
 import { MarketingHome } from '@/components/landing/marketing-home'
+import { FirstRunChecklist } from '@/components/onboarding/first-run-checklist'
 
 
 import { LogIn } from 'lucide-react'
@@ -425,6 +426,20 @@ function UserDashboard() {
   const { vtubers } = useVTubers()
   const { user } = useAuth()
   const { layout, addWidget, removeWidget, moveWidget, reset } = useDashboardLayout()
+  const [circleCount, setCircleCount] = useState(0)
+  const [profileStats, setProfileStats] = useState<{ bets_placed: number; tag_streak?: number } | null>(null)
+
+  useEffect(() => {
+    if (!user) return
+    fetch('/api/your-circle', { credentials: 'include' })
+      .then(r => r.ok ? r.json() : { oshis: [] })
+      .then(d => setCircleCount(d.oshis?.length ?? 0))
+      .catch(() => setCircleCount(0))
+    fetch(`/api/users/${user.username}`, { credentials: 'include' })
+      .then(r => r.ok ? r.json() : null)
+      .then(d => d && setProfileStats({ bets_placed: d.bets_placed ?? 0 }))
+      .catch(() => {})
+  }, [user])
 
   const role: AppRole | null = normalizeRole(user?.role ?? null)
 
@@ -474,6 +489,12 @@ function UserDashboard() {
           availableWidgets={availableWidgets}
         />
       </div>
+
+      <FirstRunChecklist
+        circleCount={circleCount}
+        betsPlaced={profileStats?.bets_placed ?? 0}
+        tagStreak={profileStats?.tag_streak ?? 0}
+      />
 
       {visibleLayout.length === 0 ? (
         <div className="vault-panel p-12 text-center">

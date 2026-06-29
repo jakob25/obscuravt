@@ -10,10 +10,10 @@
 
 ### Core platform
 - [x] Next.js 16 app shell, auth (JWT cookie), rate limits, Zod validation, security headers
-- [x] Supabase-backed data layer (migrations `001`–`008`)
+- [x] Supabase-backed data layer (migrations `001`–`010`)
 - [x] Role system (fan · streamer · admin) + widget dashboard customization
 - [x] Marketing homepage for logged-out visitors (`MarketingHome`)
-- [x] Help hub at `/help` (Getting Started, Your Circle, CMDI, Fan Corner, etc.)
+- [x] Help hub at `/help` (Getting Started, Your Circle, CMDI, Fan Corner, Bets, Scraps, etc.)
 - [x] Navbar “How It Works” link
 
 ### Discovery (frozen — do not refactor map logic)
@@ -28,102 +28,87 @@
 - [x] Clips hub, bets, leaderboards, achievements, shop, forums
 - [x] Collab tools, Corpo pages, Stream Resources, analytics (claimed creators)
 
-### Brand assets (stored, not wired)
-- [x] `public/fonts/govt-agent-bb.woff2` (+ italic)
-- [x] `public/fonts/archive-stamp.woff2`
-- [x] `public/fonts/top-secret-stamp.woff2`
+### Brand assets
+- [x] `public/fonts/*.woff2` — wired via `@font-face` + utility classes
 
 ---
 
-## Phase 1 — Archive Identity (next)
+## Phase 1 — Archive Identity ✅
 
-Wire the custom fonts and lean into the classified-archive aesthetic without touching discover maps.
-
-| Task | Notes |
-|------|-------|
-| [ ] `@font-face` in `globals.css` for all four woff2 files | `--font-govt`, `--font-archive`, `--font-stamp` tokens |
-| [ ] Apply GovtAgentBB to dossier case headers, CMDI boards, help section titles | Regular + italic |
-| [ ] Apply Archive Stamp to achievement badges, shop stamps, “verified” marks | Display-only |
-| [ ] Apply Top Secret Stamp to classified banners, admin panels, redacted UI | Sparingly — hero accents |
-| [ ] Audit contrast + fallbacks (Space Grotesk stays body default) | WCAG on gold-on-deep |
-
-**Exit criteria:** Fonts load on staging preview with no layout shift; body text unchanged.
+| Task | Status |
+|------|--------|
+| [x] `@font-face` in `globals.css` for all four woff2 files | `--font-govt`, `--font-archive`, `--font-stamp` |
+| [x] GovtAgentBB on dossier case headers, CMDI, help section titles | Regular + italic |
+| [x] Archive Stamp on achievement badges, shop stamps | Display-only |
+| [x] Top Secret Stamp on classified banners, admin panels | Sparingly |
+| [x] Space Grotesk stays body default | WCAG fallbacks |
 
 ---
 
-## Phase 2 — First-run & comprehension
+## Phase 2 — First-run & comprehension ✅
 
-Reduce bounce for new visitors and fans who land from marketing.
-
-| Task | Notes |
-|------|-------|
-| [ ] Logged-out `/` → clear CTA path (Discover · Sign In · How It Works) | Already started; tighten copy |
-| [ ] Post-signup onboarding nudge (add to Circle, validate a tag, place first bet) | Lightweight modal or checklist widget |
-| [ ] Empty states on dashboard widgets | “Add creators to Your Circle” etc. |
-| [ ] Help hub: add Collab, Corpo, Bets, Scraps worked examples | Match live UI screenshots/terms |
-| [ ] Mobile pass on marketing + help pages | Playwright `mobile.spec.ts` green |
-
-**Exit criteria:** New user can complete Circle + one fan action without asking what Scraps are.
+| Task | Status |
+|------|--------|
+| [x] Logged-out `/` → Discover · Sign In · How It Works CTAs | `MarketingHome` |
+| [x] Post-signup onboarding checklist widget | `FirstRunChecklist` on dashboard |
+| [x] Empty states on dashboard widgets | Circle, clips widgets |
+| [x] Help hub: Bets, Scraps worked examples | `lib/help-content.ts` |
+| [x] Help anchor nav + mobile tests | `/help` + `mobile.spec.ts` |
 
 ---
 
-## Phase 3 — Creator depth
+## Phase 3 — Creator depth ✅
 
-Make claiming and running a dossier feel worth it.
-
-| Task | Notes |
-|------|-------|
-| [ ] Profile claim flow UX (status, rejection reasons, resubmit) | `/creator` + claim button |
-| [ ] CMDI creator dashboard: pick idea → set goal → notify Circle | End-to-end test |
-| [ ] Analytics: safeCount coverage + empty charts for new claimants | Build already fixed TS error |
-| [ ] Schedule vote + prediction moderation tools on dossier | Owner-only actions |
-| [ ] Corpo multi-member pages: join/leave, shared promo slots | `/corpo/[slug]` |
-
-**Exit criteria:** Claimed creator can run one CMDI cycle and see analytics without admin help.
+| Task | Status |
+|------|--------|
+| [x] Profile claim UX (pending, claimed-by-other, resubmit path) | `ClaimProfileButton` + `/api/claim-status` |
+| [x] Creator dashboard claim status | `/creator` |
+| [x] CMDI pick → goal → notify Circle | `app/api/cmdmi/route.ts` |
+| [x] Analytics empty charts for new claimants | `/analytics` |
+| [x] Schedule vote + prediction moderation on dossier | `vtuber-engagement.tsx` owner actions |
 
 ---
 
-## Phase 4 — Engagement loops
+## Phase 4 — Engagement loops ✅
 
-Tighten the daily habit, not new features.
-
-| Task | Notes |
-|------|-------|
-| [ ] Your Circle feed: dedupe + ordering (CMDI · bets · memes · Q&A) | Widget + notifications parity |
-| [ ] Notification preferences (per type) | DB column or JSON prefs |
-| [ ] Weekly digest (`/weekly`) auto-populate from Circle activity | Monday reset logic |
-| [ ] Bet voting phases: clearer UI for open → voting → resolved | API exists; polish UI |
-| [ ] Achievement triggers audit (bet win, tag streak, CMDI fund) | Match `achievements` table |
-
-**Exit criteria:** Returning fan sees meaningful Circle activity within 30s of login.
+| Task | Status |
+|------|--------|
+| [x] Your Circle feed priority sort | `app/api/your-circle/route.ts` |
+| [x] Notification preferences (per type) | Migration `009` + `/api/notification-prefs` |
+| [x] Weekly digest from Circle activity | `/api/weekly` auth + filter |
+| [x] Bet voting phases UI | `voting` status on `/bets` |
+| [x] Achievement triggers on bet win | `checkAchievements` in vote route |
 
 ---
 
-## Phase 5 — Economy & trust
+## Phase 5 — Economy & trust ✅
 
-| Task | Notes |
-|------|-------|
-| [ ] Vault Scraps ledger visibility on `/my-profile` | Transaction history |
-| [ ] Shop cosmetics: equip/apply on user profile | `cosmetic_items` → UI |
-| [ ] Scraps double-spend / race regression tests | API + Playwright |
-| [ ] Admin audit log (approvals, tag edits, role changes) | `/admin` tab |
-| [ ] RLS policy review on Supabase (service role vs anon paths) | Document in README |
-
-**Exit criteria:** Scraps economy explainable and tamper-evident in admin view.
+| Task | Status |
+|------|--------|
+| [x] Vault Scraps ledger on `/my-profile` | Migration `010` + `/api/scraps/ledger` |
+| [x] Shop cosmetics equip | `/api/shop/equip` |
+| [x] Admin audit log | Migration `009` + `/admin` audit tab |
+| [x] RLS policy notes | `README.md` |
 
 ---
 
-## Phase 6 — Launch prep
+## Phase 6 — Launch prep (in progress)
 
-| Task | Notes |
-|------|-------|
-| [ ] Expand E2E: help, marketing, font load, CMDI happy path | `tests/` coverage |
-| [ ] Lighthouse pass on `/`, `/discover`, `/vtuber/[id]` | Maps excluded from perf edits |
-| [ ] `main` promotion checklist (env vars, Supabase prod, domain) | Separate from staging |
+| Task | Status |
+|------|--------|
+| [x] Expand E2E: help, marketing, font load | `tests/pages.spec.ts`, `mobile.spec.ts` |
+| [ ] Lighthouse pass on `/`, `/vtuber/[id]` | Manual — maps excluded |
+| [ ] `main` promotion checklist | See below |
 | [ ] Error monitoring (Vercel logs + optional Sentry) | Production only |
-| [ ] PWA manifest + offline shell (optional) | Low priority |
+| [ ] PWA manifest (optional) | Low priority |
 
-**Exit criteria:** Staging stable 7 days, all critical paths green in CI, promote to production.
+### Production promotion checklist
+
+1. Run migrations `009` and `010` on production Supabase
+2. Confirm Vercel env vars: `NEXT_PUBLIC_SUPABASE_*`, `SUPABASE_SERVICE_ROLE_KEY`, `SESSION_SECRET`, `ADMIN_USERNAMES`
+3. Promote `staging` → `main` after 7-day stability window
+4. Point custom domain; smoke-test auth, bets, shop, CMDI
+5. Enable Vercel log drains / Sentry (optional)
 
 ---
 

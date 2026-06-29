@@ -26,7 +26,7 @@ function BetCard({ bet, onUpdate }: { bet: Bet; onUpdate: () => void }) {
 
   const total = bet.options.reduce((s, o) => s + o.totalScraps, 0)
   const isOpen = bet.status === 'open'
-  const isClosed = bet.status === 'closed'
+  const isVoting = bet.status === 'voting' || bet.status === 'closed'
 
   const showFeedback = (text: string, ok: boolean) => {
     setFeedback({ text, ok })
@@ -87,10 +87,10 @@ function BetCard({ bet, onUpdate }: { bet: Bet; onUpdate: () => void }) {
           <h3 className="font-semibold text-vault-cream text-sm leading-snug">{bet.title}</h3>
           <Badge className={`text-xs shrink-0 ${
             isOpen ? 'bg-green-500/20 text-green-400 border-green-500/30' :
-            isClosed ? 'bg-vault-gold/20 text-vault-gold border-vault-gold/30' :
+            isVoting ? 'bg-vault-gold/20 text-vault-gold border-vault-gold/30' :
             'bg-muted text-muted-foreground'
           }`}>
-            {bet.status}
+            {isVoting ? 'voting' : bet.status}
           </Badge>
         </div>
 
@@ -171,7 +171,7 @@ function BetCard({ bet, onUpdate }: { bet: Bet; onUpdate: () => void }) {
                 {mode === 'place' ? 'Cancel' : 'Place bet'}
               </Button>
             )}
-            {(isOpen || isClosed) && (
+            {(isOpen || isVoting) && (
               <Button
                 size="sm"
                 variant="outline"
@@ -187,7 +187,7 @@ function BetCard({ bet, onUpdate }: { bet: Bet; onUpdate: () => void }) {
           </div>
         )}
 
-        {!user && (isOpen || isClosed) && (
+        {!user && (isOpen || isVoting) && (
           <p className="text-xs text-muted-foreground text-center">
             <a href="/login" className="text-vault-gold hover:underline">Sign in</a> to wager and vote
           </p>
@@ -279,7 +279,7 @@ export default function BetsPage() {
   const refresh = useCallback(() => setRefreshKey(k => k + 1), [])
 
   const openBets = bets.filter(b => b.status === 'open')
-  const closedBets = bets.filter(b => b.status === 'closed')
+  const votingBets = bets.filter(b => b.status === 'voting' || b.status === 'closed')
   const resolvedBets = bets.filter(b => b.status === 'resolved')
 
   if (loading) {
@@ -325,17 +325,17 @@ export default function BetsPage() {
       )}
 
       {/* Needs voting */}
-      {closedBets.length > 0 && (
+      {votingBets.length > 0 && (
         <section className="mb-10">
           <h2 className="text-base font-semibold text-vault-cream mb-2">
             Needs your vote
-            <span className="text-xs font-normal text-muted-foreground ml-2">({closedBets.length})</span>
+            <span className="text-xs font-normal text-muted-foreground ml-2">({votingBets.length})</span>
           </h2>
           <p className="text-xs text-muted-foreground mb-4">
-            Stream&apos;s done. Tell us what actually happened.
+            Wagering closed. Vote on the outcome to resolve the slip.
           </p>
           <div className="grid md:grid-cols-2 gap-4">
-            {closedBets.map(bet => (
+            {votingBets.map(bet => (
               <BetCard key={`${bet.id}-${refreshKey}`} bet={bet} onUpdate={refresh} />
             ))}
           </div>

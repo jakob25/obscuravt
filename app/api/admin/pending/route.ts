@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { requireAdmin } from '@/lib/session'
+import { recordAuditLog } from '@/lib/audit-log'
 
 export async function GET(req: NextRequest) {
   const session = await requireAdmin(req)
@@ -29,10 +30,12 @@ export async function PATCH(req: NextRequest) {
   if (approved) {
     const { error } = await supabaseAdmin.from('vtubers').update({ approved: true }).eq('id', vtuberId)
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    await recordAuditLog(session.username, 'vtuber_approved', 'vtuber', vtuberId)
     return NextResponse.json({ ok: true, approved: true })
   }
 
   const { error } = await supabaseAdmin.from('vtubers').delete().eq('id', vtuberId)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  await recordAuditLog(session.username, 'vtuber_rejected', 'vtuber', vtuberId)
   return NextResponse.json({ ok: true, approved: false })
 }

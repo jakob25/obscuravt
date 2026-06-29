@@ -14,6 +14,31 @@ export type NotificationType =
   | 'schedule_vote'
   | 'meme_new'
 
+const DEFAULT_PREFS: Record<NotificationType, boolean> = {
+  cmdmi_selected: true,
+  cmdmi_funded: true,
+  cmdmi_new: true,
+  bet_voting: true,
+  bet_won: true,
+  bet_lost: true,
+  achievement: true,
+  qa_open: true,
+  karaoke_open: true,
+  schedule_vote: true,
+  meme_new: true,
+}
+
+async function notificationEnabled(username: string, type: NotificationType): Promise<boolean> {
+  const { data, error } = await supabaseAdmin
+    .from('users')
+    .select('notification_prefs')
+    .eq('username', username)
+    .single()
+  if (error?.code === '42703' || !data?.notification_prefs) return true
+  const prefs = { ...DEFAULT_PREFS, ...(data.notification_prefs as Record<string, boolean>) }
+  return prefs[type] !== false
+}
+
 export async function createNotification(
   username: string,
   title: string,
@@ -21,6 +46,8 @@ export async function createNotification(
   type: NotificationType,
   relatedId?: string | null,
 ) {
+  if (!await notificationEnabled(username, type)) return
+
   const { error } = await supabaseAdmin.from('notifications').insert({
     id: randomUUID(),
     username,

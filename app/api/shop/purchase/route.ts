@@ -3,6 +3,7 @@ import { requireAuth } from '@/lib/session'
 import { rateLimits } from '@/lib/rate-limit'
 import { supabaseAdmin } from '@/lib/supabase'
 import { randomUUID } from 'crypto'
+import { recordScrapTransaction } from '@/lib/scrap-ledger'
 
 export async function POST(req: NextRequest) {
   const rl = await rateLimits.transaction(req)
@@ -33,7 +34,9 @@ export async function POST(req: NextRequest) {
     id: randomUUID(), username, item_id, equipped: false,
     purchased_at: new Date().toISOString(),
   })
-  await supabaseAdmin.from('users').update({ coins: user.coins - item.cost }).eq('username', username)
+  const newBalance = user.coins - item.cost
+  await supabaseAdmin.from('users').update({ coins: newBalance }).eq('username', username)
+  await recordScrapTransaction(username, -item.cost, newBalance, 'shop_purchase', item_id, item.name)
 
   return NextResponse.json({ ok: true })
 }

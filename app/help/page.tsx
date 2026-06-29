@@ -58,6 +58,18 @@ export default function HelpPage() {
 
         <VaultDivider className="mb-8" />
 
+        <nav className="mb-8 flex flex-wrap gap-2" aria-label="Help sections">
+          {HELP_SECTIONS.map(section => (
+            <a
+              key={section.id}
+              href={`#${section.id}`}
+              className="rounded-full border border-vault-bronze/40 px-3 py-1 text-xs text-muted-foreground transition-colors hover:border-vault-gold/40 hover:text-vault-gold"
+            >
+              {section.title}
+            </a>
+          ))}
+        </nav>
+
         <div className="space-y-6">
           {HELP_SECTIONS.map(section => (
             <VaultPanel key={section.id} className="p-5 md:p-6">

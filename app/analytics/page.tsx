@@ -138,6 +138,19 @@ function AnalyticsContent() {
 
       {fetching && <p className="text-sm text-muted-foreground animate-pulse text-center py-8">Crunching numbers…</p>}
 
+      {!fetching && data && data.circleFollowers === 0 && data.fanEngagementScore === 0 && (
+        <VaultPanel className="p-6 text-center mb-6">
+          <p className="text-sm text-muted-foreground mb-3">
+            Quiet archive so far. Encourage fans to add you to Their Circle, submit clips, and engage on your dossier.
+          </p>
+          {active && (
+            <Link href={`/vtuber/${active.id}`} className="text-sm text-vault-gold hover:underline">
+              Open public dossier →
+            </Link>
+          )}
+        </VaultPanel>
+      )}
+
       {!fetching && data && (
         <>
           <VaultPanel className="p-5 mb-6">

@@ -34,6 +34,7 @@ export default function ShopPage() {
   const [owned, setOwned] = useState<OwnedItem[]>([])
   const [loading, setLoading] = useState(true)
   const [buying, setBuying] = useState<string | null>(null)
+  const [equipping, setEquipping] = useState<string | null>(null)
   const [message, setMessage] = useState<{ text: string; ok: boolean; id: string } | null>(null)
 
   const fetchShop = async () => {
@@ -48,6 +49,30 @@ export default function ShopPage() {
   useEffect(() => { fetchShop() }, [user])
 
   const ownedIds = new Set(owned.map(o => o.item_id))
+  const equippedId = owned.find(o => o.equipped)?.item_id ?? null
+
+  const equip = async (item: ShopItem) => {
+    if (!user) return
+    setEquipping(item.id)
+    const res = await fetch('/api/shop/equip', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ item_id: item.id }),
+    })
+    const data = await res.json()
+    if (res.ok) {
+      setOwned(prev => prev.map(o => ({
+        ...o,
+        equipped: o.item_id === item.id,
+      })))
+      setMessage({ text: `Equipped "${item.name}"`, ok: true, id: item.id })
+    } else {
+      setMessage({ text: data.error ?? 'Equip failed', ok: false, id: item.id })
+    }
+    setEquipping(null)
+    setTimeout(() => setMessage(null), 3000)
+  }
 
   const buy = async (item: ShopItem) => {
     if (!user) return
@@ -172,8 +197,22 @@ export default function ShopPage() {
                       {/* Buy button */}
                       {user && (
                         isOwned ? (
-                          <div className="flex items-center gap-1.5 text-xs text-vault-gold font-medium">
-                            <Check className="h-3.5 w-3.5" /> Owned
+                          <div className="flex flex-col gap-2">
+                            <div className="flex items-center gap-1.5 text-xs text-vault-gold font-medium">
+                              <Check className="h-3.5 w-3.5" />
+                              {equippedId === item.id ? 'Equipped' : 'Owned'}
+                            </div>
+                            {equippedId !== item.id && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => equip(item)}
+                                disabled={equipping === item.id}
+                                className="w-full text-xs border-vault-bronze/40"
+                              >
+                                {equipping === item.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : 'Equip'}
+                              </Button>
+                            )}
                           </div>
                         ) : (
                           <Button

@@ -67,7 +67,7 @@ async function resolveBet(betId: string) {
     }
   }
 
-  await supabaseAdmin.from('bets').update({ status: 'closed', result: winner }).eq('id', betId)
+  await supabaseAdmin.from('bets').update({ status: 'resolved', result: winner }).eq('id', betId)
 
   // Check and award achievements
   await checkAchievements(winnerEntries.map((e: { username: string }) => e.username))
@@ -139,6 +139,7 @@ export async function POST(req: NextRequest) {
   })
 
   if ((priorVotes ?? 0) === 0) {
+    await supabaseAdmin.from('bets').update({ status: 'voting' }).eq('id', bet_id).eq('status', 'open')
     const { data: bet } = await supabaseAdmin.from('bets').select('title').eq('id', bet_id).single()
     const { data: entries } = await supabaseAdmin.from('bet_entries').select('username').eq('bet_id', bet_id)
     for (const e of entries ?? []) {
