@@ -2,7 +2,7 @@
 
 > Find VTubers by vibe and tag, not sub count. Clips, bets, and community tools for fans and creators.
 
-**Repo:** https://github.com/jakob25/obscuravt · **Staging:** https://obscuravt-git-staging-jakob25s-projects.vercel.app
+**Repo:** https://github.com/jakob25/obscuravt · **Live:** https://obscuravt.com · **Staging:** https://obscuravt-git-staging-jakob25s-projects.vercel.app
 
 **AI agents:** Read [AGENTS.md](./AGENTS.md) before making changes. Active branch is `staging`.
 

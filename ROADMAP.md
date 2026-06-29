@@ -1,7 +1,8 @@
 # ObscuraVT Roadmap
 
-> **Branch:** `staging` only until launch review  
-> **Preview:** `obscuravt-git-staging-jakob25s-projects.vercel.app`  
+> **Branches:** `main` = production · `staging` = preview  
+> **Production:** https://obscuravt.com  
+> **Staging preview:** https://obscuravt-git-staging-jakob25s-projects.vercel.app  
 > **Last updated:** 2026-06-28
 
 ---
@@ -102,7 +103,7 @@
 |------|--------|
 | [x] Expand E2E: help, marketing, font load | `tests/pages.spec.ts`, `mobile.spec.ts` |
 | [ ] Lighthouse pass on `/`, `/vtuber/[id]` | Manual — maps excluded |
-| [ ] `main` promotion checklist | See below |
+| [x] `main` promotion checklist | `main` aligned with `staging` at `bbb6bd4` |
 | [ ] Error monitoring (Vercel logs + optional Sentry) | Production only |
 | [ ] PWA manifest (optional) | Low priority |
 

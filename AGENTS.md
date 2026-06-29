@@ -8,8 +8,9 @@ You own ongoing development on this repo. Read this file first every session.
 |------|-------|
 | Product | ObscuraVT — VTuber discovery, clips, bets, fan/creator tools |
 | Repo | https://github.com/jakob25/obscuravt |
-| Active branch | `staging` only (no `main` pushes without explicit user approval) |
-| Staging preview | https://obscuravt-git-staging-jakob25s-projects.vercel.app |
+| Production | https://obscuravt.com (`main` branch) |
+| Staging preview | https://obscuravt-git-staging-jakob25s-projects.vercel.app (`staging` branch) |
+| Default dev branch | `staging` for features; merge to `main` for production release |
 | Vercel project | `obscuravt` (team `jakob25s-projects`) |
 | Stack | Next.js 16 · TypeScript · Tailwind v4 · Supabase · Playwright |
 
