@@ -41,6 +41,9 @@ Run migrations in order in your Supabase SQL editor:
 6. `db/migrations/006-cmdi-goals.sql` through `008-clips.sql` — CMDI, bets, clips
 7. `db/migrations/009-notification-prefs.sql` — per-type notification toggles + admin audit log
 8. `db/migrations/010-scrap-transactions.sql` — Vault Scraps ledger
+9. `db/migrations/011-discovery-games.sql` — VTuber `silhouette_url` + crane catch log
+
+**Discovery games:** `/discovery-games` hub · `/silhouette` (uploaded silhouettes per dossier) · `/crane` (claw machine with profile-pic prizes). Owners upload silhouettes from claimed dossiers.
 
 `db/supabase-schema.sql` is a legacy stub; use the numbered migrations above for staging/prod.
 

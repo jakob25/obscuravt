@@ -1,24 +1,56 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useVTubers } from '@/hooks/use-data'
+import Link from 'next/link'
 import { useStarMapData } from '@/hooks/use-star-map-data'
-import type { VTuber } from '@/lib/types'
 import { RotateCcw, ArrowRight, Check, X, User, Trophy, Target } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import Link from 'next/link'
 import { GlitchHeading } from '@/components/vault/glitch-heading'
 import { VaultPanel } from '@/components/vault/vault-surfaces'
+import { shuffle } from '@/lib/discovery-games'
 
-function shuffle<T>(arr: T[]): T[] {
-  return [...arr].sort(() => Math.random() - 0.5)
+interface SilhouetteEntry {
+  id: string
+  name: string
+  bio: string
+  category: string
+  displayUrl: string
+  source: 'uploaded' | 'avatar_fallback'
+}
+
+function SilhouetteImage({ entry, revealed }: { entry: SilhouetteEntry; revealed: boolean }) {
+  const isFallback = entry.source === 'avatar_fallback' && !revealed
+  return (
+    <div className="relative">
+      <img
+        src={entry.displayUrl}
+        alt="Mystery VTuber"
+        className={`h-40 w-40 rounded-full border-4 transition-all duration-500 object-cover ${
+          revealed ? 'filter-none border-vault-gold/60' : 'border-muted'
+        }`}
+        style={isFallback ? { filter: 'brightness(0) saturate(0)' } : undefined}
+      />
+      {!revealed && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <span className="text-4xl opacity-20">?</span>
+        </div>
+      )}
+      {!revealed && entry.source === 'uploaded' && (
+        <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 text-[10px] text-vault-gold/80 whitespace-nowrap">
+          Custom silhouette
+        </span>
+      )}
+    </div>
+  )
 }
 
 export default function SilhouettePage() {
-  const { vtubers, loading } = useVTubers()
   const { constellations } = useStarMapData()
-  const [current, setCurrent] = useState<VTuber | null>(null)
-  const [choices, setChoices] = useState<VTuber[]>([])
+  const [pool, setPool] = useState<SilhouetteEntry[]>([])
+  const [stats, setStats] = useState({ withSilhouette: 0, preferUploaded: false })
+  const [loading, setLoading] = useState(true)
+  const [current, setCurrent] = useState<SilhouetteEntry | null>(null)
+  const [choices, setChoices] = useState<SilhouetteEntry[]>([])
   const [revealed, setRevealed] = useState(false)
   const [selected, setSelected] = useState<string | null>(null)
   const [score, setScore] = useState(0)
@@ -26,9 +58,9 @@ export default function SilhouettePage() {
   const [gameOver, setGameOver] = useState(false)
   const MAX_ROUNDS = 10
 
-  const newRound = (pool: VTuber[]) => {
-    if (pool.length < 4) return
-    const shuffled = shuffle(pool)
+  const newRound = (source: SilhouetteEntry[]) => {
+    if (source.length < 4) return
+    const shuffled = shuffle(source)
     const answer = shuffled[0]
     const wrong = shuffled.slice(1, 4)
     setCurrent(answer)
@@ -38,8 +70,20 @@ export default function SilhouettePage() {
   }
 
   useEffect(() => {
-    if (!loading && vtubers.length >= 4) newRound(vtubers)
-  }, [loading, vtubers])
+    fetch('/api/discovery-games/silhouette')
+      .then(r => r.ok ? r.json() : { pool: [], stats: {} })
+      .then(data => {
+        const entries: SilhouetteEntry[] = data.pool ?? []
+        setPool(entries)
+        setStats({
+          withSilhouette: data.stats?.withSilhouette ?? 0,
+          preferUploaded: data.stats?.preferUploaded ?? false,
+        })
+        if (entries.length >= 4) newRound(entries)
+      })
+      .catch(() => setPool([]))
+      .finally(() => setLoading(false))
+  }, [])
 
   const guess = (vtuberId: string) => {
     if (selected) return
@@ -52,12 +96,12 @@ export default function SilhouettePage() {
     const nextRound = round + 1
     if (nextRound >= MAX_ROUNDS) { setGameOver(true); return }
     setRound(nextRound)
-    newRound(vtubers)
+    newRound(pool)
   }
 
   const restart = () => {
     setScore(0); setRound(0); setGameOver(false)
-    newRound(vtubers)
+    newRound(pool)
   }
 
   const constellation = current ? constellations.find(c => c.id === current.category) : null
@@ -67,8 +111,22 @@ export default function SilhouettePage() {
       <div className="min-h-[60vh] flex items-center justify-center">
         <div className="text-center">
           <User className="h-10 w-10 text-vault-gold mx-auto mb-3 animate-pulse" />
-          <p className="text-muted-foreground animate-pulse">Loading VTubers…</p>
+          <p className="text-muted-foreground animate-pulse">Loading silhouettes…</p>
         </div>
+      </div>
+    )
+  }
+
+  if (pool.length < 4) {
+    return (
+      <div className="container mx-auto max-w-lg px-4 py-16 text-center">
+        <GlitchHeading as="h1" className="text-xl font-bold text-vault-cream mb-4">Who is this VTuber?</GlitchHeading>
+        <p className="text-sm text-muted-foreground mb-4">
+          Need at least four dossiers with avatars or uploaded silhouettes in the archive.
+        </p>
+        <Button asChild className="bg-vault-gold text-vault-deep">
+          <Link href="/discover">Explore Star Map</Link>
+        </Button>
       </div>
     )
   }
@@ -85,6 +143,11 @@ export default function SilhouettePage() {
             <span className="font-bold text-vault-gold">Score: {score}</span>
           </div>
         </div>
+        {stats.preferUploaded && (
+          <p className="container mx-auto max-w-lg text-[10px] text-vault-gold/80 mt-1">
+            {stats.withSilhouette} custom silhouettes in rotation
+          </p>
+        )}
       </div>
 
       <div className="container mx-auto max-w-lg px-4 py-8">
@@ -109,9 +172,12 @@ export default function SilhouettePage() {
                  'Hit the map. Study the silhouettes.'}
               </p>
             </div>
-            <div className="flex gap-3 justify-center">
+            <div className="flex gap-3 justify-center flex-wrap">
               <Button onClick={restart} variant="outline" className="border-border text-vault-cream gap-2">
                 <RotateCcw className="h-4 w-4" /> Play again
+              </Button>
+              <Button asChild variant="outline" className="border-vault-bronze/40">
+                <Link href="/crane">Vault Crane</Link>
               </Button>
               <Button asChild className="bg-vault-gold hover:bg-vault-amber text-vault-deep font-semibold gap-2">
                 <Link href="/discover">Explore Star Map</Link>
@@ -120,36 +186,18 @@ export default function SilhouettePage() {
           </div>
         ) : current ? (
           <div className="space-y-6">
-            {/* Silhouette / revealed avatar */}
             <div className="flex justify-center">
-              <div className="relative">
-                <img
-                  src={current.avatarUrl}
-                  alt="Mystery VTuber"
-                  className={`h-40 w-40 rounded-full border-4 transition-all duration-500 ${
-                    revealed
-                      ? 'filter-none border-vault-gold/60'
-                      : 'brightness-0 border-muted'
-                  }`}
-                  style={revealed ? {} : { filter: 'brightness(0) saturate(0)' }}
-                />
-                {!revealed && (
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-4xl opacity-20">?</span>
-                  </div>
-                )}
-              </div>
+              <SilhouetteImage entry={current} revealed={revealed} />
             </div>
 
-            {/* Revealed info */}
-            {revealed && current && (
+            {revealed && (
               <VaultPanel className="p-4 text-center">
                 <h2 className="font-bold text-vault-cream text-lg mb-1">{current.name}</h2>
                 {constellation && (
                   <span className="text-xs px-2 py-0.5 rounded-full border"
                     style={{ borderColor: `${constellation.color}50`, color: constellation.color, background: `${constellation.color}15` }}>
                     {constellation.name}
-                </span>
+                  </span>
                 )}
                 {current.bio && <p className="text-xs text-muted-foreground mt-2 line-clamp-2">{current.bio}</p>}
                 <Link href={`/vtuber/${current.id}`} className="text-xs text-vault-gold hover:underline mt-2 inline-block">
@@ -158,7 +206,6 @@ export default function SilhouettePage() {
               </VaultPanel>
             )}
 
-            {/* Choices */}
             <div className="grid grid-cols-2 gap-3">
               {choices.map(v => {
                 const isSelected = selected === v.id
@@ -168,6 +215,7 @@ export default function SilhouettePage() {
                 return (
                   <button
                     key={v.id}
+                    type="button"
                     onClick={() => guess(v.id)}
                     disabled={!!selected}
                     className={`p-4 rounded-xl border-2 text-left transition-all ${
@@ -185,13 +233,12 @@ export default function SilhouettePage() {
                       {showResult && isCorrect && <Check className="h-4 w-4 text-green-400" />}
                       {showResult && isSelected && !isCorrect && <X className="h-4 w-4 text-red-400" />}
                     </div>
-                    <span className="text-xs text-muted-foreground line-clamp-1">{v.bio ?? ''}</span>
+                    <span className="text-xs text-muted-foreground line-clamp-1">{v.bio}</span>
                   </button>
                 )
               })}
             </div>
 
-            {/* Next button */}
             {revealed && (
               <Button
                 onClick={next}

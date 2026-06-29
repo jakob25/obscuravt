@@ -16,6 +16,8 @@ interface DbVTuber {
   tags: string[]
   approved: boolean
   spotlight: boolean
+  avatar_url?: string | null
+  silhouette_url?: string | null
 }
 
 interface DbBet {
@@ -66,10 +68,13 @@ export function dbVTuberToType(row: DbVTuber): VTuber {
     else if (p.includes('youtube')) externalLinks.push({ platform: 'youtube', url: row.link })
     else externalLinks.push({ platform: 'website', url: row.link })
   }
+  const avatarUrl = row.avatar_url?.trim() ||
+    `https://api.dicebear.com/7.x/bottts-neutral/svg?seed=${encodeURIComponent(row.id)}&backgroundColor=d4a574`
   return {
     id: row.id,
     name: row.name,
-    avatarUrl: `https://api.dicebear.com/7.x/bottts-neutral/svg?seed=${encodeURIComponent(row.id)}&backgroundColor=d4a574`,
+    avatarUrl,
+    silhouetteUrl: row.silhouette_url ?? null,
     vibeTags: (row.tags ?? []).filter((t: string) => !t.startsWith('clust_')),
     category: clusterTag,
     externalLinks,

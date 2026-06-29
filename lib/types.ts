@@ -4,6 +4,7 @@ export interface VTuber {
   id: string;
   name: string;
   avatarUrl: string;
+  silhouetteUrl?: string | null;
   vibeTags: string[];
   category: string; // Constellation cluster
   externalLinks: ExternalLink[];

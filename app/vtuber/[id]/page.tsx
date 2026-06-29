@@ -12,6 +12,7 @@ import { PageBackNav } from '@/components/vault/page-back-nav'
 import { ClaimProfileButton } from '@/components/vtuber/claim-profile-button'
 import { AddToCircleButton } from '@/components/vtuber/add-to-circle-button'
 import { RecommendedStrip } from '@/components/corpo/recommended-strip'
+import { SilhouetteAssetPanel } from '@/components/discovery/silhouette-asset-panel'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -127,6 +128,13 @@ export default async function VTuberProfilePage({ params }: Props) {
                 approved={vtuber.approved !== false}
               />
             </div>
+
+            <SilhouetteAssetPanel
+              vtuberId={vtuber.id}
+              vtuberName={vtuber.name}
+              claimedBy={vtuber.claimed_by ?? null}
+              initialSilhouetteUrl={vtuber.silhouette_url ?? null}
+            />
 
             {corpo && corpoSiblings.length > 0 && (
               <div className="mb-6">

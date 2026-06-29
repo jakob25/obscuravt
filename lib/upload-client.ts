@@ -1,4 +1,4 @@
-export type UploadPurpose = 'meme' | 'fan-art' | 'general'
+export type UploadPurpose = 'meme' | 'fan-art' | 'silhouette' | 'general'
 
 export async function uploadImageFile(file: File, purpose: UploadPurpose): Promise<string> {
   const formData = new FormData()

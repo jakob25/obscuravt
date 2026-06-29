@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import {
   Menu, X, Compass, Film, Trophy, User, Medal,
-  LogIn, TrendingUp, Shield, Search, Heart, Gamepad2,
+  LogIn, TrendingUp, Shield, Search, Heart, Gamepad2, Gift,
   Bell, ShoppingBag, Calendar, Zap, Eye, MessageSquare, LayoutDashboard,
   Users, BookOpen, Star, HelpCircle,
 } from 'lucide-react'
@@ -32,7 +32,9 @@ const moreItems = [
   { href: '/help',          label: 'How It Works',   icon: HelpCircle     },
   // Find My Oshi lives in dashboard widgets (lib/roles.ts find_my_oshi) — not primary nav
   { href: '/tag-validator', label: 'Tag Validator',  icon: Zap            },
+  { href: '/discovery-games', label: 'Discovery Games', icon: Gamepad2    },
   { href: '/silhouette',    label: 'Who Is This?',   icon: Eye            },
+  { href: '/crane',         label: 'Vault Crane',    icon: Gift           },
   { href: '/forums',        label: 'Forums',         icon: MessageSquare  },
 ]
 

@@ -21,6 +21,8 @@ const PUBLIC_PAGES = [
   { path: '/help',          title: /how|help|obscura/i },
   { path: '/fan-art',       title: /fan art|gallery/i },
   { path: '/silhouette',    title: /vtuber|silhouette|who/i },
+  { path: '/crane',         title: /crane|vault/i },
+  { path: '/discovery-games', title: /discovery|games/i },
   { path: '/login',         title: /login|sign/i },
 ]
 
