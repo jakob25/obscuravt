@@ -1,18 +1,24 @@
-# VTVault 🌟
+# ObscuraVT
 
 > Find VTubers by vibe and tag, not sub count. Clips, bets, and community tools for fans and creators.
+
+**Repo:** https://github.com/jakob25/obscuravt · **Staging:** https://obscuravt-git-staging-jakob25s-projects.vercel.app
+
+**AI agents:** Read [AGENTS.md](./AGENTS.md) before making changes. Active branch is `staging`.
 
 ---
 
 ## Setup
 
 ```bash
-git clone https://github.com/jakob25/VTVAULT-V2.git
-cd VTVAULT-V2
+git clone https://github.com/jakob25/obscuravt.git
+cd obscuravt
 pnpm install
 cp .env.example .env.local   # fill in credentials
 pnpm dev
 ```
+
+`next build` requires all env vars in `.env.example` (including `SUPABASE_SERVICE_ROLE_KEY`). On Windows PowerShell, use `cmd /c "pnpm.cmd run build"` if execution policy blocks `pnpm`.
 
 ---
 

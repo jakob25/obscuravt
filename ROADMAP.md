@@ -30,6 +30,10 @@
 
 ### Brand assets
 - [x] `public/fonts/*.woff2` — wired via `@font-face` + utility classes
+- [x] Site-wide vault backdrop (glow + grain + scanline static) — `SiteBackdrop` in root layout
+- [x] Copy cleanup — `lib/site-copy.ts`, trimmed marketing/help, dossier real data
+- [x] Discovery games hub — `/discovery-games`, `/silhouette`, `/crane` (migration `011`)
+- [x] Agent handoff — `AGENTS.md`, `.grok/rules/`, `.grok/skills/obscuravt/`
 
 ---
 
@@ -104,7 +108,7 @@
 
 ### Production promotion checklist
 
-1. Run migrations `009` and `010` on production Supabase
+1. Run migrations `009`, `010`, and `011` on production Supabase
 2. Confirm Vercel env vars: `NEXT_PUBLIC_SUPABASE_*`, `SUPABASE_SERVICE_ROLE_KEY`, `SESSION_SECRET`, `ADMIN_USERNAMES`
 3. Promote `staging` → `main` after 7-day stability window
 4. Point custom domain; smoke-test auth, bets, shop, CMDI
@@ -117,8 +121,10 @@
 1. **Staging only** — no direct `main` pushes without explicit approval.
 2. **Surgical diffs** — no drive-by refactors; match existing patterns.
 3. **Do not touch** Vibe Map, Niche Map, or `/discover` clustering logic unless fixing a confirmed bug.
-4. **Verify on Vercel** after each push — deployment must reach `READY`.
-5. **Data in Supabase** — tags, clusters, shop items, achievements via admin/SQL, not hardcoded.
+4. **Do not restyle** VTuber profile cards (`dossier-frame`, `DossierFrame`, `archive-shell`).
+5. **Verify on Vercel** after each push — deployment must reach `READY`.
+6. **Data in Supabase** — tags, clusters, shop items, achievements via admin/SQL, not hardcoded.
+7. **Agents** — follow [AGENTS.md](./AGENTS.md) for full handoff instructions.
 
 ---
 
@@ -132,5 +138,8 @@
 | Fonts | `public/fonts/*.woff2` |
 | Migrations | `db/migrations/` |
 | Tests | `tests/*.spec.ts` |
+| Agent rules | `AGENTS.md`, `.grok/rules/` |
+| User copy | `lib/site-copy.ts` |
+| Site backdrop | `components/layout/site-backdrop.tsx` |
 
 Update checkboxes as work lands on `staging`.
