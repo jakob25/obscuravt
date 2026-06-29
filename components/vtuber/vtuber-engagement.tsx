@@ -7,7 +7,8 @@ import { VaultFrame } from '@/components/vault/vault-frame'
 import { GalleryWall, GalleryWallItem } from '@/components/vault/vault-surfaces'
 import { ImageUploadField } from '@/components/common/image-upload-field'
 import { Progress } from '@/components/ui/progress'
-import { Plus, Check, X } from 'lucide-react'
+import { Plus, Check, X, Link2 } from 'lucide-react'
+import { ShapeTheStreamBanner } from '@/components/vtuber/shape-the-stream-banner'
 import { StreamPredictions } from '@/components/vtuber/stream-predictions'
 import { useOwnsVtuber } from '@/hooks/use-owns-vtuber'
 import type { StreamPrediction } from '@/lib/stream-predictions'
@@ -436,6 +437,25 @@ export function VTuberEngagement({ vtuberId, vtuberName, claimedBy }: Props) {
     loadSessions()
   }
 
+  const shapeSignals = useMemo(() => {
+    const signals: string[] = []
+    if (activeCmdmi?.goal) signals.push('Chat Made Me Do It goal funding')
+    if (openQaSession) signals.push(`Q&A open: ${openQaSession.title}`)
+    if (pendingKaraoke.length > 0) signals.push(`${pendingKaraoke.length} karaoke request${pendingKaraoke.length === 1 ? '' : 's'} waiting`)
+    if (hasScheduleVotes) signals.push('Fans voting on stream times')
+    if (activePredictions.length > 0) signals.push('Stream predictions live')
+    return signals
+  }, [activeCmdmi, openQaSession, pendingKaraoke, hasScheduleVotes, activePredictions])
+
+  const copyMemeLink = async (slug: string) => {
+    const url = `${window.location.origin}/meme/${slug}`
+    try {
+      await navigator.clipboard.writeText(url)
+    } catch {
+      // clipboard unavailable
+    }
+  }
+
   const galleryItems = useMemo(() => {
     const items: Array<
       | { kind: 'meme'; key: string; meme: Meme }
@@ -461,6 +481,8 @@ export function VTuberEngagement({ vtuberId, vtuberName, claimedBy }: Props) {
 
       {error && <p className="text-xs text-red-400 mb-3">{error}</p>}
 
+      {!loading && <ShapeTheStreamBanner vtuberId={vtuberId} signals={shapeSignals} />}
+
       {loading ? (
         <p className="text-xs text-muted-foreground animate-pulse">Loading fan activity…</p>
       ) : (
@@ -469,7 +491,7 @@ export function VTuberEngagement({ vtuberId, vtuberName, claimedBy }: Props) {
             <div className="space-y-4 mb-4">
               {activeCmdmi?.goal && (
                 <ActivityBlock
-                  title="CMDMI — funding in progress"
+                  title="Chat Made Me Do It — funding in progress"
                   meta={`${activeCmdmi.title} · by ${activeCmdmi.submitted_by}`}
                   href={`/cmdmi?profile=${vtuberId}`}
                 >
@@ -676,29 +698,49 @@ export function VTuberEngagement({ vtuberId, vtuberName, claimedBy }: Props) {
                               </Link>
                               <div className="p-2 flex justify-between items-center gap-1 bg-vault-deep/80">
                                 <span className="text-[10px] text-muted-foreground truncate">meme · @{item.meme.submitted_by}</span>
-                                <button
-                                  type="button"
-                                  disabled={!user}
-                                  onClick={async () => {
-                                    await fetch('/api/memes', {
-                                      method: 'PATCH',
-                                      headers: { 'Content-Type': 'application/json' },
-                                      credentials: 'include',
-                                      body: JSON.stringify({ memeId: item.meme.id }),
-                                    })
-                                    loadMemes()
-                                  }}
-                                  className="text-xs text-vault-gold disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
-                                >
-                                  ↑ {item.meme.upvotes}
-                                </button>
+                                <div className="flex items-center gap-2 shrink-0">
+                                  <button
+                                    type="button"
+                                    onClick={() => copyMemeLink(item.meme.share_slug)}
+                                    className="text-[10px] text-muted-foreground hover:text-vault-gold flex items-center gap-0.5"
+                                    title="Copy share link"
+                                  >
+                                    <Link2 className="h-3 w-3" />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    disabled={!user}
+                                    onClick={async () => {
+                                      await fetch('/api/memes', {
+                                        method: 'PATCH',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        credentials: 'include',
+                                        body: JSON.stringify({ memeId: item.meme.id }),
+                                      })
+                                      loadMemes()
+                                    }}
+                                    className="text-xs text-vault-gold disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                                  >
+                                    ↑ {item.meme.upvotes}
+                                  </button>
+                                </div>
                               </div>
                             </>
                           ) : item.art.image_url ? (
                             <div>
                               <img src={item.art.image_url} alt="Fan art" className="w-full object-cover" />
-                              <div className="p-2 bg-vault-deep/80">
-                                <span className="text-[10px] text-muted-foreground">fan art · {item.art.submitted_by}</span>
+                              <div className="p-2 bg-vault-deep/80 space-y-0.5">
+                                <span className="text-[10px] text-muted-foreground block">fan art · {item.art.submitted_by}</span>
+                                {item.art.twitter_url && (
+                                  <a
+                                    href={item.art.twitter_url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-[10px] text-vault-gold hover:underline block truncate"
+                                  >
+                                    view on X →
+                                  </a>
+                                )}
                               </div>
                             </div>
                           ) : (
@@ -767,10 +809,10 @@ export function VTuberEngagement({ vtuberId, vtuberName, claimedBy }: Props) {
 
               {!activeCmdmi && (
                 <section className="space-y-2">
-                  <h3 className="text-sm font-semibold text-vault-cream">CMDMI</h3>
+                  <h3 className="text-sm font-semibold text-vault-cream">Chat Made Me Do It</h3>
                   <p className="text-xs text-muted-foreground">Pitch a stream idea or pledge toward a goal.</p>
                   <Link href={`/cmdmi?profile=${vtuberId}`} className="text-xs text-vault-gold hover:underline">
-                    Open CMDMI board →
+                    Open idea board →
                   </Link>
                 </section>
               )}

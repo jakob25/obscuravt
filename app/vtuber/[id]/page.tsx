@@ -11,6 +11,7 @@ import {
 import { PageBackNav } from '@/components/vault/page-back-nav'
 import { ClaimProfileButton } from '@/components/vtuber/claim-profile-button'
 import { AddToCircleButton } from '@/components/vtuber/add-to-circle-button'
+import { RecommendedStrip } from '@/components/corpo/recommended-strip'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -72,6 +73,25 @@ export default async function VTuberProfilePage({ params }: Props) {
     .order('created_at', { ascending: false })
     .limit(3)
 
+  const { data: corpoGroups } = await supabase
+    .from('corpo_groups')
+    .select('slug,name,member_vtuber_ids')
+    .contains('member_vtuber_ids', [id])
+
+  const corpo = (corpoGroups ?? []).find(g => (g.member_vtuber_ids ?? []).includes(id))
+  let corpoSiblings: { id: string; name: string; avatar_url: string | null }[] = []
+  if (corpo) {
+    const siblingIds = (corpo.member_vtuber_ids ?? []).filter((mid: string) => mid !== id)
+    if (siblingIds.length > 0) {
+      const { data: sibs } = await supabase
+        .from('vtubers')
+        .select('id,name,avatar_url')
+        .in('id', siblingIds)
+        .eq('approved', true)
+      corpoSiblings = sibs ?? []
+    }
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8 max-w-6xl">
@@ -106,6 +126,16 @@ export default async function VTuberProfilePage({ params }: Props) {
                 claimedBy={vtuber.claimed_by ?? null} 
               />
             </div>
+
+            {corpo && corpoSiblings.length > 0 && (
+              <div className="mb-6">
+                <RecommendedStrip
+                  corpoName={corpo.name}
+                  corpoSlug={corpo.slug}
+                  siblings={corpoSiblings}
+                />
+              </div>
+            )}
 
             {/* Subject Info */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-8">

@@ -11,6 +11,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Plus, Loader2 } from 'lucide-react'
 import { VaultDivider } from '@/components/vault/vault-surfaces'
+import { MemberPicker } from '@/components/corpo/member-picker'
 
 interface CorpoGroup {
   slug: string
@@ -26,6 +27,7 @@ export default function CorpoIndexPage() {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
   const [form, setForm] = useState({ name: '', slug: '', bio: '' })
+  const [memberIds, setMemberIds] = useState<string[]>([])
 
   const loadGroups = () => {
     fetch('/api/corpo')
@@ -53,12 +55,13 @@ export default function CorpoIndexPage() {
           name: form.name.trim(),
           slug: form.slug.trim(),
           bio: form.bio.trim(),
-          memberVtuberIds: [],
+          memberVtuberIds: memberIds,
         }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Failed to create group')
       setForm({ name: '', slug: '', bio: '' })
+      setMemberIds([])
       setShowForm(false)
       loadGroups()
     } catch (err: unknown) {
@@ -123,6 +126,7 @@ export default function CorpoIndexPage() {
                 rows={3}
               />
             </div>
+            <MemberPicker selectedIds={memberIds} onChange={setMemberIds} />
             {error && <p className="text-sm text-red-400">{error}</p>}
             <Button type="submit" disabled={submitting} className="bg-vault-gold hover:bg-vault-amber text-vault-deep font-semibold">
               {submitting ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Creating…</> : 'Create Collective'}

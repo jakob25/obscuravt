@@ -6,7 +6,7 @@ export async function GET(req: NextRequest) {
   const slug = req.nextUrl.searchParams.get('slug')
 
   if (slug) {
-    const { data } = await supabaseAdmin.from('corpo_groups').select('*').eq('slug', slug).single()
+    const { data } = await supabaseAdmin.from('corpo_groups').select('slug,name,bio,banner_url,member_vtuber_ids,created_by').eq('slug', slug).single()
     if (!data) return NextResponse.json({ error: 'Group not found.' }, { status: 404 })
     const { data: members } = await supabaseAdmin.from('vtubers').select('id,name,avatar_url,bio,link').in('id', data.member_vtuber_ids ?? [])
     return NextResponse.json({ group: data, members: members ?? [] })

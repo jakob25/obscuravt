@@ -64,7 +64,7 @@ export async function POST(req: NextRequest) {
   await notifyFavoriteVtubers(
     profileId,
     vtuber?.name ?? 'a creator',
-    'New CMDMI idea',
+    'New stream idea',
     `${vtuber?.name ?? 'A creator'} has a new stream idea: "${title.trim()}"`,
     'cmdmi_new',
     ideaId,
@@ -143,7 +143,7 @@ export async function PATCH(req: NextRequest) {
     await notifyFavoriteVtubers(
       idea.profile_id,
       ownedVtuber.name ?? 'a creator',
-      'New CMDMI goal',
+      'New Chat Made Me Do It goal',
       `${ownedVtuber.name ?? 'A creator'} set a ${goalAmount.toLocaleString()} scrap goal for "${idea.title}"`,
       'cmdmi_new',
       goalId,
@@ -193,9 +193,9 @@ export async function PATCH(req: NextRequest) {
 
       if (idea) {
         const msg = `"${idea.title}" hit its ${goal.goal_amount.toLocaleString()} scrap goal — stream locked in!`
-        await createNotification(idea.submitted_by, 'CMDMI goal funded!', msg, 'cmdmi_funded', goalId)
+        await createNotification(idea.submitted_by, 'Chat Made Me Do It goal funded!', msg, 'cmdmi_funded', goalId)
         if (goal.set_by !== idea.submitted_by) {
-          await createNotification(goal.set_by, 'CMDMI goal funded!', msg, 'cmdmi_funded', goalId)
+          await createNotification(goal.set_by, 'Chat Made Me Do It goal funded!', msg, 'cmdmi_funded', goalId)
         }
       }
     }

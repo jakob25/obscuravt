@@ -48,7 +48,7 @@ function FeedRow({ item }: { item: CircleFeedItem }) {
       <div className="p-3 rounded-lg border border-border/60 bg-muted/20">
         <div className="flex items-start justify-between gap-2 mb-2">
           <div className="min-w-0">
-            <p className="text-[10px] text-muted-foreground uppercase tracking-wide">CMDMI · {item.vtuberName}</p>
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Chat Made Me Do It · {item.vtuberName}</p>
             <p className="text-sm font-medium text-vault-cream line-clamp-1">{item.ideaTitle}</p>
           </div>
           <Link href={`/cmdmi?profile=${item.vtuberId}`} className="text-xs text-vault-gold hover:underline shrink-0">
@@ -206,7 +206,7 @@ export function YourCircleWidget() {
       <section className="vault-panel">
         <h2 className="text-lg font-bold text-vault-cream mb-2">Your Circle</h2>
         <p className="text-sm text-muted-foreground mb-4">
-          Follow oshis and their activity shows up here — CMDMI, predictions, memes, Q&A, karaoke, and more.
+          Follow oshis and their activity shows up here — Chat Made Me Do It, predictions, memes, Q&A, karaoke, and more.
         </p>
         <Link href="/discover" className="text-sm text-vault-gold hover:underline font-medium">
           Open Star Map to find someone →

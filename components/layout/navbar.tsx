@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import {
   Menu, X, Compass, Film, Trophy, User, Medal,
-  LogIn, TrendingUp, Shield, Search, Heart,
+  LogIn, TrendingUp, Shield, Search, Heart, Gamepad2,
   Bell, ShoppingBag, Calendar, Zap, Eye, MessageSquare, LayoutDashboard,
   Users, BookOpen, Star,
 } from 'lucide-react'
@@ -21,7 +21,7 @@ const navItems = [
   { href: '/discover',       label: 'Discover',      icon: Compass    },
   { href: '/clips',          label: 'Clips',          icon: Film       },
   { href: '/bets',           label: 'Bets',           icon: Trophy     },
-  { href: '/find-my-oshi',   label: 'Find My Oshi',   icon: Heart      },
+  { href: '/resources',      label: 'Stream Resources', icon: Gamepad2 },
   { href: '/leaderboard',    label: 'Leaderboard',    icon: TrendingUp },
 ]
 
@@ -29,7 +29,7 @@ const moreItems = [
   { href: '/weekly',        label: 'Weekly Digest',  icon: Calendar       },
   { href: '/collab',        label: 'Collab',         icon: Users          },
   { href: '/nominator',     label: 'Nominator',      icon: Star           },
-  { href: '/resources',     label: 'Resources',      icon: BookOpen       },
+  // Find My Oshi lives in dashboard widgets (lib/roles.ts find_my_oshi) — not primary nav
   { href: '/tag-validator', label: 'Tag Validator',  icon: Zap            },
   { href: '/silhouette',    label: 'Who Is This?',   icon: Eye            },
   { href: '/forums',        label: 'Forums',         icon: MessageSquare  },

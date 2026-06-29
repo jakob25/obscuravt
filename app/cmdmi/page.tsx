@@ -136,7 +136,7 @@ function CmdmiPageContent() {
 
       {!profileId && (
         <VaultPanel className="p-4 mb-6 text-sm text-muted-foreground">
-          All ideas, all creators. Hit a profile&apos;s CMDMI link to pitch someone specific.
+          All ideas, all creators. Hit a profile&apos;s Chat Made Me Do It link to pitch someone specific.
         </VaultPanel>
       )}
 

@@ -9,7 +9,7 @@ import { GlitchHeading } from '@/components/vault/glitch-heading'
 import { PageBackNav } from '@/components/vault/page-back-nav'
 import { VaultFrame } from '@/components/vault/vault-frame'
 import {
-  Calendar, Palette, Lightbulb, Users, BookOpen,
+  Calendar, Palette, Lightbulb, Users, BookOpen, BarChart3,
 } from 'lucide-react'
 import { VaultDivider } from '@/components/vault/vault-surfaces'
 
@@ -27,10 +27,11 @@ const TOOLS: Array<{
   path: (id: string) => string
 }> = [
   { label: 'Stream Schedule', icon: Calendar, desc: 'Set weekly stream slots', needsProfile: true, path: id => `/schedule?vtuber=${id}` },
-  { label: 'CMDMI Ideas', icon: Lightbulb, desc: 'Community-driven milestones', needsProfile: true, path: id => `/cmdmi?profile=${id}` },
+  { label: 'Chat Made Me Do It', icon: Lightbulb, desc: 'Fans pitch stream ideas — pledge scraps to make them happen', needsProfile: true, path: id => `/cmdmi?profile=${id}` },
   { label: 'Fan Art', icon: Palette, desc: 'Gallery submissions', needsProfile: true, path: id => `/fan-art?vtuber=${id}` },
   { label: 'Collab Finder', icon: Users, desc: 'Vibe match & schedule overlap', needsProfile: false, path: () => '/collab' },
   { label: 'Stream Resources', icon: BookOpen, desc: 'Chat games & tools', needsProfile: false, path: () => '/resources' },
+  { label: 'Analytics', icon: BarChart3, desc: 'Circle size, fan submissions, engagement pulse', needsProfile: true, path: id => `/analytics?profile=${id}` },
 ]
 
 export default function CreatorDashboardPage() {

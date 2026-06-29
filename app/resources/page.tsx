@@ -5,13 +5,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { GlitchHeading } from '@/components/vault/glitch-heading'
 import { PageBackNav } from '@/components/vault/page-back-nav'
 import { VaultDivider, VaultPanel } from '@/components/vault/vault-surfaces'
-
-interface GameResource {
-  name: string
-  description: string
-  link: string
-  tags: string[]
-}
+import { CHAT_INTEGRATED_GAMES, type GameResource } from '@/lib/chat-integrated-games'
 
 const STREAM_TOOLS: GameResource[] = [
   { name: 'OBS Studio', description: 'Free, open-source broadcaster — the standard for VTuber streaming.', link: 'https://obsproject.com/', tags: ['free', 'essential', 'capture'] },
@@ -31,17 +25,6 @@ const DEBUT_CHECKLIST: string[] = [
   'Prepare 2–3 chat games or segment ideas for dead air',
   'Link your Twitch/YouTube in your ObscuraVT dossier',
   'Submit clips after streams so fans can discover you off-platform',
-]
-
-const CHAT_GAMES: GameResource[] = [
-  { name: 'Jackbox Party Pack', description: 'Chat votes and submits answers via phone browser — works great for big audiences.', link: 'https://www.jackboxgames.com/', tags: ['party', 'voice-optional', 'large chat'] },
-  { name: 'Twitch Plays', description: 'Chat commands control gameplay directly via chat messages — classic chaos format.', link: 'https://en.wikipedia.org/wiki/Twitch_Plays_Pok%C3%A9mon', tags: ['chaos', 'classic', 'any chat size'] },
-  { name: 'StreamElements / Streamlabs Chat Games', description: 'Built-in mini-games triggered by chat commands during downtime.', link: 'https://streamelements.com/', tags: ['passive', 'economy', 'easy setup'] },
-  { name: 'Crowd Control', description: 'Viewers spend channel points to directly affect gameplay in supported games.', link: 'https://crowdcontrol.live/', tags: ['chaos', 'channel points', 'supported games only'] },
-  { name: 'Among Us', description: 'Chat can vote on suspects in spectator mode, or join in for variety streams.', link: 'https://www.innersloth.com/games/among-us/', tags: ['social deduction', 'multiplayer'] },
-  { name: 'Gartic Phone', description: 'Telephone-style drawing game — great for collab streams or chat participation rounds.', link: 'https://garticphone.com/', tags: ['drawing', 'collab', 'low pressure'] },
-  { name: 'Wheel of Names / Chat Roulette', description: 'Spin a wheel populated by chat usernames or suggestions — simple, high engagement.', link: 'https://wheelofnames.com/', tags: ['simple', 'any chat size', 'free'] },
-  { name: 'Forsen-style Chat Polls', description: 'Use !poll commands via bots like Nightbot or StreamElements to let chat decide what happens next.', link: 'https://nightbot.tv/', tags: ['decision-making', 'bot required'] },
 ]
 
 function ResourceList({ items }: { items: GameResource[] }) {
@@ -75,10 +58,10 @@ function ResourceList({ items }: { items: GameResource[] }) {
   )
 }
 
-function ChatGamesTab() {
+function ChatIntegratedGamesTab() {
   return (
     <>
-      <ResourceList items={CHAT_GAMES} />
+      <ResourceList items={CHAT_INTEGRATED_GAMES} />
       <p className="text-xs text-muted-foreground text-center mt-6">
         Missing a banger? Tell us — this list is community-fed.
       </p>
@@ -109,7 +92,7 @@ function DebutChecklistTab() {
 export default function ResourcesPage() {
   return (
     <div className="container mx-auto px-4 py-8 max-w-3xl">
-      <PageBackNav fallbackHref="/creator" />
+      <PageBackNav fallbackHref="/" />
       <div className="mb-6">
         <GlitchHeading as="h1" className="text-2xl font-bold text-vault-cream mb-1">
           Stream Resources
@@ -121,7 +104,7 @@ export default function ResourcesPage() {
       <Tabs defaultValue="chat-games">
         <TabsList className="mb-6 bg-muted/50 flex-wrap h-auto">
           <TabsTrigger value="chat-games" className="data-[state=active]:bg-vault-gold/20 data-[state=active]:text-vault-gold">
-            <Gamepad2 className="h-4 w-4 mr-1" /> Chat Games
+            <Gamepad2 className="h-4 w-4 mr-1" /> Chat Integrated Games
           </TabsTrigger>
           <TabsTrigger value="stream-tools" className="data-[state=active]:bg-vault-gold/20 data-[state=active]:text-vault-gold">
             <Monitor className="h-4 w-4 mr-1" /> Stream Setup
@@ -131,7 +114,7 @@ export default function ResourcesPage() {
           </TabsTrigger>
         </TabsList>
         <TabsContent value="chat-games">
-          <ChatGamesTab />
+          <ChatIntegratedGamesTab />
         </TabsContent>
         <TabsContent value="stream-tools">
           <StreamToolsTab />
