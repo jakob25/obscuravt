@@ -132,7 +132,7 @@ export default function SilhouettePage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen">
       <div className="border-b border-border px-4 py-4">
         <div className="container mx-auto max-w-lg flex items-center justify-between">
           <GlitchHeading as="h1" className="text-xl font-bold text-vault-cream">

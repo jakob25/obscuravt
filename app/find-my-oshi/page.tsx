@@ -134,7 +134,7 @@ export default function FindMyOshiPage() {
   const progress = step === 0 ? 0 : Math.min((step / QUESTIONS.length) * 100, 100)
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen flex flex-col">
       {/* Header */}
       <div className="border-b border-border px-4 py-4">
         <div className="container mx-auto max-w-2xl flex items-center justify-between">

@@ -143,7 +143,8 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply text-foreground;
+    background-color: transparent;
   }
   a,
   button:not(:disabled),
@@ -189,6 +190,71 @@
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+}
+
+/* ── Site-wide ambient backdrop (layout only — not cards/dossiers) ── */
+
+.site-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: -10;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.site-backdrop-glow {
+  position: absolute;
+  inset: 0;
+  background-color: var(--vault-deep);
+  background-image:
+    radial-gradient(ellipse 70% 55% at 12% 8%, rgba(212, 168, 67, 0.07), transparent 58%),
+    radial-gradient(ellipse 55% 45% at 88% 92%, rgba(224, 86, 160, 0.045), transparent 55%),
+    linear-gradient(180deg, #0d0d14 0%, #10101a 45%, #0d0d14 100%);
+}
+
+.site-backdrop-grain {
+  position: absolute;
+  inset: 0;
+  opacity: 0.045;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 128px 128px;
+  animation: siteBackdropGrainShift 10s steps(4) infinite;
+}
+
+.site-backdrop-scan {
+  position: absolute;
+  inset: 0;
+  opacity: 0.04;
+  background-image:
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(212, 168, 67, 0.35) 2px,
+      rgba(212, 168, 67, 0.35) 4px
+    ),
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='128' height='128'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='1.4' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='0.9'/></svg>");
+  background-size: auto, 128px 128px;
+  mix-blend-mode: overlay;
+  animation: siteBackdropStaticFlicker 8s steps(3) infinite;
+}
+
+@keyframes siteBackdropGrainShift {
+  0%, 100% { background-position: 0 0, 0 0; }
+  50% { background-position: 32px 16px, 0 0; }
+}
+
+@keyframes siteBackdropStaticFlicker {
+  0%, 88%, 100% { opacity: 0.035; }
+  90% { opacity: 0.055; }
+  94% { opacity: 0.025; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .site-backdrop-grain,
+  .site-backdrop-scan {
+    animation: none;
+  }
 }
 
 /* ── Vault texture language (site-wide, subtle) ── */

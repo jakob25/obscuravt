@@ -49,7 +49,7 @@ export default function FanCornerPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen">
       <div className="container mx-auto px-4 py-8 max-w-6xl">
 
         <div className="archive-shell rounded-lg overflow-hidden border-2 border-[#1e3a4a] lighter-glitch">

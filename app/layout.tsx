@@ -5,6 +5,7 @@ import { Navbar } from '@/components/layout/navbar'
 import { AddButton } from '@/components/common/add-button'
 import { AuthProvider } from '@/lib/auth-context'
 import { AppShell } from '@/components/layout/app-shell'
+import { SiteBackdrop } from '@/components/layout/site-backdrop'
 import { SITE_DESCRIPTION, SITE_NAME } from '@/lib/site-copy'
 import './globals.css'
 
@@ -42,7 +43,8 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${spaceGrotesk.variable} ${geistMono.variable} dark`}>
-      <body className="font-sans antialiased min-h-screen bg-background text-foreground">
+      <body className="font-sans antialiased min-h-screen text-foreground isolate">
+        <SiteBackdrop />
         <AuthProvider>
           <AppShell>
             <Navbar />
