@@ -18,6 +18,7 @@ const PUBLIC_PAGES = [
   { path: '/nominator',     title: /nominator|nominate/i },
   { path: '/corpo',         title: /corpo|collective/i },
   { path: '/resources',     title: /resources|stream/i },
+  { path: '/help',          title: /how|help|obscura/i },
   { path: '/fan-art',       title: /fan art|gallery/i },
   { path: '/silhouette',    title: /vtuber|silhouette|who/i },
   { path: '/login',         title: /login|sign/i },
@@ -125,6 +126,11 @@ test('resources page has extra tabs', async ({ page }) => {
   await page.goto('/resources')
   await expect(page.getByRole('tab', { name: /stream setup/i })).toBeVisible()
   await expect(page.getByRole('tab', { name: /debut checklist/i })).toBeVisible()
+})
+
+test('help page shows FAQ sections', async ({ page }) => {
+  await page.goto('/help')
+  await expect(page.getByText(/getting started/i).or(page.getByText(/chat made me do it/i))).toBeVisible()
 })
 
 test('meme share page handles missing slug gracefully', async ({ page }) => {
