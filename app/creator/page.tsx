@@ -31,7 +31,7 @@ const TOOLS: Array<{
   { label: 'Fan Art', icon: Palette, desc: 'Gallery submissions', needsProfile: true, path: id => `/fan-art?vtuber=${id}` },
   { label: 'Collab Finder', icon: Users, desc: 'Vibe match & schedule overlap', needsProfile: false, path: () => '/collab' },
   { label: 'Stream Resources', icon: BookOpen, desc: 'Chat games & tools', needsProfile: false, path: () => '/resources' },
-  { label: 'Analytics', icon: BarChart3, desc: 'Circle size, fan submissions, engagement pulse', needsProfile: true, path: id => `/analytics?profile=${id}` },
+  { label: 'Analytics', icon: BarChart3, desc: 'Circle size and fan submissions', needsProfile: true, path: id => `/analytics?profile=${id}` },
 ]
 
 export default function CreatorDashboardPage() {
@@ -68,7 +68,7 @@ export default function CreatorDashboardPage() {
       <PageBackNav fallbackHref="/" />
       <GlitchHeading as="h1" className="text-2xl font-bold text-vault-cream mb-1">Creator Dashboard</GlitchHeading>
       <p className="text-sm text-muted-foreground mb-4">
-        {role === 'VTuber' ? 'Your profiles, your fans, your chaos.' : 'Clip, curate, grow the underground.'}
+        {role === 'VTuber' ? 'Manage claimed profiles and fan tools.' : 'Clip, curate, and nominate creators.'}
       </p>
       <VaultDivider className="mb-6" />
 

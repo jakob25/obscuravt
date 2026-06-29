@@ -299,7 +299,7 @@ export default function BetsPage() {
     <div className="container mx-auto px-4 py-8">
       <GlitchHeading as="h1" className="text-2xl font-bold text-vault-cream mb-2">VTuberBets</GlitchHeading>
       <p className="text-sm text-muted-foreground mb-4">
-        Wager scraps on stream chaos. Vote when it&apos;s over. Collect when you called it.
+        Wager scraps on stream outcomes. Vote when wagering closes.
       </p>
       <VaultDivider className="mb-8" />
 

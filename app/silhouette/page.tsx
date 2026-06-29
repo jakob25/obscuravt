@@ -167,9 +167,9 @@ export default function SilhouettePage() {
                 {score}/{MAX_ROUNDS} correct
               </h2>
               <p className="text-muted-foreground">
-                {score >= 8 ? 'Vault encyclopedia. Respect.' :
-                 score >= 5 ? 'Decent eye. Star Map awaits.' :
-                 'Hit the map. Study the silhouettes.'}
+                {score >= 8 ? 'Strong score.' :
+                 score >= 5 ? 'Not bad. Try Discover next.' :
+                 'Browse Discover to learn the roster.'}
               </p>
             </div>
             <div className="flex gap-3 justify-center flex-wrap">

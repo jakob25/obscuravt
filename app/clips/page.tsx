@@ -24,7 +24,7 @@ export default function ClipsPage() {
       <div className="flex items-center justify-between mb-4">
         <div>
           <GlitchHeading as="h1" className="text-3xl font-bold text-vault-cream">Raw Clips</GlitchHeading>
-          <p className="text-sm text-muted-foreground mt-1">Unfiltered moments from the underground.</p>
+          <p className="text-sm text-muted-foreground mt-1">Community clips with timestamps and source links.</p>
         </div>
         <Link href="/clips"><Button variant="vault" size="sm">Submit a clip</Button></Link>
       </div>
@@ -35,7 +35,7 @@ export default function ClipsPage() {
       {loading ? (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">{[1,2,3,4,5,6].map(i=><div key={i} className="vault-panel aspect-video animate-pulse bg-muted/30" />)}</div>
       ) : filtered.length === 0 ? (
-        <p className="text-muted-foreground">No clips yet. Someone&apos;s gotta capture the chaos first.</p>
+        <p className="text-muted-foreground">No clips yet. Submit one with a timestamp and link.</p>
       ) : (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {filtered.map(clip => <ClipCard key={clip.id} clip={clip} />)}

@@ -78,7 +78,7 @@ export default function NotificationsPage() {
           </Button>
         )}
       </div>
-      <p className="text-sm text-muted-foreground mb-4">Bets, achievements, chaos — delivered here.</p>
+      <p className="text-sm text-muted-foreground mb-4">Bets, CMDI, and Circle activity.</p>
       <VaultDivider className="mb-6" />
 
       {loading ? (

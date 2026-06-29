@@ -16,19 +16,19 @@ export const HELP_SECTIONS: HelpSection[] = [
     items: [
       {
         q: 'What is ObscuraVT?',
-        a: 'ObscuraVT is a discovery hub for VTubers and fans. Instead of ranking creators by subscriber count, it surfaces people by personality, vibe tags, and content niche. Every clip and profile links back to the creator\'s real channel.',
+        a: 'A VTuber discovery site. Browse by vibe tags, clips, and dossiers — not subscriber count.',
       },
       {
         q: 'Do I need an account?',
-        a: 'You can browse Discover, clips, and profiles without signing in. Create a free account to vote on clips, place bets, earn Vault Scraps, submit nominations, and customize your home dashboard.',
+        a: 'Browse without signing in. Create a free account to bet, clip, earn Vault Scraps, and customize your dashboard.',
       },
       {
         q: 'How do I find VTubers here?',
-        a: 'Start on Discover and browse by tags, try the Find My Oshi quiz for personality matches, or use Search to look up a name or tag. You can also explore Raw Clips and follow links back to creators you like.',
+        a: 'Use Discover (tags or maps), Search, or the Find My Oshi quiz. Clips link back to each creator\'s channel.',
       },
       {
         q: 'What are Vault Scraps?',
-        a: 'Vault Scraps are ObscuraVT\'s in-site currency. You earn them through daily bonuses, tag validation, winning bets, and other community activity. Spend scraps on bets, shop cosmetics, and pledges — they never leave the platform.',
+        a: 'In-site currency for bets, shop items, and CMDI pledges. Earn them via daily bonus, tag validation, and winning bets.',
       },
     ],
   },
@@ -38,19 +38,19 @@ export const HELP_SECTIONS: HelpSection[] = [
     items: [
       {
         q: 'What is Your Circle?',
-        a: 'Your Circle is the set of creators you follow on your dashboard. Their Chat Made Me Do It goals, predictions, memes, Q&A, karaoke, and schedule votes show up in one feed — built around people you chose, not an algorithm.',
+        a: 'Creators you follow. Their CMDI goals, memes, Q&A, and schedule votes appear in one feed on your dashboard.',
       },
       {
         q: 'How do I add someone to my Circle?',
-        a: 'Open a creator\'s dossier and use the Add to Circle button. You can follow up to your role\'s limit. Pin the Your Circle widget on your home dashboard to see their activity first.',
+        a: 'Open a dossier and tap Add to Circle. Pin the Your Circle widget on your home page.',
       },
       {
         q: 'Can I customize my home page?',
-        a: 'Yes. Your home dashboard is fully widget-based. Add, remove, reorder, or reset widgets with the customize control in the top-right. Logged-in users can shape the page around their daily habits.',
+        a: 'Yes. Use the customize control to add, remove, or reorder dashboard widgets.',
       },
       {
         q: 'What shows up in notifications?',
-        a: 'Notifications cover bet results, Chat Made Me Do It updates, Q&A sessions, memes, karaoke queue changes, schedule votes, and more from creators in your Circle.',
+        a: 'Bet results, CMDI updates, Q&A, memes, karaoke, and schedule votes from creators in your Circle.',
       },
     ],
   },
@@ -60,19 +60,19 @@ export const HELP_SECTIONS: HelpSection[] = [
     items: [
       {
         q: 'What is Chat Made Me Do It?',
-        a: 'Fans submit stream ideas on a creator\'s board. The VTuber picks one and sets a scraps goal. When fans pledge enough scraps and the goal is met, that idea becomes a stream — chat influence with receipts.',
+        a: 'Fans submit stream ideas. The creator picks one and sets a scraps goal. Funded goals become streams.',
       },
       {
         q: 'How do I submit an idea?',
-        a: 'Sign in, open a creator\'s Chat Made Me Do It board from their dossier or fan corner, and post a title plus optional details. Upvote ideas you want to see happen.',
+        a: 'Sign in, open a creator\'s fan corner or CMDI board, and post a title plus details.',
       },
       {
         q: 'What are pledges?',
-        a: 'Pledges spend your Vault Scraps toward an active goal. When funded_amount hits goal_amount, the stream is locked in. Pledging signals demand — the creator committed when they set the goal.',
+        a: 'Spend Vault Scraps toward an active goal. When funded_amount hits goal_amount, the stream is locked in.',
       },
       {
         q: 'I\'m a VTuber — how do I run it?',
-        a: 'Claim your profile, open Chat Made Me Do It from Creator Dashboard, review submitted ideas, pick one, and set a scraps goal. Your Circle gets notified when a goal goes live.',
+        a: 'Claim your profile, open CMDI from Creator Dashboard, pick an idea, and set a scraps goal.',
       },
     ],
   },
@@ -82,19 +82,19 @@ export const HELP_SECTIONS: HelpSection[] = [
     items: [
       {
         q: 'What is the Fan Corner?',
-        a: 'Each dossier has a fan corner for memes, fan art, karaoke requests, Q&A, stream predictions, and schedule votes. It is where fans shape the stream without spamming chat.',
+        a: 'Per-dossier hub for memes, fan art, karaoke, Q&A, predictions, and schedule votes.',
       },
       {
         q: 'How do clips work?',
-        a: 'Anyone can submit raw or edited clips with a timestamp and platform link. Clips are upvoted by the community and always link back to the original upload on YouTube, Twitch, or another supported platform.',
+        a: 'Submit clips with a timestamp and platform link. Community upvotes; every clip links to the original upload.',
       },
       {
         q: 'What are community bets?',
-        a: 'Bets are prediction markets around stream outcomes. Spend scraps on an option; when the bet resolves, winners split the pool. Browse open bets on the Bets page.',
+        a: 'Wager scraps on stream outcomes. Winners split the pool when the bet resolves. See the Bets page.',
       },
       {
         q: 'Can I submit memes or fan art?',
-        a: 'Yes. Post memes from a dossier\'s fan corner. Submit fan art with an image or Twitter/X link — approved pieces stay on display with credit to the artist.',
+        a: 'Yes — from a dossier\'s fan corner. Fan art can be an image or Twitter/X link.',
       },
     ],
   },
@@ -104,19 +104,19 @@ export const HELP_SECTIONS: HelpSection[] = [
     items: [
       {
         q: 'How do I claim my VTuber profile?',
-        a: 'If your profile is already in the archive, use the claim flow from your dossier or Creator Dashboard to verify ownership. If you are not listed yet, nominate yourself or ask a fan to nominate you.',
+        a: 'Use the claim flow on your dossier or Creator Dashboard. Not listed yet? Nominate yourself.',
       },
       {
         q: 'What is the Creator Dashboard?',
-        a: 'A hub for claimed profiles: switch active profiles, jump to schedule, Chat Made Me Do It, fan art, collab tools, stream resources, and analytics.',
+        a: 'Hub for claimed profiles: schedule, CMDI, fan art, collab, resources, and analytics.',
       },
       {
         q: 'What does the Analytics page show?',
-        a: 'Circle followers, memes, fan art, karaoke queue, Q&A, Chat Made Me Do It activity, schedule votes, predictions, and clips — engagement on ObscuraVT itself, not your off-platform metrics.',
+        a: 'Circle followers, memes, fan art, karaoke, Q&A, CMDI, and clips — activity on ObscuraVT only.',
       },
       {
         q: 'How are tags assigned?',
-        a: 'Tags come from the community and admin-curated canonical tag list. Fans validate tags in the Tag Validator; accurate tags improve how you appear in Discover and search.',
+        a: 'Community and admin-curated tags. Validate tags in the Tag Validator to improve Discover placement.',
       },
     ],
   },
@@ -126,19 +126,19 @@ export const HELP_SECTIONS: HelpSection[] = [
     items: [
       {
         q: 'What is the Collab page?',
-        a: 'Vibe match % compares tag overlap between creators. Community % shows how many of your Circle fans also follow them. Blind collab hides names until you reveal. Schedule comparer finds overlapping stream slots.',
+        a: 'Vibe match %, community overlap, blind collab, and schedule comparer between creators.',
       },
       {
         q: 'What are Corpo collectives?',
-        a: 'Small groups get a shared collective page with member roster and cross-promo. Creators in the same corpo show a recommended strip on each other\'s dossiers — Twitch-group simple, not agency contracts.',
+        a: 'Shared pages for small groups. Members show a recommended strip on each other\'s dossiers.',
       },
       {
         q: 'How do I create a collective?',
-        a: 'Sign in, open Corpo Collectives, create a name and slug, pick members from the directory, and publish. Owners can edit bio and members later.',
+        a: 'Sign in, open Corpo Collectives, name it, pick members, and publish.',
       },
       {
         q: 'Is ObscuraVT trying to be a talent agency?',
-        a: 'No. ObscuraVT is a discovery and community layer. It helps fans find you and helps you find collab partners — no exclusivity or revenue splits.',
+        a: 'No. It\'s a discovery and community layer — no exclusivity or revenue splits.',
       },
     ],
   },
@@ -148,19 +148,19 @@ export const HELP_SECTIONS: HelpSection[] = [
     items: [
       {
         q: 'How do community bets work?',
-        a: 'Open a bet, pick an outcome, and wager Vault Scraps. When wagering closes, fans vote on what actually happened. When enough votes agree, winners split the pool (minus a small house cut).',
+        a: 'Pick an outcome and wager Vault Scraps. After wagering closes, fans vote to resolve. Winners split the pool.',
       },
       {
         q: 'What is the voting phase?',
-        a: 'After wagering, bets move to voting. Head to the Bets page, open "Needs your vote", select the correct outcome, and submit. Your vote helps resolve the slip for everyone who wagered.',
+        a: 'Open "Needs your vote" on the Bets page, pick the correct outcome, and submit.',
       },
       {
         q: 'Stream predictions on dossiers',
-        a: 'Each dossier can host stream-specific prediction bets tied to that creator. They show up in Your Circle and work like global bets — scraps in, vote to resolve.',
+        a: 'Per-creator prediction bets. They appear in Your Circle and work like global bets.',
       },
       {
         q: 'Can I lose all my scraps?',
-        a: 'Wagers are spent when you place them. If your option loses, those scraps are gone — but daily bonuses, tag validation streaks, and winning bets help you recover.',
+        a: 'Lost wagers are gone. Daily bonus, tag streaks, and winning bets help you recover.',
       },
     ],
   },
@@ -170,19 +170,19 @@ export const HELP_SECTIONS: HelpSection[] = [
     items: [
       {
         q: 'How do I earn Vault Scraps?',
-        a: 'Claim the daily bonus on My Profile (+250), validate tags (10-streak pays), win bets, unlock achievements, and stay active in community features.',
+        a: 'Daily bonus (+250), tag validation streaks, winning bets, and achievements.',
       },
       {
         q: 'What can I spend scraps on?',
-        a: 'Bets, Chat Made Me Do It pledges, and shop cosmetics (titles, badges, frames). Scraps never leave ObscuraVT — they circulate inside the archive.',
+        a: 'Bets, CMDI pledges, and shop cosmetics. Scraps stay on ObscuraVT.',
       },
       {
         q: 'Where is my transaction history?',
-        a: 'My Profile shows a scraps ledger after migration 010 — daily bonuses, shop purchases, pledges, and bet activity in one list.',
+        a: 'My Profile shows a scraps ledger — bonuses, shop, pledges, and bets.',
       },
       {
         q: 'Do creators get paid in scraps?',
-        a: 'No. Scraps are fan-side engagement currency. The goal is to drive attention and clips back to creators\' real channels, not replace platform revenue.',
+        a: 'No. Scraps are fan-side currency. The goal is attention back to creators\' real channels.',
       },
     ],
   },
@@ -192,19 +192,19 @@ export const HELP_SECTIONS: HelpSection[] = [
     items: [
       {
         q: 'What is on the Stream Resources page?',
-        a: 'Chat Integrated Games (community-fed list), stream setup tools, and a debut checklist. Primary nav links here — built for indies prepping streams or fighting dead air.',
+        a: 'Chat-integrated games, setup tools, and a debut checklist.',
       },
       {
         q: 'Can I add my stream schedule?',
-        a: 'Yes. Claimed creators can post schedule entries on their dossier so fans know when you are live. Fans can also propose times via schedule votes.',
+        a: 'Claimed creators post schedule slots on their dossier. Fans can propose times via schedule votes.',
       },
       {
         q: 'Where do submitted clips link?',
-        a: 'Every clip must include a valid platform URL with a timestamp. ObscuraVT links out to the original — the goal is to drive views to your channel.',
+        a: 'Every clip requires a platform URL with a timestamp. ObscuraVT links out to the original.',
       },
       {
         q: 'Any tips for getting discovered?',
-        a: 'Keep tags accurate, encourage fans to submit clips with timestamps, and stay active in community features. Browse Discover by tags to see how similar creators are categorized.',
+        a: 'Keep tags accurate, encourage clip submissions, and stay active in community features.',
       },
     ],
   },

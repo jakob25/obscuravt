@@ -4,8 +4,8 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import {
-  Compass, Film, Trophy, ArrowRight, TrendingUp, Clock, Sparkles, Heart, Search,
-  Gift, Tag, Gamepad2, Calendar, Zap, BarChart3, MessageSquare, Bell, Globe, Wrench, RefreshCw,
+  Compass, Trophy, ArrowRight, TrendingUp, Clock, Sparkles,
+  Gift, Tag, Gamepad2,
 } from 'lucide-react'
 import { useVTubers, useClips, useBets } from '@/hooks/use-data'
 import { useStarMapData } from '@/hooks/use-star-map-data'
@@ -17,9 +17,9 @@ import { useDashboardLayout, DashboardCustomizer, type WidgetId } from '@/compon
 import { GlitchHeading } from '@/components/vault/glitch-heading'
 import { MarketingHome } from '@/components/landing/marketing-home'
 import { FirstRunChecklist } from '@/components/onboarding/first-run-checklist'
+import { EMPTY } from '@/lib/site-copy'
 
 
-import { LogIn } from 'lucide-react'
 import { MyClipsWidget } from '@/components/dashboard/my-clips-widget'
 import { YourCircleWidget } from '@/components/dashboard/your-circle-widget'
 import { normalizeRole, ROLE_ALLOWED_WIDGETS, ROLE_DEFAULT_WIDGETS, type AppRole } from '@/lib/roles'
@@ -34,7 +34,7 @@ function TrendingClipsWidget() {
   return (
     <section>
       <div className="flex items-center justify-between mb-4">
-        <GlitchHeading as="h2" className="text-xl font-bold text-vault-cream">Clips worth stealing</GlitchHeading>
+        <GlitchHeading as="h2" className="text-xl font-bold text-vault-cream">Top clips</GlitchHeading>
         <Link href="/clips" className="text-sm text-vault-gold hover:text-vault-amber flex items-center gap-1">
           All clips <ArrowRight className="h-3 w-3" />
         </Link>
@@ -44,7 +44,7 @@ function TrendingClipsWidget() {
           {[1,2,3,4].map(i => <div key={i} className="vault-card rounded-lg aspect-video animate-pulse bg-muted/30" />)}
         </div>
       ) : top.length === 0 ? (
-        <p className="text-muted-foreground text-sm">Nothing clipped yet. Be the first heat.</p>
+        <p className="text-muted-foreground text-sm">{EMPTY.clips}</p>
       ) : (
         <div className="grid sm:grid-cols-2 gap-4">
           {top.map(clip => <ClipCard key={clip.id} clip={clip} />)}
@@ -68,7 +68,7 @@ function ActiveBetsWidget() {
       {loading ? (
         <div className="p-4 space-y-3">{[1,2,3].map(i => <div key={i} className="h-14 rounded animate-pulse bg-muted/30" />)}</div>
       ) : open.length === 0 ? (
-        <p className="p-4 text-sm text-muted-foreground">No wagers on the board. Start one.</p>
+        <p className="p-4 text-sm text-muted-foreground">{EMPTY.bets}</p>
       ) : (
         <div className="divide-y divide-border">
           {open.map(bet => {
@@ -157,8 +157,8 @@ function FeaturedVTubersWidget() {
     <section>
       <div className="flex items-center justify-between mb-2">
         <div>
-          <GlitchHeading as="h2" className="text-xl font-bold text-vault-cream">Someone you haven&apos;t met</GlitchHeading>
-          <p className="text-xs text-muted-foreground mt-0.5">Shuffled every load. No ranking games.</p>
+          <GlitchHeading as="h2" className="text-xl font-bold text-vault-cream">Random dossiers</GlitchHeading>
+          <p className="text-xs text-muted-foreground mt-0.5">Shuffled each visit.</p>
         </div>
         <Link href="/discover" className="text-sm text-vault-gold hover:text-vault-amber flex items-center gap-1">
           Star Map <ArrowRight className="h-3 w-3" />
@@ -215,9 +215,9 @@ function WeeklyDigestWidget() {
         <Link href="/weekly" className="text-xs text-vault-gold hover:text-vault-amber">View full →</Link>
       </div>
       {loading ? (
-        <p className="text-sm text-muted-foreground animate-pulse">Pulling the tape…</p>
+        <p className="text-sm text-muted-foreground animate-pulse">{EMPTY.weekly}</p>
       ) : !digest ? (
-        <p className="text-sm text-muted-foreground">Digest offline. Try again later.</p>
+        <p className="text-sm text-muted-foreground">{EMPTY.digestOffline}</p>
       ) : (
         <div className="space-y-2 text-sm">
           {digest.topClips[0] && (
@@ -242,7 +242,7 @@ function WeeklyDigestWidget() {
             </p>
           )}
           {!digest.topClips[0] && !digest.topBet && !digest.topVtuber && (
-            <p className="text-muted-foreground">Dead air this week. Break the silence.</p>
+            <p className="text-muted-foreground">Quiet week. Check back Monday.</p>
           )}
         </div>
       )}
@@ -354,70 +354,6 @@ const WIDGET_COMPONENTS: Record<WidgetId, React.ComponentType> = {
   forums:               ForumsWidget,
   recent_notifications: NotificationsWidget,
   my_clips:             MyClipsWidget,
-}
-
-// ── Main page ──────────────────────────────────────────────
-
-function LandingHero() {
-  return (
-    <section className="relative border-b border-border overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-br from-vault-gold/8 via-transparent to-[#e056a0]/5 pointer-events-none" />
-      <div className="absolute inset-0 opacity-[0.03] pointer-events-none"
-        style={{ backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(212,168,67,0.4) 2px, rgba(212,168,67,0.4) 4px)' }} />
-      <div className="container mx-auto px-4 py-10 md:py-16">
-        <div className="max-w-2xl mb-6">
-          <GlitchHeading
-            as="h1"
-            className="text-3xl md:text-4xl font-bold text-vault-cream mb-3 leading-tight"
-            glitchText="The creators the algorithm doesn't want you to see."
-          >
-            The creators the algorithm{' '}
-            <span className="text-vault-gold">doesn&apos;t want you to see.</span>
-          </GlitchHeading>
-            <p className="text-muted-foreground text-base leading-relaxed mb-2">
-              ObscuraVT is a discovery hub built around vibes, not views. Find VTubers by personality,
-              content niche, or community tag — not subscriber count. Every clip links back to the
-              creator. Every search rewards the niche.
-            </p>
-            <p className="text-sm text-muted-foreground/70">
-              Works for solo indies, small groups, and light corpos. No contracts, no exclusives.
-            </p>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-3 mb-6">
-            <Button asChild className="bg-vault-gold hover:bg-vault-amber text-vault-deep font-semibold">
-              <Link href="/login"><LogIn className="mr-2 h-4 w-4" />Sign In to Enter the Vault</Link>
-            </Button>
-            <Button asChild className="bg-vault-gold hover:bg-vault-amber text-vault-deep font-semibold">
-              <Link href="/discover"><Compass className="mr-2 h-4 w-4" />Explore Star Map</Link>
-            </Button>
-            <Button asChild variant="outline" className="border-vault-bronze/50 text-vault-cream hover:bg-vault-bronze/10">
-              <Link href="/find-my-oshi"><Heart className="mr-2 h-4 w-4" />Find My Oshi</Link>
-            </Button>
-            <Button asChild variant="outline" className="border-vault-bronze/50 text-vault-cream hover:bg-vault-bronze/10">
-              <Link href="/clips"><Film className="mr-2 h-4 w-4" />Raw Clips</Link>
-            </Button>
-            <Button asChild variant="outline" className="border-vault-bronze/50 text-vault-cream hover:bg-vault-bronze/10">
-              <Link href="/search"><Search className="mr-2 h-4 w-4" />Search</Link>
-            </Button>
-          </div>
-
-          <div className="flex flex-wrap gap-2">
-            {[
-              { Icon: Wrench, text: 'Vibe-based discovery' },
-              { Icon: Film, text: 'Raw clips with timestamps' },
-              { Icon: Trophy, text: 'Community predictions' },
-              { Icon: Zap, text: 'Daily habit loop' },
-              { Icon: Globe, text: 'Drives views to creators' },
-            ].map(({ Icon, text }) => (
-              <span key={text} className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-muted/30 border border-border text-xs text-muted-foreground">
-                <Icon className="h-3 w-3 text-vault-gold" />{text}
-              </span>
-            ))}
-          </div>
-      </div>
-    </section>
-  )
 }
 
 const CIRCLE_MIGRATION_KEY = 'vtvault_circle_widget_migrated'

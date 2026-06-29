@@ -27,7 +27,7 @@ export default function WeeklyPage() {
       <p className="text-sm text-muted-foreground mb-4">Resets Monday. What happened while you weren&apos;t watching.</p>
       <VaultDivider className="mb-8" />
 
-      {loading && <p className="text-muted-foreground animate-pulse">Pulling the tape…</p>}
+      {loading && <p className="text-muted-foreground animate-pulse">Loading digest…</p>}
 
       {!loading && digest && (
         <div className="space-y-6">

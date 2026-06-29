@@ -129,7 +129,7 @@ function CmdmiPageContent() {
           Chat Made Me Do It
         </GlitchHeading>
         <p className="text-muted-foreground text-sm">
-          Chat pitches the chaos. Creator picks one. Pledge scraps — goal met, stream happens.
+          Fans submit ideas. Creators pick one and set a scraps goal.
         </p>
       </div>
       <VaultDivider className="mb-6" />

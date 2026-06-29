@@ -1,7 +1,6 @@
 # VTVault 🌟
 
-> The ultimate discovery hub for VTubers, fans, and raw clips.
-> Find creators by vibe or niche — not subscriber count. Every clip funnels back to the creator.
+> Find VTubers by vibe and tag, not sub count. Clips, bets, and community tools for fans and creators.
 
 ---
 

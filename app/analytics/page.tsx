@@ -155,7 +155,7 @@ function AnalyticsContent() {
         <>
           <VaultPanel className="p-5 mb-6">
             <div className="flex justify-between items-center mb-2">
-              <span className="text-sm font-medium text-vault-cream">Fan engagement pulse</span>
+              <span className="text-sm font-medium text-vault-cream">Activity score</span>
               <span className="text-xs text-vault-gold">{data.fanEngagementScore} pts</span>
             </div>
             <Progress value={engagementPct} className="h-2" />

@@ -5,6 +5,7 @@ import { Navbar } from '@/components/layout/navbar'
 import { AddButton } from '@/components/common/add-button'
 import { AuthProvider } from '@/lib/auth-context'
 import { AppShell } from '@/components/layout/app-shell'
+import { SITE_DESCRIPTION, SITE_NAME } from '@/lib/site-copy'
 import './globals.css'
 
 const spaceGrotesk = Space_Grotesk({ 
@@ -20,8 +21,8 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'ObscuraVT - Discover Your Next Oshi',
-  description: 'ObscuraVT is the ultimate discovery hub for VTubers and fans. Find your perfect match through vibe-based search, raw clips, community bets, and more.',
+  title: `${SITE_NAME} — Discover VTubers by Vibe`,
+  description: SITE_DESCRIPTION,
   keywords: ['VTuber', 'discovery', 'clips', 'streaming', 'community', 'oshi', 'bets'],
   icons: {
     icon: [

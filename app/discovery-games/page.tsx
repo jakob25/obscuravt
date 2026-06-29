@@ -9,30 +9,26 @@ const GAMES = [
   {
     href: '/silhouette',
     title: 'Who Is This?',
-    description: 'Guess the VTuber from uploaded silhouettes tied to each dossier. Owners upload custom silhouette art.',
+    description: 'Guess the VTuber from silhouettes on each dossier. Owners can upload custom art.',
     icon: Eye,
-    status: 'Playable',
   },
   {
     href: '/crane',
     title: 'Vault Crane',
-    description: 'Carnival claw machine — profile pictures are the prizes. Catch a creator and jump to their dossier.',
+    description: 'Claw machine with profile pictures as prizes. Catch a creator and open their dossier.',
     icon: Gift,
-    status: 'Playable',
   },
   {
     href: '/find-my-oshi',
     title: 'Find My Oshi',
-    description: 'Personality quiz that matches you to creators by vibe, not follower count.',
+    description: 'Personality quiz that matches you to creators by vibe tags.',
     icon: Sparkles,
-    status: 'Playable',
   },
   {
     href: '/discover',
     title: 'Star Map',
-    description: 'The main discovery canvas. Vibe and niche maps — frozen logic, always the hub.',
+    description: 'Vibe and niche maps for browsing the full directory.',
     icon: Compass,
-    status: 'Hub',
   },
 ]
 
@@ -44,7 +40,7 @@ export default function DiscoveryGamesPage() {
           Discovery Games
         </GlitchHeading>
         <p className="text-sm text-muted-foreground mb-6">
-          Mini-games that send fans toward dossiers. Silhouettes and crane prizes pull from live VTuber profiles.
+          Mini-games that point fans toward dossiers.
         </p>
         <VaultDivider className="mb-8" />
 
@@ -59,14 +55,9 @@ export default function DiscoveryGamesPage() {
                       <Icon className="h-5 w-5" />
                     </div>
                     <div>
-                      <div className="flex items-center gap-2 mb-1">
-                        <h2 className="font-bold text-vault-cream group-hover:text-vault-gold transition-colors">
-                          {game.title}
-                        </h2>
-                        <span className="text-[10px] uppercase tracking-wide text-muted-foreground border border-border px-1.5 py-0.5 rounded">
-                          {game.status}
-                        </span>
-                      </div>
+                      <h2 className="font-bold text-vault-cream group-hover:text-vault-gold transition-colors mb-1">
+                        {game.title}
+                      </h2>
                       <p className="text-sm text-muted-foreground leading-relaxed">{game.description}</p>
                     </div>
                   </div>
@@ -77,7 +68,7 @@ export default function DiscoveryGamesPage() {
         </div>
 
         <p className="text-xs text-muted-foreground mt-8 text-center">
-          VTuber owners: upload silhouettes from your dossier after claiming a profile.
+          Claimed creators can upload silhouettes from their dossier.
         </p>
       </div>
     </div>

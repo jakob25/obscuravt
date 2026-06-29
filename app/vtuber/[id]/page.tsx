@@ -13,6 +13,8 @@ import { ClaimProfileButton } from '@/components/vtuber/claim-profile-button'
 import { AddToCircleButton } from '@/components/vtuber/add-to-circle-button'
 import { RecommendedStrip } from '@/components/corpo/recommended-strip'
 import { SilhouetteAssetPanel } from '@/components/discovery/silhouette-asset-panel'
+import { fetchDossierSidebarData } from '@/lib/vtuber-dossier-data'
+import { EMPTY } from '@/lib/site-copy'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -55,24 +57,7 @@ export default async function VTuberProfilePage({ params }: Props) {
 
   const caseId = `OVT-${String(vtuber.id).replace(/[^a-zA-Z0-9]/g, '').slice(-5).toUpperCase().padStart(5, '0')}`
 
-  // Fetch active CMDI goal
-  const { data: activeCmdiGoal } = await supabase
-    .from('cmdi_goals')
-    .select('*')
-    .eq('vtuber_id', id)
-    .eq('status', 'active')
-    .order('created_at', { ascending: false })
-    .limit(1)
-    .single()
-
-  // Fetch open bets for this specific VTuber
-  const { data: openBets } = await supabase
-    .from('bets')
-    .select('id, title, option_a, option_b, status')
-    .eq('vtuber_id', id)
-    .eq('status', 'open')
-    .order('created_at', { ascending: false })
-    .limit(3)
+  const { nextScheduleLabel, activeCmdi, openBets } = await fetchDossierSidebarData(id, vtuber.name)
 
   const { data: corpoGroups } = await supabase
     .from('corpo_groups')
@@ -193,38 +178,32 @@ export default async function VTuberProfilePage({ params }: Props) {
               </div>
             </div>
 
-            {/* Social Links - added in the dead space right of photo (2x2 grid) */}
-            <div className="mt-3 grid grid-cols-2 gap-1.5">
-              {vtuber.link && (
-                <a href={vtuber.link} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-1.5 px-2.5 py-1 text-[10px] border border-[#5a4f2e]/40 rounded hover:bg-[#d4a843]/10 transition-colors">
-                  <Twitch className="h-3 w-3" /> Twitch
-                </a>
-              )}
-              <a href="#" className="flex items-center justify-center gap-1.5 px-2.5 py-1 text-[10px] border border-[#5a4f2e]/40 rounded hover:bg-[#d4a843]/10 transition-colors opacity-70">YouTube</a>
-              <a href="#" className="flex items-center justify-center gap-1.5 px-2.5 py-1 text-[10px] border border-[#5a4f2e]/40 rounded hover:bg-[#d4a843]/10 transition-colors opacity-70">𝕏</a>
-              <a href="#" className="flex items-center justify-center gap-1.5 px-2.5 py-1 text-[10px] border border-[#5a4f2e]/40 rounded hover:bg-[#d4a843]/10 transition-colors opacity-70">TikTok</a>
-            </div>
-
             {/* Chat Made Me Do It */}
             <div className="mb-8 border-t border-[#5a4f2e]/30 pt-6">
               <div className="section-label mb-2">CHAT MADE ME DO IT</div>
               
-              {activeCmdiGoal ? (
+              {activeCmdi ? (
                 <div className="bg-[#0d0d14] border border-[#143544] rounded p-4">
                   <div className="flex justify-between text-sm mb-2">
-                    <span>{activeCmdiGoal.title}</span>
+                    <span>{activeCmdi.title}</span>
                     <span className="text-[#d4a843] font-medium">
-                      {Math.round((activeCmdiGoal.current_progress / activeCmdiGoal.target) * 100)}%
+                      {activeCmdi.goal_amount > 0
+                        ? Math.round((activeCmdi.funded_amount / activeCmdi.goal_amount) * 100)
+                        : 0}%
                     </span>
                   </div>
                   <div className="h-2 bg-[#143544] rounded mb-1">
                     <div 
                       className="h-2 bg-[#d4a843] rounded transition-all" 
-                      style={{ width: `${Math.min((activeCmdiGoal.current_progress / activeCmdiGoal.target) * 100, 100)}%` }}
+                      style={{
+                        width: `${activeCmdi.goal_amount > 0
+                          ? Math.min((activeCmdi.funded_amount / activeCmdi.goal_amount) * 100, 100)
+                          : 0}%`,
+                      }}
                     />
                   </div>
                   <div className="text-xs text-[#5a4f2e]">
-                    {activeCmdiGoal.current_progress} / {activeCmdiGoal.target} scraps funded
+                    {activeCmdi.funded_amount.toLocaleString()} / {activeCmdi.goal_amount.toLocaleString()} scraps
                   </div>
                 </div>
               ) : (
@@ -241,33 +220,37 @@ export default async function VTuberProfilePage({ params }: Props) {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="bg-[#e9dfc4] border border-[#5a4f2e]/30 rounded p-4">
                 <div className="section-label mb-1">SCHEDULE / LAST STREAM</div>
-                <div className="text-sm">Next: Sunday 8:00 PM<br /><span className="text-xs text-[#5a4f2e]">or view last stream VOD</span></div>
+                <div className="text-sm">
+                  {nextScheduleLabel ?? EMPTY.schedule}
+                </div>
               </div>
 
               {/* Bets - real data per VTuber */}
               <div className="bg-[#e9dfc4] border border-[#5a4f2e]/30 rounded p-4">
                 <div className="section-label mb-2">BETS</div>
                 
-                {openBets && openBets.length > 0 ? (
+                {openBets.length > 0 ? (
                   <div className="space-y-2">
                     {openBets.map((bet) => (
                       <div key={bet.id} className="text-sm">
                         <div className="font-medium">{bet.title}</div>
-                        <div className="text-xs text-[#5a4f2e]">
-                          {bet.option_a} vs {bet.option_b}
-                        </div>
+                        {bet.options.length > 0 && (
+                          <div className="text-xs text-[#5a4f2e]">
+                            {bet.options.join(' · ')}
+                          </div>
+                        )}
                       </div>
                     ))}
                     <Link 
-                      href={`/vtuber/${id}/bets`}
+                      href="/bets"
                       className="inline-block mt-1 text-xs text-[#d4a843] hover:underline"
                     >
-                      View all open bets →
+                      All open bets →
                     </Link>
                   </div>
                 ) : (
                   <div className="text-sm text-[#5a4f2e]">
-                    No open bets right now.
+                    {EMPTY.bets}
                   </div>
                 )}
               </div>
