@@ -8,7 +8,7 @@ import {
   Menu, X, Compass, Film, Trophy, User, Medal,
   LogIn, TrendingUp, Shield, Search, Heart, Gamepad2,
   Bell, ShoppingBag, Calendar, Zap, Eye, MessageSquare, LayoutDashboard,
-  Users, BookOpen, Star,
+  Users, BookOpen, Star, HelpCircle,
 } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/lib/auth-context'
@@ -29,6 +29,7 @@ const moreItems = [
   { href: '/weekly',        label: 'Weekly Digest',  icon: Calendar       },
   { href: '/collab',        label: 'Collab',         icon: Users          },
   { href: '/nominator',     label: 'Nominator',      icon: Star           },
+  { href: '/help',          label: 'How It Works',   icon: HelpCircle     },
   // Find My Oshi lives in dashboard widgets (lib/roles.ts find_my_oshi) — not primary nav
   { href: '/tag-validator', label: 'Tag Validator',  icon: Zap            },
   { href: '/silhouette',    label: 'Who Is This?',   icon: Eye            },
@@ -214,54 +215,38 @@ export function Navbar() {
               )
             })}
 
-            <div className="my-1 border-t border-border" />
+            <div className="border-t border-border my-2" />
 
-            {user ? (
+            {moreItems.map(({ href, label, icon: Icon }) => (
+              <Link key={href} href={href} onClick={() => setMobileOpen(false)}
+                className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-muted-foreground hover:text-vault-cream hover:bg-muted/50">
+                <Icon className="h-5 w-5" /> {label}
+              </Link>
+            ))}
+
+            {user && (
               <>
-                <Link href="/notifications" onClick={() => setMobileOpen(false)}
+                <div className="border-t border-border my-2" />
+                <Link href="/creator" onClick={() => setMobileOpen(false)}
+                  className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-muted-foreground hover:text-vault-gold hover:bg-muted/50">
+                  <LayoutDashboard className="h-5 w-5" /> Creator Dashboard
+                </Link>
+                <Link href="/my-profile" onClick={() => setMobileOpen(false)}
                   className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-muted-foreground hover:text-vault-cream hover:bg-muted/50">
-                  <Bell className="h-5 w-5" />
-                  Notifications
-                  {unread > 0 && <span className="ml-auto bg-vault-gold text-vault-deep text-[10px] font-bold px-1.5 py-0.5 rounded-full">{unread}</span>}
+                  <User className="h-5 w-5" /> My Profile
                 </Link>
                 <Link href="/shop" onClick={() => setMobileOpen(false)}
                   className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-muted-foreground hover:text-vault-cream hover:bg-muted/50">
                   <ShoppingBag className="h-5 w-5" /> Shop
                 </Link>
-                {moreItems.map(({ href, label, icon: Icon }) => (
-                <Link key={href} href={href} onClick={() => setMobileOpen(false)}
-                  className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-muted-foreground hover:text-vault-cream hover:bg-muted/50">
-                  <Icon className="h-5 w-5" /> {label}
-                </Link>
-              ))}
-              {user && (
-                <Link href="/creator" onClick={() => setMobileOpen(false)}
-                  className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-muted-foreground hover:text-vault-gold hover:bg-muted/50">
-                  <LayoutDashboard className="h-5 w-5" /> Creator Dashboard
-                </Link>
-              )}
-              <Link href="/achievements" onClick={() => setMobileOpen(false)}
-                  className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-muted-foreground hover:text-vault-cream hover:bg-muted/50">
-                  <Medal className="h-5 w-5" /> Achievements
-                </Link>
-                <Link href="/my-profile" onClick={() => setMobileOpen(false)}
-                  className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-muted-foreground hover:text-vault-cream hover:bg-muted/50">
-                  <User className="h-5 w-5" /> Profile ({user.coins.toLocaleString()} coins)
-                </Link>
-                {ADMINS.includes(user.username) && (
-                  <Link href="/admin" onClick={() => setMobileOpen(false)}
-                    className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-muted-foreground hover:text-vault-gold hover:bg-muted/50">
-                    <Shield className="h-5 w-5" /> Admin
-                  </Link>
-                )}
               </>
-            ) : (
-              <button
-                onClick={() => { setMobileOpen(false); router.push('/login') }}
-                className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-vault-gold hover:bg-vault-gold/10"
-              >
-                <LogIn className="h-5 w-5" /> Sign In / Register
-              </button>
+            )}
+
+            {!user && (
+              <Link href="/login" onClick={() => setMobileOpen(false)}
+                className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium bg-vault-gold/10 text-vault-gold mt-2">
+                <LogIn className="h-5 w-5" /> Sign In
+              </Link>
             )}
           </div>
         </div>
