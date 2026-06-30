@@ -142,9 +142,12 @@
   * {
     @apply border-border outline-ring/50;
   }
+  html {
+    background-color: var(--vault-deep);
+  }
   body {
     @apply text-foreground;
-    background-color: transparent;
+    background-color: var(--vault-deep);
   }
   a,
   button:not(:disabled),
@@ -197,9 +200,8 @@
 .site-backdrop {
   position: fixed;
   inset: 0;
-  z-index: -10;
+  z-index: 0;
   pointer-events: none;
-  overflow: hidden;
 }
 
 .site-backdrop-glow {

@@ -43,17 +43,19 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${spaceGrotesk.variable} ${geistMono.variable} dark`}>
-      <body className="font-sans antialiased min-h-screen text-foreground isolate">
+      <body className="font-sans antialiased min-h-screen bg-vault-deep text-foreground">
         <SiteBackdrop />
-        <AuthProvider>
-          <AppShell>
-            <Navbar />
-            <main className="min-h-[calc(100vh-4rem)]">
-              {children}
-            </main>
-            <AddButton />
-          </AppShell>
-        </AuthProvider>
+        <div className="relative z-10 flex min-h-screen flex-col">
+          <AuthProvider>
+            <AppShell>
+              <Navbar />
+              <main className="min-h-[calc(100vh-4rem)] flex-1">
+                {children}
+              </main>
+              <AddButton />
+            </AppShell>
+          </AuthProvider>
+        </div>
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
     </html>
