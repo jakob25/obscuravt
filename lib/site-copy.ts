@@ -2,12 +2,12 @@
 
 export const SITE_NAME = 'ObscuraVT'
 
-export const SITE_TAGLINE = 'Find VTubers by vibe and tag, not sub count.'
+export const SITE_TAGLINE = "Find the VTubers the Algorithms don't want you to find."
 
-export const SITE_HERO = 'Find VTubers by vibe and tag, not sub count.'
+export const SITE_HERO = "Find the VTubers the Algorithms don't want you to find."
 
 export const SITE_DESCRIPTION =
-  'Browse dossiers, clips, and community bets. Every clip links back to the creator.'
+  'Browse Profiles, clips, and community bets. Every clip links back to the creator.'
 
 export const EMPTY = {
   clips: 'No clips yet.',
@@ -20,8 +20,3 @@ export const EMPTY = {
   weekly: 'Loading digest…',
   digestOffline: 'Digest unavailable.',
 } as const
-
-// New tagline and description per feedback (old versions left intact per editing rules)
-export const SITE_TAGLINE_V2 = "Find the VTubers the Algorithms don't want you to find."
-export const SITE_HERO_V2 = "Find the VTubers the Algorithms don't want you to find."
-export const SITE_DESCRIPTION_V2 = 'Browse Profiles, clips, and community bets. Every clip links back to the creator.'
