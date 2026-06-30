@@ -18,6 +18,7 @@ Do not edit these files unless fixing a **confirmed layout bug** with reproducti
 | App wrapped in `relative z-10 flex min-h-screen flex-col` | Keeps content above fixed backdrop |
 | `.site-backdrop` z-index ≥ 0 | Negative z-index trapped backdrop behind body |
 | No `overflow: hidden` on `html`, `body`, or `.nav-rgb-shell` | Clipped sides/bottom of the page |
+| `.nav-rgb-shell` uses `overflow-x: clip`; FX lives in `.nav-rgb-fx` | Nav RGB glitch must not widen the page |
 | `globals.css` stays ~1100+ lines | Cloud agent once deleted 1000+ lines in one commit |
 
 ## Agent workflow

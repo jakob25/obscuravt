@@ -29,9 +29,12 @@ export function NavRgbGlitch({ children, className }: NavRgbGlitchProps) {
           : undefined
       }
     >
-      <div className="nav-rgb-tear nav-rgb-tear-a" aria-hidden />
-      <div className="nav-rgb-tear nav-rgb-tear-b" aria-hidden />
-      <div className="nav-rgb-scan" aria-hidden />
+      <div className="nav-rgb-fx" aria-hidden>
+        <div className="nav-rgb-glitch-layer" />
+        <div className="nav-rgb-tear nav-rgb-tear-a" />
+        <div className="nav-rgb-tear nav-rgb-tear-b" />
+        <div className="nav-rgb-scan" />
+      </div>
       {children}
     </header>
   )

@@ -57,7 +57,15 @@ if (/@layer base[\s\S]*?body\s*\{[^}]*overflow:\s*hidden/s.test(globals)) {
 }
 
 if (/\.nav-rgb-shell\s*\{[^}]*overflow:\s*hidden/s.test(globals)) {
-  fail('app/globals.css: do not set overflow:hidden on .nav-rgb-shell (clips page edges)')
+  fail('app/globals.css: do not set overflow:hidden on .nav-rgb-shell — use overflow-x: clip + .nav-rgb-fx overflow:hidden')
+}
+
+if (!/\.nav-rgb-shell\s*\{[^}]*overflow-x:\s*clip/s.test(globals)) {
+  fail('app/globals.css: .nav-rgb-shell must include overflow-x: clip (prevents nav glitch horizontal scroll)')
+}
+
+if (!globals.includes('.nav-rgb-fx')) {
+  fail('app/globals.css: missing .nav-rgb-fx container — nav glitch FX must be clipped inside the header')
 }
 
 const globalsLines = globals.split('\n').length
