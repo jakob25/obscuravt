@@ -97,8 +97,8 @@ export default async function VTuberProfilePage({ params }: Props) {
 
           <div className="case-folder p-7">
             
-            {/* Top Action Buttons */}
-            <div className="flex flex-wrap gap-2 mb-6">
+            {/* Top Action Buttons - fixed layout and alignment */}
+            <div className="flex flex-wrap items-center gap-3 mb-6">
               <Link 
                 href={`/vtuber/${id}/fan-corner`}
                 className="px-4 py-1.5 text-xs border border-[#5a4f2e] hover:bg-[#5a4f2e] hover:text-[#e9dfc4] transition-colors"
@@ -134,11 +134,15 @@ export default async function VTuberProfilePage({ params }: Props) {
             {/* Subject Info */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-8">
               <div className="lg:col-span-5 flex gap-5">
-                <CasePhoto
-                  src={vtuber.avatar_url}
-                  alt={vtuber.name}
-                  caption="FIG. 1 — SUBJECT"
-                />
+                {/* PFP made much larger */}
+                <div className="w-48 h-48 flex-shrink-0">
+                  <CasePhoto
+                    src={vtuber.avatar_url}
+                    alt={vtuber.name}
+                    caption="FIG. 1 — SUBJECT"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
                 <div className="flex-1 min-w-0 font-mono pt-1">
                   <CaseField label="CODENAME" value={vtuber.name} />
                   <CaseField label="HANDLE" value={vtuber.handle || undefined} />
