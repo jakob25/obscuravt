@@ -57,7 +57,7 @@ export default async function VTuberProfilePage({ params }: Props) {
 
   const caseId = `OVT-${String(vtuber.id).replace(/[^a-zA-Z0-9]/g, '').slice(-5).toUpperCase().padStart(5, '0')}`
 
-  const { nextScheduleLabel, activeCmdi, openBets } = await fetchDossierSidebarData(id, vtuber.name)
+  const { nextScheduleLabel, lastStreamLabel, activeCmdi, openBets } = await fetchDossierSidebarData(id, vtuber.name, vtuber.platform || '', vtuber.link || '')
 
   const { data: corpoGroups } = await supabase
     .from('corpo_groups')
@@ -222,6 +222,7 @@ export default async function VTuberProfilePage({ params }: Props) {
                 <div className="section-label mb-1">SCHEDULE / LAST STREAM</div>
                 <div className="text-sm">
                   {nextScheduleLabel ?? EMPTY.schedule}
+                  {lastStreamLabel && <div className="text-xs text-[#5a4f2e] mt-1">{lastStreamLabel}</div>}
                 </div>
               </div>
 
