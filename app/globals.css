@@ -1024,7 +1024,12 @@
   z-index: 0;
 }
 
-.nav-rgb-glitch-layer,
+.nav-rgb-glitch-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
 .nav-rgb-tear,
 .nav-rgb-scan {
   position: absolute;
@@ -1075,42 +1080,42 @@
   animation: navRgbScanPass 0.45s ease-out 1;
 }
 
-/* Filter-only on clipped inner layer — no header translate (was causing horizontal scroll) */
+/* Runs on clipped .nav-rgb-glitch-layer — not the sticky header (avoids page-wide scroll) */
 @keyframes navRgbSplit {
   0%, 100% {
-    opacity: 0;
+    transform: translate(0, 0);
     filter: none;
   }
   25% {
-    opacity: 0.85;
-    filter: drop-shadow(3px 0 0 rgba(255, 34, 68, 0.85))
-            drop-shadow(-3px 0 0 rgba(34, 204, 255, 0.85));
+    transform: translate(calc(-4px * var(--nav-glitch-intensity, 0.5)), 0);
+    filter: drop-shadow(calc(5px * var(--nav-glitch-intensity, 0.5)) 0 0 rgba(255, 34, 68, 0.85))
+            drop-shadow(calc(-5px * var(--nav-glitch-intensity, 0.5)) 0 0 rgba(34, 204, 255, 0.85));
   }
   50% {
-    opacity: 0.9;
-    filter: drop-shadow(-4px 0 0 #ff2244)
-            drop-shadow(4px 0 0 #22ccff);
+    transform: translate(calc(6px * var(--nav-glitch-intensity, 0.5)), 0);
+    filter: drop-shadow(calc(-7px * var(--nav-glitch-intensity, 0.5)) 0 0 #ff2244)
+            drop-shadow(calc(6px * var(--nav-glitch-intensity, 0.5)) 0 0 #22ccff);
   }
   75% {
-    opacity: 0.8;
-    filter: drop-shadow(2px 0 0 rgba(255, 34, 68, 0.7))
-            drop-shadow(-2px 0 0 rgba(34, 204, 255, 0.7));
+    transform: translate(calc(-3px * var(--nav-glitch-intensity, 0.5)), 0);
+    filter: drop-shadow(calc(4px * var(--nav-glitch-intensity, 0.5)) 0 0 rgba(255, 34, 68, 0.7))
+            drop-shadow(calc(-4px * var(--nav-glitch-intensity, 0.5)) 0 0 rgba(34, 204, 255, 0.7));
   }
 }
 
 @keyframes navRgbTearA {
   0%, 100% { opacity: 0; transform: translateX(0); }
-  15% { opacity: 0.9; transform: translateX(-5px); }
-  30% { opacity: 0; transform: translateX(4px); }
-  55% { opacity: 0.75; transform: translateX(-3px); }
+  15% { opacity: 0.9; transform: translateX(-12px); }
+  30% { opacity: 0; transform: translateX(8px); }
+  55% { opacity: 0.75; transform: translateX(-6px); }
   70% { opacity: 0; }
 }
 
 @keyframes navRgbTearB {
   0%, 100% { opacity: 0; transform: translateX(0); }
-  20% { opacity: 0.85; transform: translateX(5px); }
-  40% { opacity: 0; transform: translateX(-4px); }
-  65% { opacity: 0.7; transform: translateX(3px); }
+  20% { opacity: 0.85; transform: translateX(14px); }
+  40% { opacity: 0; transform: translateX(-10px); }
+  65% { opacity: 0.7; transform: translateX(7px); }
   80% { opacity: 0; }
 }
 
