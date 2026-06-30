@@ -106,13 +106,15 @@ export function CasePhoto({
   src,
   alt,
   caption,
+  size = 'default',
 }: {
   src?: string | null
   alt: string
   caption?: string
+  size?: 'default' | 'lg'
 }) {
   return (
-    <div className="case-photo-slot">
+    <div className={size === 'lg' ? 'case-photo-slot case-photo-slot-lg' : 'case-photo-slot'}>
       <svg className="case-paperclip" viewBox="0 0 30 46" fill="none" aria-hidden>
         <path
           d="M9 6 C9 2.5 12 0.5 15.5 0.5 C19.5 0.5 22.5 3.5 22.5 8 L22.5 34 C22.5 38 19.5 41 15.5 41 C12 41 9.5 38.5 9.5 35 L9.5 14 C9.5 11.8 11 10.5 12.8 10.5 C14.6 10.5 15.8 11.8 15.8 13.5 L15.8 30"

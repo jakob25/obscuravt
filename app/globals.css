@@ -527,6 +527,25 @@
   flex-shrink: 0;
 }
 
+.case-photo-slot-lg {
+  width: 192px;
+}
+
+.case-photo-slot-lg .case-paperclip {
+  top: -18px;
+  left: 20px;
+  width: 42px;
+  height: 64px;
+}
+
+.case-photo-slot-lg .case-polaroid-photo {
+  height: 192px;
+}
+
+.case-photo-slot-lg .case-polaroid-fallback {
+  font-size: 48px;
+}
+
 .case-paperclip {
   position: absolute;
   top: -12px;

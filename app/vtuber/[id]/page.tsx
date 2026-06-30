@@ -133,11 +133,12 @@ export default async function VTuberProfilePage({ params }: Props) {
 
             {/* Subject Info */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-8">
-              <div className="lg:col-span-5 flex gap-5">
+              <div className="lg:col-span-5 flex flex-col sm:flex-row gap-5 items-start">
                 <CasePhoto
                   src={vtuber.avatar_url}
                   alt={vtuber.name}
                   caption="FIG. 1 — SUBJECT"
+                  size="lg"
                 />
                 <div className="flex-1 min-w-0 font-mono pt-1">
                   <CaseField label="CODENAME" value={vtuber.name} />
