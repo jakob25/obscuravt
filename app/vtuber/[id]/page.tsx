@@ -97,7 +97,7 @@ export default async function VTuberProfilePage({ params }: Props) {
 
           <div className="case-folder p-7">
             
-            {/* Top Action Buttons - fixed layout and alignment */}
+            {/* Top Action Buttons */}
             <div className="flex flex-wrap items-center gap-3 mb-6">
               <Link 
                 href={`/vtuber/${id}/fan-corner`}
@@ -140,7 +140,6 @@ export default async function VTuberProfilePage({ params }: Props) {
                     src={vtuber.avatar_url}
                     alt={vtuber.name}
                     caption="FIG. 1 — SUBJECT"
-                    className="w-full h-full object-cover"
                   />
                 </div>
                 <div className="flex-1 min-w-0 font-mono pt-1">
