@@ -1024,10 +1024,8 @@
   z-index: 0;
 }
 
-.nav-rgb-glitch-layer {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
+.nav-rgb-glitch-target {
+  position: relative;
 }
 
 .nav-rgb-tear,
@@ -1055,16 +1053,16 @@
   bottom: auto;
 }
 
-.nav-rgb-shell > *:not(.nav-rgb-fx) {
+.nav-rgb-glitch-target > *:not(.nav-rgb-fx) {
   position: relative;
   z-index: 1;
 }
 
-.nav-rgb-glitching .nav-rgb-glitch-layer {
+.nav-rgb-glitching .nav-rgb-glitch-target {
   animation: navRgbSplit 0.14s steps(2) 3;
 }
 
-.nav-rgb-glitching-micro .nav-rgb-glitch-layer {
+.nav-rgb-glitching-micro .nav-rgb-glitch-target {
   animation: navRgbSplit 0.1s steps(2) 2;
 }
 
@@ -1080,7 +1078,7 @@
   animation: navRgbScanPass 0.45s ease-out 1;
 }
 
-/* Runs on clipped .nav-rgb-glitch-layer — not the sticky header (avoids page-wide scroll) */
+/* Runs on .nav-rgb-glitch-target inside overflow-x:clip shell (full nav, no page scroll) */
 @keyframes navRgbSplit {
   0%, 100% {
     transform: translate(0, 0);
@@ -1150,8 +1148,8 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .nav-rgb-glitching .nav-rgb-glitch-layer,
-  .nav-rgb-glitching-micro .nav-rgb-glitch-layer,
+  .nav-rgb-glitching .nav-rgb-glitch-target,
+  .nav-rgb-glitching-micro .nav-rgb-glitch-target,
   .nav-rgb-glitching .nav-rgb-tear-a,
   .nav-rgb-glitching .nav-rgb-tear-b,
   .nav-rgb-glitching .nav-rgb-scan,

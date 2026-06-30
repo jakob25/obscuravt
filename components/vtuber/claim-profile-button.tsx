@@ -38,7 +38,7 @@ export function ClaimProfileButton({ vtuberId, vtuberName, claimedBy, approved =
   }
   if (!approved) {
     return (
-      <div className="flex flex-col items-end gap-1 text-right">
+      <div className="inline-flex flex-col items-start gap-1">
         <p className="text-xs text-amber-400 flex items-center gap-1.5">
           <Clock className="h-3.5 w-3.5" /> Pending admin approval
         </p>
@@ -71,7 +71,7 @@ export function ClaimProfileButton({ vtuberId, vtuberName, claimedBy, approved =
   }
 
   return (
-    <div className="flex flex-col items-end gap-1">
+    <div className="inline-flex flex-col items-start gap-1">
       <button
         type="button"
         onClick={claim}
@@ -82,7 +82,7 @@ export function ClaimProfileButton({ vtuberId, vtuberName, claimedBy, approved =
         {status === 'loading' ? 'Claiming…' : status === 'done' ? 'Claimed' : 'Claim Profile'}
       </button>
       {message && (
-        <p className={`text-xs max-w-[220px] text-right ${status === 'error' ? 'text-red-400 flex items-center gap-1 justify-end' : 'text-vault-gold'}`}>
+        <p className={`text-xs max-w-[220px] ${status === 'error' ? 'text-red-400 flex items-center gap-1' : 'text-vault-gold'}`}>
           {status === 'error' && <AlertCircle className="h-3 w-3 shrink-0" />}
           {message}
         </p>

@@ -76,7 +76,7 @@ export function AddToCircleButton({ vtuberId, vtuberName }: Props) {
   }
 
   return (
-    <div className="flex flex-col items-end gap-1">
+    <div className="inline-flex flex-col items-start gap-1">
       <button
         type="button"
         onClick={toggle}
@@ -90,7 +90,7 @@ export function AddToCircleButton({ vtuberId, vtuberName }: Props) {
         {loading ? '…' : inCircle ? 'In your Circle' : 'Add to Circle'}
       </button>
       <span className="text-[10px] text-muted-foreground">{count}/{MAX_CIRCLE_SIZE} in Circle</span>
-      {message && <p className="text-[10px] text-vault-gold max-w-[160px] text-right">{message}</p>}
+      {message && <p className="text-[10px] text-vault-gold max-w-[160px]">{message}</p>}
     </div>
   )
 }

@@ -98,7 +98,7 @@ export default async function VTuberProfilePage({ params }: Props) {
           <div className="case-folder p-7">
             
             {/* Top Action Buttons */}
-            <div className="flex flex-wrap gap-2 mb-6">
+            <div className="flex flex-wrap items-center gap-3 mb-6">
               <Link 
                 href={`/vtuber/${id}/fan-corner`}
                 className="px-4 py-1.5 text-xs border border-[#5a4f2e] hover:bg-[#5a4f2e] hover:text-[#e9dfc4] transition-colors"
