@@ -24,6 +24,7 @@ export interface DossierBet {
 
 export interface DossierSidebarData {
   nextScheduleLabel: string | null
+  lastStreamLabel: string | null
   activeCmdi: DossierCmdiGoal | null
   openBets: DossierBet[]
 }
@@ -60,9 +61,48 @@ export function formatScheduleLabel(slot: ScheduleSlot | null): string | null {
   return `Next: ${day} ${time}${label}`
 }
 
+// New: Fetch last stream from Twitch or YouTube
+async function fetchLastStream(platform: string, channelIdOrLogin: string): Promise<string | null> {
+  if (!channelIdOrLogin) return null
+
+  const platformLower = platform.toLowerCase()
+
+  if (platformLower.includes('twitch')) {
+    try {
+      const response = await fetch(`https://api.twitch.tv/helix/videos?user_id=${channelIdOrLogin}&first=1`, {
+        headers: {
+          'Client-ID': process.env.TWITCH_CLIENT_ID!,
+          'Authorization': `Bearer ${process.env.TWITCH_ACCESS_TOKEN!}`,
+        },
+      })
+      const data = await response.json()
+      if (data.data && data.data.length > 0) {
+        const video = data.data[0]
+        return `Last stream: ${video.title} (${new Date(video.created_at).toLocaleDateString()})`
+      }
+    } catch (e) {
+      console.error('Twitch last stream fetch error', e)
+    }
+  } else if (platformLower.includes('youtube')) {
+    try {
+      const response = await fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelIdOrLogin}&order=date&type=video&maxResults=1&key=${process.env.YOUTUBE_API_KEY!}`)
+      const data = await response.json()
+      if (data.items && data.items.length > 0) {
+        const video = data.items[0]
+        return `Last stream: ${video.snippet.title} (${new Date(video.snippet.publishedAt).toLocaleDateString()})`
+      }
+    } catch (e) {
+      console.error('YouTube last stream fetch error', e)
+    }
+  }
+  return null
+}
+
 export async function fetchDossierSidebarData(
   vtuberId: string,
   vtuberName: string,
+  platform: string,
+  channelIdOrLogin: string,
 ): Promise<DossierSidebarData> {
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -91,6 +131,8 @@ export async function fetchDossierSidebarData(
 
   const nextSlot = getNextScheduleSlot((scheduleRows ?? []) as ScheduleSlot[])
   const nextScheduleLabel = formatScheduleLabel(nextSlot)
+
+  const lastStreamLabel = await fetchLastStream(platform, channelIdOrLogin)
 
   let activeCmdi: DossierCmdiGoal | null = null
   const ideaIds = (ideas ?? []).map(i => i.id)
@@ -123,5 +165,5 @@ export async function fetchDossierSidebarData(
     options: Array.isArray(b.options) ? b.options : [],
   }))
 
-  return { nextScheduleLabel, activeCmdi, openBets }
+  return { nextScheduleLabel, lastStreamLabel, activeCmdi, openBets }
 }
