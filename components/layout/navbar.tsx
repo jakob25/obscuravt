@@ -63,7 +63,7 @@ export function Navbar() {
       <nav className="container mx-auto flex h-16 items-center justify-between px-4">
 
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-2 group">
+        <Link href="/" data-nav-glitch className="flex items-center gap-2 group">
           <div className="relative flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-vault-gold to-vault-bronze">
             <span className="font-bold text-vault-deep text-lg">O</span>
             <div className="absolute inset-0 rounded-lg bg-vault-gold/20 opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -84,6 +84,7 @@ export function Navbar() {
               <Link
                 key={href}
                 href={href}
+                data-nav-glitch
                 className={cn(
                   'flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
                   isActive
@@ -102,7 +103,7 @@ export function Navbar() {
         <div className="flex items-center gap-2">
           {/* Search — always visible */}
           <Button asChild variant="ghost" size="icon" className="text-muted-foreground hover:text-vault-cream">
-            <Link href="/search"><Search className="h-5 w-5" /></Link>
+            <Link href="/search" data-nav-glitch><Search className="h-5 w-5" /></Link>
           </Button>
 
           {!loading && user ? (
@@ -110,6 +111,7 @@ export function Navbar() {
               {/* Coin balance */}
               <Link
                 href="/my-profile"
+                data-nav-glitch
                 className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-muted/50 border border-border hover:border-vault-gold/40 transition-colors"
               >
                 <div className="h-4 w-4 rounded-full bg-gradient-to-br from-vault-gold to-vault-amber" />
@@ -119,7 +121,7 @@ export function Navbar() {
 
               {/* Notifications bell */}
               <Button asChild variant="ghost" size="icon" className="text-muted-foreground hover:text-vault-cream relative">
-                <Link href="/notifications">
+                <Link href="/notifications" data-nav-glitch>
                   <Bell className="h-5 w-5" />
                   {unread > 0 && (
                     <span className="absolute -top-0.5 -right-0.5 h-4 w-4 rounded-full bg-vault-gold text-vault-deep text-[10px] font-bold flex items-center justify-center">
@@ -136,24 +138,24 @@ export function Navbar() {
 
               {/* Shop */}
               <Button asChild variant="ghost" size="icon" className="hidden md:flex text-muted-foreground hover:text-vault-cream">
-                <Link href="/shop"><ShoppingBag className="h-5 w-5" /></Link>
+                <Link href="/shop" data-nav-glitch><ShoppingBag className="h-5 w-5" /></Link>
               </Button>
 
               {/* Admin */}
               {ADMINS.includes(user.username) && (
                 <Button asChild variant="ghost" size="icon" className="hidden md:flex text-muted-foreground hover:text-vault-gold">
-                  <Link href="/admin"><Shield className="h-5 w-5" /></Link>
+                  <Link href="/admin" data-nav-glitch><Shield className="h-5 w-5" /></Link>
                 </Button>
               )}
 
               {/* Profile */}
               <Button asChild variant="ghost" size="icon" className="hidden md:flex text-muted-foreground hover:text-vault-cream">
-                <Link href="/my-profile"><User className="h-5 w-5" /></Link>
+                <Link href="/my-profile" data-nav-glitch><User className="h-5 w-5" /></Link>
               </Button>
             </>
           ) : (
             <Button asChild size="sm" className="hidden md:flex bg-vault-gold hover:bg-vault-amber text-vault-deep font-semibold">
-              <Link href="/login">
+              <Link href="/login" data-nav-glitch>
                 <LogIn className="mr-1.5 h-4 w-4" /> Sign In
               </Link>
             </Button>
@@ -162,7 +164,7 @@ export function Navbar() {
           {/* More dropdown for desktop */}
           <div className="hidden md:relative md:flex">
             <details className="group">
-              <summary className="flex items-center gap-1 px-3 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:text-vault-cream hover:bg-muted/50 cursor-pointer list-none">
+              <summary data-nav-glitch className="flex items-center gap-1 px-3 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:text-vault-cream hover:bg-muted/50 cursor-pointer list-none">
                 More ▾
               </summary>
               <div className="absolute right-0 top-full mt-1 w-48 vault-card rounded-xl border border-border shadow-xl z-50 py-1">
@@ -186,6 +188,7 @@ export function Navbar() {
           <Button
             variant="ghost"
             size="icon"
+            data-nav-glitch
             className="md:hidden text-muted-foreground"
             onClick={() => setMobileOpen(!mobileOpen)}
           >
