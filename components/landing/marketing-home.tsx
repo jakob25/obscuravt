@@ -17,6 +17,7 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { GlitchHeading } from '@/components/vault/glitch-heading'
+import { CardRgbTearOverlay } from '@/components/vault/card-rgb-tear-overlay'
 import { VaultDivider, VaultPanel } from '@/components/vault/vault-surfaces'
 import { VaultFrame } from '@/components/vault/vault-frame'
 import { SITE_DESCRIPTION, SITE_HERO, SITE_NAME } from '@/lib/site-copy'
@@ -73,13 +74,14 @@ const FAN_LOOP = [
   { step: '03', title: 'Follow your Circle', body: 'CMDI goals, notifications, and daily scraps.', icon: Sparkles },
 ]
 
-function FeatureCardBlock({ feature }: { feature: FeatureCard }) {
+function FeatureCardBlock({ feature, staggerIndex }: { feature: FeatureCard; staggerIndex: number }) {
   const Icon = feature.icon
   return (
     <Link href={feature.href} className="block h-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-vault-gold/50 rounded-xl">
       <VaultPanel className="group relative h-full overflow-hidden transition-all duration-300 hover:border-vault-gold/35 p-5 md:p-6">
         <div className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${feature.accent ?? 'from-vault-gold/10 to-transparent'} opacity-80`} />
-        <div className="relative flex h-full flex-col">
+        <CardRgbTearOverlay staggerIndex={staggerIndex} />
+        <div className="relative z-[2] flex h-full flex-col">
           <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl border border-vault-gold/25 bg-vault-gold/10 text-vault-gold">
             <Icon className="h-5 w-5" />
           </div>
@@ -140,7 +142,7 @@ export function MarketingHome() {
         </div>
         <VaultDivider className="mb-10" />
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {FEATURES.map(f => <FeatureCardBlock key={f.title} feature={f} />)}
+          {FEATURES.map((f, i) => <FeatureCardBlock key={f.title} feature={f} staggerIndex={i} />)}
         </div>
       </section>
 
