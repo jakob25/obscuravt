@@ -20,3 +20,7 @@ export const EMPTY = {
   weekly: 'Loading digest…',
   digestOffline: 'Digest unavailable.',
 } as const
+
+// Updated tagline per user feedback: "Find the VTubers the Algorithms don't want you to find"
+export const SITE_TAGLINE_NEW = "Find the VTubers the Algorithms don't want you to find."
+export const SITE_HERO_NEW = "Find the VTubers the Algorithms don't want you to find."
