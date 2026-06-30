@@ -1077,28 +1077,81 @@
   z-index: 1;
 }
 
-.nav-rgb-glitching .nav-rgb-glitch-target {
-  animation: navRgbSplit 0.14s steps(2) 3;
+/* ── Section RGB background flash (random slices of the bar) ── */
+.nav-rgb-bg-section {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: var(--nav-bg-left, 0%);
+  width: var(--nav-bg-width, 30%);
+  overflow: hidden;
+  pointer-events: none;
+  animation: navRgbSectionFlash 0.14s steps(2) 3;
 }
 
-.nav-rgb-glitching-micro .nav-rgb-glitch-target {
-  animation: navRgbSplit 0.1s steps(2) 2;
+.nav-rgb-bg-section-micro {
+  animation: navRgbSectionFlash 0.1s steps(2) 2;
 }
 
-.nav-rgb-glitching .nav-rgb-tear-a {
+.nav-rgb-bg-section-chroma {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg,
+      rgba(255, 34, 68, 0.45) 0%,
+      transparent 35%,
+      transparent 65%,
+      rgba(34, 204, 255, 0.4) 100%);
+  mix-blend-mode: screen;
+  opacity: calc(0.55 + var(--nav-glitch-intensity, 0.5) * 0.35);
+}
+
+.nav-rgb-bg-section .nav-rgb-tear-a {
   animation: navRgbTearA 0.35s steps(1) 1;
 }
 
-.nav-rgb-glitching .nav-rgb-tear-b {
+.nav-rgb-bg-section .nav-rgb-tear-b {
   animation: navRgbTearB 0.35s steps(1) 1;
 }
 
-.nav-rgb-glitching:not(.nav-rgb-glitching-micro) .nav-rgb-scan {
+.nav-rgb-bg-section:not(.nav-rgb-bg-section-micro) .nav-rgb-scan {
   animation: navRgbScanPass 0.45s ease-out 1;
 }
 
-/* Runs on .nav-rgb-glitch-target inside overflow-x:clip shell (full nav, no page scroll) */
-@keyframes navRgbSplit {
+/* ── Per-button chromatic tear (nav controls only) ── */
+.nav-btn-glitching {
+  position: relative;
+  z-index: 2;
+  animation: navBtnGlitchSplit 0.14s steps(2) 3;
+}
+
+.nav-btn-glitching-micro {
+  animation: navBtnGlitchSplit 0.1s steps(2) 2;
+}
+
+@keyframes navRgbSectionFlash {
+  0%, 100% {
+    transform: translate(0, 0);
+    filter: none;
+  }
+  25% {
+    transform: translate(calc(-3px * var(--nav-glitch-intensity, 0.5)), 0);
+    filter: drop-shadow(calc(4px * var(--nav-glitch-intensity, 0.5)) 0 0 rgba(255, 34, 68, 0.75))
+            drop-shadow(calc(-4px * var(--nav-glitch-intensity, 0.5)) 0 0 rgba(34, 204, 255, 0.75));
+  }
+  50% {
+    transform: translate(calc(5px * var(--nav-glitch-intensity, 0.5)), 0);
+    filter: drop-shadow(calc(-6px * var(--nav-glitch-intensity, 0.5)) 0 0 #ff2244)
+            drop-shadow(calc(5px * var(--nav-glitch-intensity, 0.5)) 0 0 #22ccff);
+  }
+  75% {
+    transform: translate(calc(-2px * var(--nav-glitch-intensity, 0.5)), 0);
+    filter: drop-shadow(calc(3px * var(--nav-glitch-intensity, 0.5)) 0 0 rgba(255, 34, 68, 0.6))
+            drop-shadow(calc(-3px * var(--nav-glitch-intensity, 0.5)) 0 0 rgba(34, 204, 255, 0.6));
+  }
+}
+
+@keyframes navBtnGlitchSplit {
   0%, 100% {
     transform: translate(0, 0);
     filter: none;
@@ -1167,11 +1220,12 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .nav-rgb-glitching .nav-rgb-glitch-target,
-  .nav-rgb-glitching-micro .nav-rgb-glitch-target,
-  .nav-rgb-glitching .nav-rgb-tear-a,
-  .nav-rgb-glitching .nav-rgb-tear-b,
-  .nav-rgb-glitching .nav-rgb-scan,
+  .nav-rgb-bg-section,
+  .nav-rgb-bg-section .nav-rgb-tear-a,
+  .nav-rgb-bg-section .nav-rgb-tear-b,
+  .nav-rgb-bg-section .nav-rgb-scan,
+  .nav-btn-glitching,
+  .nav-btn-glitching-micro,
   .vault-scanline-header::after {
     animation: none;
   }
