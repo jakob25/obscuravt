@@ -1,13 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { createClient } from '@supabase/supabase-js'
+import { getSupabase } from '@/lib/supabase'
 import type { VTuber, Constellation } from '@/lib/types'
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
 
 export function rowToVTuber(row: Record<string, unknown>): VTuber {
   const tags = (row.tags as string[]) ?? []
@@ -59,6 +54,7 @@ export function useStarMapData(): StarMapData {
   useEffect(() => {
     async function load() {
       try {
+        const supabase = getSupabase()
         const [vtRes, clusterRes] = await Promise.all([
           supabase.from('vtubers').select('*').eq('approved', true),
           supabase

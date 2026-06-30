@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation'
-import { createClient } from '@supabase/supabase-js'
+import { getSupabase } from '@/lib/supabase'
 import Link from 'next/link'
 import { ExternalLink, Twitch, Youtube } from 'lucide-react'
 import {
@@ -16,17 +16,13 @@ import { SilhouetteAssetPanel } from '@/components/discovery/silhouette-asset-pa
 import { fetchDossierSidebarData } from '@/lib/vtuber-dossier-data'
 import { EMPTY } from '@/lib/site-copy'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
-
 interface Props {
   params: Promise<{ id: string }>
 }
 
 export default async function VTuberProfilePage({ params }: Props) {
   const { id } = await params
+  const supabase = getSupabase()
 
   const { data: vtuber, error } = await supabase
     .from('vtubers')
