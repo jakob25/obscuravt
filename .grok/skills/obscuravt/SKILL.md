@@ -19,7 +19,7 @@ metadata:
 ## Workflow
 
 1. Implement the smallest change that satisfies the task.
-2. `pnpm run build` with env vars from `.env.example`.
+2. `pnpm run guard:layout` then `pnpm run build` with env vars from `.env.example`.
 3. Commit and `git push origin staging`.
 4. Verify Vercel deployment `READY`.
 
@@ -27,6 +27,8 @@ metadata:
 
 - Do not refactor discover map logic.
 - Do not restyle VTuber profile cards / dossier frames.
+- Do not edit layout shell (`app/layout.tsx`, `site-backdrop.tsx`, `.site-backdrop*` / `.nav-rgb-shell` in `globals.css`) unless fixing a confirmed layout bug.
+- Never force-push `main` or `staging`.
 - User copy goes in `lib/site-copy.ts`.
 
 ## Migrations

@@ -12,7 +12,8 @@
     "test:ui": "playwright test --ui",
     "test:report": "playwright show-report",
     "test:headed": "playwright test --headed",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "guard:layout": "node scripts/guard-layout.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",

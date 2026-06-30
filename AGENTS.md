@@ -25,7 +25,9 @@ You own ongoing development on this repo. Read this file first every session.
 
 - **Discover maps** — `app/discover/page.tsx`, `components/common/star-map.tsx`, `components/common/niche-map.tsx`, clustering/hook logic for vibe/niche maps.
 - **VTuber profile cards** — `.dossier-frame`, `DossierFrame`, `CaseFolder`, `CasePhoto`, `archive-shell` styling and components in `components/vault/vault-surfaces.tsx`. Do not restyle dossier tiles on the dashboard (`app/page.tsx` featured VTuber cards).
-- **Direct `main` branch pushes** or production promotion without explicit approval.
+- **Layout shell** — `app/layout.tsx`, `components/layout/site-backdrop.tsx`, `.site-backdrop*` / `.nav-rgb-shell` in `globals.css`. See [`.grok/rules/layout-shell.md`](.grok/rules/layout-shell.md). Enforced by `pnpm run guard:layout` + GitHub CI.
+- **Direct `main` branch pushes**, force-pushes, or production promotion without explicit approval.
+- **Bulk edits to `globals.css`** (mass delete, “simplify”, or global `overflow: hidden` on `html`/`body`/nav).
 
 ## Protected patterns
 
@@ -53,6 +55,7 @@ Vercel staging already has real Supabase env. Local builds need dummy or real va
 ```bash
 pnpm install
 pnpm dev                    # http://localhost:3000
+pnpm run guard:layout       # must pass before push (layout shell invariants)
 pnpm run build              # must pass before push
 pnpm run typecheck
 pnpm test                   # Playwright (needs dev server or staging config)
@@ -79,11 +82,27 @@ Features degrade gracefully with migration hints if tables/columns are missing.
 
 ## Verification checklist
 
+- [ ] `pnpm run guard:layout` green
 - [ ] `next build` green
 - [ ] No new `href="#"` placeholder links in user UI
 - [ ] Discover map still renders (canvas visible)
 - [ ] Dossier/profile cards visually unchanged unless task explicitly requests it
+- [ ] Home page scrolls; vault background visible at edges (or `tests/layout-shell.spec.ts` on staging)
 - [ ] Push to `staging`; Vercel `READY`
+
+## Incident protections (Jun 2026 UI break)
+
+What went wrong: cloud agent edited layout/CSS in a loop (including a 1000-line `globals.css` deletion), then force-pushed.
+
+What blocks recurrence:
+
+| Layer | Mechanism |
+|-------|-----------|
+| Static guard | `scripts/guard-layout.mjs` — body/backdrop/overflow invariants |
+| CI | `.github/workflows/ci.yml` — guard + typecheck + build on every PR |
+| E2E | `tests/layout-shell.spec.ts` — scroll, backdrop, no horizontal clip |
+| Agent rules | `.grok/rules/layout-shell.md`, forbidden zones, no force-push |
+| GitHub (manual) | Branch protection on `main`: require PR + CI green |
 
 ## Architecture (quick)
 

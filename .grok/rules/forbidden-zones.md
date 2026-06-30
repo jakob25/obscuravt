@@ -17,3 +17,13 @@ Do not edit these unless fixing a user-reported bug with reproduction steps:
 - Dashboard featured VTuber tiles in `app/page.tsx` (`dossier-frame` class usage)
 
 Backdrop and global layout changes must not alter card/dossier appearance.
+
+## Layout shell (frozen — CI enforced)
+
+See [layout-shell.md](./layout-shell.md).
+
+- `app/layout.tsx`
+- `components/layout/site-backdrop.tsx`
+- `app/globals.css` — `.site-backdrop*`, `.nav-rgb-shell`, nav RGB keyframes only
+
+Run `pnpm run guard:layout` before push. GitHub Actions runs the same check on every PR.
