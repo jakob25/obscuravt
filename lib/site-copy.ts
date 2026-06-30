@@ -21,6 +21,7 @@ export const EMPTY = {
   digestOffline: 'Digest unavailable.',
 } as const
 
-// Updated tagline per user feedback: "Find the VTubers the Algorithms don't want you to find"
-export const SITE_TAGLINE_NEW = "Find the VTubers the Algorithms don't want you to find."
-export const SITE_HERO_NEW = "Find the VTubers the Algorithms don't want you to find."
+// New tagline and description per feedback (old versions left intact per editing rules)
+export const SITE_TAGLINE_V2 = "Find the VTubers the Algorithms don't want you to find."
+export const SITE_HERO_V2 = "Find the VTubers the Algorithms don't want you to find."
+export const SITE_DESCRIPTION_V2 = 'Browse Profiles, clips, and community bets. Every clip links back to the creator.'
