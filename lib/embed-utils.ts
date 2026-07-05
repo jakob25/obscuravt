@@ -77,7 +77,13 @@ export function getTwitchVodEmbedUrl(videoId: string, parent: string, timestamp?
   return url;
 }
 
-export function extractVideoId(url: string): { platform: 'youtube' | 'twitch'; videoId: string } | null {
+// New: Twitter/X support
+
+export function getTwitterEmbedUrl(tweetId: string): string {
+  return `https://twitter.com/i/web/status/${tweetId}`;
+}
+
+export function extractVideoId(url: string): { platform: 'youtube' | 'twitch' | 'twitter'; videoId: string } | null {
   // YouTube patterns
   const youtubePatterns = [
     /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/,
@@ -111,6 +117,13 @@ export function extractVideoId(url: string): { platform: 'youtube' | 'twitch'; v
     return { platform: 'twitch', videoId: match[1] };
   }
   
+  // Twitter/X patterns
+  const twitterPattern = /(?:twitter\.com|x\.com)\/\w+\/status\/(\d+)/;
+  match = url.match(twitterPattern);
+  if (match) {
+    return { platform: 'twitter', videoId: match[1] };
+  }
+  
   return null;
 }
 
@@ -131,9 +144,20 @@ export function validateClipUrl(url: string): { valid: boolean; error?: string }
   if (!extracted) {
     return { 
       valid: false, 
-      error: 'Could not recognize this URL. Please use a YouTube video/VOD or Twitch clip/VOD link.' 
+      error: 'Could not recognize this URL. Please use a YouTube video/VOD, Twitch clip/VOD, or Twitter status link.' 
     };
   }
   
   return { valid: true };
+}
+
+export function getEmbedUrl(platform: 'youtube' | 'twitch' | 'twitter', videoId: string, parent?: string): string {
+  if (platform === 'youtube') {
+    return getYouTubeEmbedUrl(videoId);
+  } else if (platform === 'twitch') {
+    return getTwitchClipEmbedUrl(videoId, parent || 'obscuravt.com');
+  } else if (platform === 'twitter') {
+    return getTwitterEmbedUrl(videoId);
+  }
+  return videoId;
 }
