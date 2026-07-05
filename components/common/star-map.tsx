@@ -1,11 +1,10 @@
 'use client'
 
-import { useRef, useEffect, useState, useCallback } from 'react'
+import { useRef, useEffect, useState, useCallback, useMemo } from 'react'
 import { zoom, zoomIdentity, ZoomTransform, D3ZoomEvent } from 'd3-zoom'
 import { select } from 'd3-selection'
 import { useRouter } from 'next/navigation'
-import { useStarMapData, getVTubersByConstellationLive } from '@/hooks/use-star-map-data'
-import { AnalogStaticCanvas } from '@/components/vault/analog-static-canvas'
+import { useStarMapData } from '@/hooks/use-star-map-data'
 import type { VTuber, Constellation } from '@/lib/types'
 
 interface StarPosition {
@@ -18,8 +17,42 @@ const ZOOM_THRESHOLD = 1.5
 const MIN_ZOOM = 0.4
 const MAX_ZOOM = 5
 
+// ── Offscreen static noise canvas — built once, composited every frame ──────
+// Eliminates 400 individual fillRect calls per frame from the original.
+function buildNoiseCanvas(w: number, h: number): HTMLCanvasElement {
+  const oc = document.createElement('canvas')
+  oc.width = w
+  oc.height = h
+  const octx = oc.getContext('2d')!
+  const id = octx.createImageData(w, h)
+  const data = id.data
+  for (let i = 0; i < data.length; i += 4) {
+    const v = Math.random() > 0.5 ? 255 : 0
+    const isCyan = Math.random() > 0.5
+    data[i] = isCyan ? 0 : v
+    data[i + 1] = isCyan ? v : v
+    data[i + 2] = isCyan ? v : v
+    data[i + 3] = Math.random() * 15 // very faint — max ~6% opacity
+  }
+  octx.putImageData(id, 0, 0)
+  return oc
+}
+
+// ── Offscreen scanline canvas — built once per height, composited every frame
+function buildScanlineCanvas(w: number, h: number): HTMLCanvasElement {
+  const oc = document.createElement('canvas')
+  oc.width = w
+  oc.height = h
+  const octx = oc.getContext('2d')!
+  octx.fillStyle = 'rgba(0,0,0,0.04)'
+  for (let y = 0; y < h; y += 3) {
+    octx.fillRect(0, y, w, 1)
+  }
+  return oc
+}
+
 export function StarMap() {
-  const { vtubers, constellations, loading } = useStarMapData()
+  const { vtubers, constellations, memberMap, loading } = useStarMapData()
   const router = useRouter()
 
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -27,26 +60,29 @@ export function StarMap() {
   const rafRef = useRef<number | undefined>(undefined)
   const timeRef = useRef(0)
 
-  // All hot-path state in refs — avoids stale closures in canvas loop
+  // Hot-path state in refs — no stale closures in the canvas loop
   const transformRef = useRef<ZoomTransform>(zoomIdentity)
   const starPositionsRef = useRef<StarPosition[]>([])
   const hoveredStarRef = useRef<StarPosition | null>(null)
   const hoveredConstRef = useRef<Constellation | null>(null)
   const constellationsRef = useRef<Constellation[]>([])
-  const vtubersRef = useRef<VTuber[]>([])
+  const memberMapRef = useRef<Map<string, VTuber[]>>(new Map())
   const imageCache = useRef<Map<string, HTMLImageElement>>(new Map())
   const zoomBehaviorRef = useRef<ReturnType<typeof zoom<HTMLCanvasElement, unknown>> | null>(null)
+  // Offscreen canvases — rebuilt only on dimension change
+  const noiseCanvasRef = useRef<HTMLCanvasElement | null>(null)
+  const scanlineCanvasRef = useRef<HTMLCanvasElement | null>(null)
 
-  // Only use React state for things that affect overlay UI
+  // React state only for overlay UI
   const [dimensions, setDimensions] = useState({ width: 900, height: 600 })
   const [zoomPct, setZoomPct] = useState(100)
   const [tooltip, setTooltip] = useState<{ vtuber: VTuber; sx: number; sy: number } | null>(null)
 
   // Keep refs in sync
   useEffect(() => { constellationsRef.current = constellations }, [constellations])
-  useEffect(() => { vtubersRef.current = vtubers }, [vtubers])
+  useEffect(() => { memberMapRef.current = memberMap }, [memberMap])
 
-  // Preload avatar images
+  // Preload avatar images — only fires for new entries
   useEffect(() => {
     vtubers.forEach(v => {
       if (!imageCache.current.has(v.id)) {
@@ -58,12 +94,12 @@ export function StarMap() {
     })
   }, [vtubers])
 
-  // Build star positions
+  // Build star positions from member map — O(n) single pass
   useEffect(() => {
     if (!vtubers.length || !constellations.length) return
     const positions: StarPosition[] = []
     constellations.forEach(c => {
-      const members = getVTubersByConstellationLive(vtubers, c.id)
+      const members = memberMap.get(c.id) ?? []
       members.forEach((vtuber, i) => {
         const angle = (i / Math.max(members.length, 1)) * Math.PI * 2 + i * 0.42
         const radius = 55 + (i % 3) * 32
@@ -75,7 +111,14 @@ export function StarMap() {
       })
     })
     starPositionsRef.current = positions
-  }, [vtubers, constellations])
+  }, [vtubers, constellations, memberMap])
+
+  // Rebuild offscreen canvases on dimension change — not on every frame
+  useEffect(() => {
+    const { width, height } = dimensions
+    noiseCanvasRef.current = buildNoiseCanvas(width, height)
+    scanlineCanvasRef.current = buildScanlineCanvas(width, height)
+  }, [dimensions])
 
   // Resize observer
   useEffect(() => {
@@ -99,7 +142,6 @@ export function StarMap() {
       .on('zoom', (event: D3ZoomEvent<HTMLCanvasElement, unknown>) => {
         transformRef.current = event.transform
         setZoomPct(Math.round(event.transform.k * 100))
-        // Clear tooltip on pan/zoom
         setTooltip(null)
       })
     zoomBehaviorRef.current = zb
@@ -107,18 +149,27 @@ export function StarMap() {
     return () => { sel.on('.zoom', null) }
   }, [dimensions.width, dimensions.height])
 
-  // ── Main render loop ─────────────────────────────────────────────────────────
+  // ── Main render loop ─────────────────────────────────────────────────────
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
     const ctx = canvas.getContext('2d')
     if (!ctx) return
 
-    // CCTV glitch state
+    // Glitch state — lives in the loop closure, no React state needed
     let glitchTimer = 0
     let glitchActive = false
     let glitchIntensity = 0
     let nextGlitch = 2 + Math.random() * 4
+
+    // Pre-built ambient star positions — deterministic, computed once
+    const ambientStars = Array.from({ length: 220 }, (_, i) => ({
+      x: ((i * 43 + 7) % 1100) - 50,
+      y: ((i * 71 + 13) % 900) - 50,
+      r: (i % 3) * 0.4 + 0.3,
+      hue: (i * 37) % 360,
+      phase: i * 0.9,
+    }))
 
     const render = () => {
       timeRef.current += 0.016
@@ -128,12 +179,13 @@ export function StarMap() {
       const { width, height } = dimensions
       const consts = constellationsRef.current
       const stars = starPositionsRef.current
+      const mmap = memberMapRef.current
       const hovStar = hoveredStarRef.current
       const hovConst = hoveredConstRef.current
 
       ctx.clearRect(0, 0, width, height)
 
-      // ── Background ───────────────────────────────────────────────────────────
+      // ── Background ────────────────────────────────────────────────────────
       ctx.fillStyle = '#020408'
       ctx.fillRect(0, 0, width, height)
 
@@ -144,7 +196,19 @@ export function StarMap() {
       ctx.fillStyle = vig
       ctx.fillRect(0, 0, width, height)
 
-      // ── CCTV Glitch effects ───────────────────────────────────────────────────
+      // ── Scanlines — single drawImage instead of hundreds of fillRects ─────
+      if (scanlineCanvasRef.current) {
+        ctx.drawImage(scanlineCanvasRef.current, 0, 0)
+      }
+
+      // ── Static noise — single drawImage instead of 400 fillRects ─────────
+      if (noiseCanvasRef.current) {
+        ctx.globalAlpha = 0.6
+        ctx.drawImage(noiseCanvasRef.current, 0, 0)
+        ctx.globalAlpha = 1
+      }
+
+      // ── Glitch effects — random, uninvited ───────────────────────────────
       glitchTimer += 0.016
       if (glitchTimer > nextGlitch) {
         glitchActive = true
@@ -154,31 +218,6 @@ export function StarMap() {
         setTimeout(() => { glitchActive = false }, 80 + Math.random() * 120)
       }
 
-      // Scanlines — always on, subtle
-      ctx.save()
-      for (let y = 0; y < height; y += 3) {
-        ctx.globalAlpha = 0.04
-        ctx.fillStyle = '#000'
-        ctx.fillRect(0, y, width, 1)
-      }
-      ctx.globalAlpha = 1
-      ctx.restore()
-
-      // Static noise — always faint
-      ctx.save()
-      const noiseCount = 400
-      for (let i = 0; i < noiseCount; i++) {
-        const nx = Math.random() * width
-        const ny = Math.random() * height
-        const nb = Math.random()
-        ctx.globalAlpha = nb * 0.06
-        ctx.fillStyle = nb > 0.5 ? '#fff' : '#0af'
-        ctx.fillRect(nx, ny, 1, 1)
-      }
-      ctx.globalAlpha = 1
-      ctx.restore()
-
-      // Active glitch: horizontal tear + color fringe
       if (glitchActive) {
         const tearCount = Math.floor(glitchIntensity * 5)
         for (let i = 0; i < tearCount; i++) {
@@ -187,14 +226,12 @@ export function StarMap() {
           const gx = (Math.random() - 0.5) * 30 * glitchIntensity
           ctx.save()
           ctx.globalAlpha = 0.15 + Math.random() * 0.2
-          // Copy a horizontal slice and shift it
           try {
             const slice = ctx.getImageData(0, Math.max(0, gy - gh), width, gh * 2)
             ctx.putImageData(slice, gx, Math.max(0, gy - gh))
           } catch (_) {}
           ctx.restore()
         }
-        // Color fringe flash
         ctx.save()
         ctx.globalAlpha = 0.04 * glitchIntensity
         ctx.fillStyle = `hsl(${Math.random() * 60 + 160}, 100%, 60%)`
@@ -202,7 +239,6 @@ export function StarMap() {
         ctx.globalAlpha = 1
         ctx.restore()
 
-        // Extra static burst
         ctx.save()
         for (let i = 0; i < 200 * glitchIntensity; i++) {
           ctx.globalAlpha = Math.random() * 0.3
@@ -213,31 +249,31 @@ export function StarMap() {
         ctx.restore()
       }
 
-      // ── Apply map transform ───────────────────────────────────────────────────
+      // ── Apply map transform ───────────────────────────────────────────────
       ctx.save()
       ctx.translate(tr.x, tr.y)
       ctx.scale(k, k)
 
-      // Ambient background stars
-      for (let i = 0; i < 220; i++) {
-        const bx = ((i * 43 + 7) % 1100) - 50
-        const by = ((i * 71 + 13) % 900) - 50
-        const tw = Math.sin(t * 1.6 + i * 0.9) * 0.3 + 0.7
+      // Ambient background stars — precomputed positions
+      ambientStars.forEach(({ x, y, r, hue, phase }) => {
+        const tw = Math.sin(t * 1.6 + phase) * 0.3 + 0.7
         ctx.globalAlpha = tw * 0.5
-        const hue = (i * 37) % 360
         ctx.fillStyle = `hsl(${hue}, 60%, 80%)`
         ctx.beginPath()
-        ctx.arc(bx, by, (i % 3) * 0.4 + 0.3, 0, Math.PI * 2)
+        ctx.arc(x, y, r, 0, Math.PI * 2)
         ctx.fill()
-      }
+      })
       ctx.globalAlpha = 1
 
       const showStars = k >= ZOOM_THRESHOLD
 
       if (showStars) {
-        // ── Connection lines between stars ──────────────────────────────────
+        // ── Connection lines ─────────────────────────────────────────────────
         consts.forEach(c => {
-          const members = stars.filter(s => s.vtuber.category === c.id)
+          // Use pre-built member map — no per-frame filter
+          const members = (mmap.get(c.id) ?? [])
+            .map(v => stars.find(s => s.vtuber.id === v.id))
+            .filter((s): s is StarPosition => s !== null)
           if (members.length < 2) return
           ctx.strokeStyle = `${c.color}35`
           ctx.lineWidth = 1.5 / k
@@ -253,17 +289,17 @@ export function StarMap() {
           ctx.setLineDash([])
         })
 
-        // ── Individual stars ────────────────────────────────────────────────
+        // ── Individual stars ──────────────────────────────────────────────────
         stars.forEach(star => {
           const isHov = hovStar?.vtuber.id === star.vtuber.id
-          const c = consts.find(x => x.id === star.vtuber.category)
+          // Lookup constellation color from map instead of find() per star
+          const c = constellationsRef.current.find(x => x.id === star.vtuber.category)
           const color = c?.color ?? '#64b5f6'
 
           const fx = star.x + Math.sin(t * 0.7 + star.x * 0.012) * 2
           const fy = star.y + Math.cos(t * 1.0 + star.y * 0.012) * 2
           const r = isHov ? 16 : 10
 
-          // Glow — vibrant and large
           if (isHov) {
             const g1 = ctx.createRadialGradient(fx, fy, 0, fx, fy, 55)
             g1.addColorStop(0, `${color}cc`)
@@ -275,7 +311,6 @@ export function StarMap() {
             ctx.fill()
           }
 
-          // Ambient pulse glow
           const pulse = Math.sin(t * 2.5 + star.x * 0.05) * 0.4 + 0.6
           const g2 = ctx.createRadialGradient(fx, fy, 0, fx, fy, r * 2.5)
           g2.addColorStop(0, `${color}${isHov ? 'ff' : 'aa'}`)
@@ -288,7 +323,6 @@ export function StarMap() {
           ctx.fill()
           ctx.globalAlpha = 1
 
-          // Avatar or colored core
           if (k >= 2) {
             const img = imageCache.current.get(star.vtuber.id)
             if (img?.complete && img.naturalWidth > 0) {
@@ -308,14 +342,12 @@ export function StarMap() {
               ctx.arc(fx, fy, r, 0, Math.PI * 2)
               ctx.fill()
             }
-            // Ring
             ctx.strokeStyle = isHov ? '#ffffff' : `${color}cc`
             ctx.lineWidth = (isHov ? 2.5 : 1.5) / k
             ctx.beginPath()
             ctx.arc(fx, fy, r, 0, Math.PI * 2)
             ctx.stroke()
           } else {
-            // Point star
             const core = ctx.createRadialGradient(fx, fy, 0, fx, fy, r)
             core.addColorStop(0, '#ffffff')
             core.addColorStop(0.25, color)
@@ -326,14 +358,12 @@ export function StarMap() {
             ctx.fill()
           }
 
-          // Label
           if (isHov || k >= 3.5) {
             const fs = Math.max(10, 13 / k)
             ctx.font = `${isHov ? '700' : '500'} ${fs}px "Space Grotesk", sans-serif`
             ctx.textAlign = 'center'
             ctx.textBaseline = 'top'
             const ly = fy + r + 5 / k
-            // Shadow
             ctx.fillStyle = 'rgba(0,0,0,0.8)'
             ctx.fillText(star.vtuber.name, fx + 0.8, ly + 0.8)
             ctx.fillStyle = isHov ? '#ffffff' : '#e8f4ff'
@@ -342,16 +372,16 @@ export function StarMap() {
         })
 
       } else {
-        // ── Constellation orbs (zoomed out) ─────────────────────────────────
+        // ── Constellation orbs (zoomed out) ───────────────────────────────────
         consts.forEach(c => {
           const cx = c.position.x
           const cy = c.position.y
           const isHov = hovConst?.id === c.id
-          const count = getVTubersByConstellationLive(vtubersRef.current, c.id).length
+          // Pre-built map — no .filter() call per constellation per frame
+          const count = mmap.get(c.id)?.length ?? 0
           const pulse = Math.sin(t * 1.2 + cx * 0.004) * 0.1 + 0.9
           const orbR = (isHov ? 95 : 75) * pulse
 
-          // Outer nebula — VIBRANT
           const neb = ctx.createRadialGradient(cx, cy, 0, cx, cy, orbR * 2.2)
           neb.addColorStop(0, `${c.color}88`)
           neb.addColorStop(0.35, `${c.color}33`)
@@ -362,7 +392,6 @@ export function StarMap() {
           ctx.arc(cx, cy, orbR * 2.2, 0, Math.PI * 2)
           ctx.fill()
 
-          // Core orb — bright and saturated
           const orb = ctx.createRadialGradient(cx - orbR * 0.2, cy - orbR * 0.2, 0, cx, cy, orbR)
           orb.addColorStop(0, '#ffffff')
           orb.addColorStop(0.15, `${c.color}ff`)
@@ -373,7 +402,6 @@ export function StarMap() {
           ctx.arc(cx, cy, orbR, 0, Math.PI * 2)
           ctx.fill()
 
-          // Bright ring
           ctx.strokeStyle = isHov ? '#ffffff' : `${c.color}dd`
           ctx.lineWidth = (isHov ? 2.5 : 1.5) / k
           ctx.shadowColor = c.color
@@ -383,7 +411,6 @@ export function StarMap() {
           ctx.stroke()
           ctx.shadowBlur = 0
 
-          // Orbiting mini-stars
           for (let i = 0; i < Math.min(count, 8); i++) {
             const ang = (i / Math.min(count, 8)) * Math.PI * 2 + t * (isHov ? 0.5 : 0.3)
             const sx = cx + Math.cos(ang) * orbR * 0.7
@@ -396,12 +423,10 @@ export function StarMap() {
           }
           ctx.globalAlpha = 1
 
-          // Label
           const fs = 16 / k
           ctx.font = `700 ${fs}px "Space Grotesk", sans-serif`
           ctx.textAlign = 'center'
           ctx.textBaseline = 'middle'
-          // Glow text effect
           ctx.shadowColor = c.color
           ctx.shadowBlur = isHov ? 18 / k : 8 / k
           ctx.fillStyle = '#ffffff'
@@ -429,7 +454,7 @@ export function StarMap() {
     return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current) }
   }, [dimensions])
 
-  // ── Mouse move — uses refs, no stale closures ─────────────────────────────
+  // ── Mouse move ────────────────────────────────────────────────────────────
   const handleMouseMove = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current
     if (!canvas) return
@@ -473,7 +498,7 @@ export function StarMap() {
     setTooltip(null)
   }, [])
 
-  // ── Click — reads from refs, always fresh ─────────────────────────────────
+  // ── Click ──────────────────────────────────────────────────────────────────
   const handleClick = useCallback(() => {
     const star = hoveredStarRef.current
     const c = hoveredConstRef.current
@@ -481,27 +506,20 @@ export function StarMap() {
     const zb = zoomBehaviorRef.current
 
     if (star) {
-      // Navigate to VTuber profile
       router.push(`/vtuber/${star.vtuber.id}`)
       return
     }
 
     if (c && canvas && zb) {
-      // Zoom into constellation
-      const t = zoomIdentity
+      const tr = zoomIdentity
         .translate(dimensions.width / 2 - c.position.x * 2.5, dimensions.height / 2 - c.position.y * 2.5)
         .scale(2.5)
-      select(canvas).call(zb.transform, t)
+      select(canvas).call(zb.transform, tr)
     }
   }, [router, dimensions.width, dimensions.height])
 
   return (
     <div ref={containerRef} className="relative w-full h-full min-h-[500px] bg-[#020408] overflow-hidden">
-      <AnalogStaticCanvas
-        active
-        intensity={0.35}
-        className="absolute inset-0 w-full h-full pointer-events-none opacity-[0.12] mix-blend-screen"
-      />
       <canvas
         ref={canvasRef}
         width={dimensions.width}
@@ -513,7 +531,6 @@ export function StarMap() {
         onClick={handleClick}
       />
 
-      {/* Loading overlay — rendered on top of canvas so refs are always attached */}
       {loading && (
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-[#020408]">
           <div className="relative w-16 h-16">
@@ -529,7 +546,6 @@ export function StarMap() {
         </div>
       )}
 
-      {/* Zoom indicator */}
       {!loading && (
         <div className="absolute bottom-4 left-4 flex items-center gap-2 px-3 py-1.5 rounded-lg bg-black/70 border border-white/10 text-xs select-none">
           <span className="text-white/40">zoom</span>
@@ -540,14 +556,12 @@ export function StarMap() {
         </div>
       )}
 
-      {/* Instructions */}
       {!loading && (
         <div className="absolute top-4 right-4 px-3 py-1.5 rounded-lg bg-black/60 border border-white/10 text-xs text-white/30 select-none">
           scroll to zoom · drag to pan · click to explore
         </div>
       )}
 
-      {/* VTuber tooltip — click target */}
       {tooltip && (
         <div
           className="absolute z-20 pointer-events-none"
@@ -582,7 +596,6 @@ export function StarMap() {
           </div>
         </div>
       )}
-
     </div>
   )
 }
