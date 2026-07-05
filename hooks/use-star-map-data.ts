@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { createClient } from '@supabase/supabase-js'
 import type { VTuber, Constellation } from '@/lib/types'
 
@@ -8,6 +8,16 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 )
+
+// ── Module-level cache — survives re-mounts, cleared on tab close ──────────
+// Prevents re-fetching when user navigates away and back to /discover.
+interface CacheEntry {
+  vtubers: VTuber[]
+  constellations: Constellation[]
+  ts: number
+}
+let _cache: CacheEntry | null = null
+const CACHE_TTL_MS = 5 * 60 * 1000 // 5 minutes
 
 export function rowToVTuber(row: Record<string, unknown>): VTuber {
   const tags = (row.tags as string[]) ?? []
@@ -20,8 +30,8 @@ export function rowToVTuber(row: Record<string, unknown>): VTuber {
     else externalLinks.push({ platform: 'website', url: row.link as string })
   }
 
-  // Use uploaded avatar if available, otherwise fall back to Dicebear
-  const avatarUrl = (row.avatar_url as string) ||
+  const avatarUrl =
+    (row.avatar_url as string) ||
     `https://api.dicebear.com/7.x/bottts-neutral/svg?seed=${encodeURIComponent(row.id as string)}&backgroundColor=d4a574`
 
   return {
@@ -46,21 +56,37 @@ export function getVTubersByConstellationLive(vtubers: VTuber[], constellationId
 interface StarMapData {
   vtubers: VTuber[]
   constellations: Constellation[]
+  // Pre-built lookup: constellationId → VTuber[] — avoids per-frame filter in the render loop
+  memberMap: Map<string, VTuber[]>
   loading: boolean
   error: string | null
 }
 
 export function useStarMapData(): StarMapData {
-  const [vtubers, setVtubers] = useState<VTuber[]>([])
-  const [constellations, setConstellations] = useState<Constellation[]>([])
-  const [loading, setLoading] = useState(true)
+  const [vtubers, setVtubers] = useState<VTuber[]>(_cache?.vtubers ?? [])
+  const [constellations, setConstellations] = useState<Constellation[]>(_cache?.constellations ?? [])
+  const [memberMap, setMemberMap] = useState<Map<string, VTuber[]>>(() => buildMemberMap(_cache?.vtubers ?? [], _cache?.constellations ?? []))
+  const [loading, setLoading] = useState(_cache === null)
   const [error, setError] = useState<string | null>(null)
+  const abortRef = useRef<AbortController | null>(null)
 
   useEffect(() => {
+    // Cache hit — nothing to do
+    if (_cache && Date.now() - _cache.ts < CACHE_TTL_MS) {
+      setLoading(false)
+      return
+    }
+
+    abortRef.current = new AbortController()
+
     async function load() {
       try {
+        // Only select columns the star map actually uses — not select('*')
         const [vtRes, clusterRes] = await Promise.all([
-          supabase.from('vtubers').select('*').eq('approved', true),
+          supabase
+            .from('vtubers')
+            .select('id, name, bio, avatar_url, link, platform, tags')
+            .eq('approved', true),
           supabase
             .from('canonical_tags')
             .select('id, tag, color, position_x, position_y, description')
@@ -70,12 +96,16 @@ export function useStarMapData(): StarMapData {
             .order('sort_order'),
         ])
 
+        if (abortRef.current?.signal.aborted) return
         if (vtRes.error) throw vtRes.error
         if (clusterRes.error) throw clusterRes.error
 
         const mappedVtubers = (vtRes.data ?? []).map(
           (row: Record<string, unknown>) => rowToVTuber(row)
         )
+
+        // Build a Set of occupied cluster IDs for O(1) lookup instead of O(n) .some()
+        const occupiedClusters = new Set(mappedVtubers.map((v) => v.category))
 
         const mappedConstellations = (clusterRes.data ?? [])
           .map((r: Record<string, unknown>) => {
@@ -89,19 +119,42 @@ export function useStarMapData(): StarMapData {
             } as Constellation
           })
           .filter((c): c is Constellation => c !== null)
-          .filter((c) => mappedVtubers.some((v) => v.category === c.id))
+          .filter((c) => occupiedClusters.has(c.id))
+
+        const map = buildMemberMap(mappedVtubers, mappedConstellations)
+
+        _cache = { vtubers: mappedVtubers, constellations: mappedConstellations, ts: Date.now() }
 
         setVtubers(mappedVtubers)
         setConstellations(mappedConstellations)
+        setMemberMap(map)
       } catch (err) {
-        console.error('Star map error:', err)
-        setError('Failed to load.')
+        if (!abortRef.current?.signal.aborted) {
+          console.error('Star map error:', err)
+          setError('Failed to load.')
+        }
       } finally {
-        setLoading(false)
+        if (!abortRef.current?.signal.aborted) {
+          setLoading(false)
+        }
       }
     }
+
     load()
+    return () => { abortRef.current?.abort() }
   }, [])
 
-  return { vtubers, constellations, loading, error }
+  return { vtubers, constellations, memberMap, loading, error }
+}
+
+// ── Helpers ────────────────────────────────────────────────────────────────
+
+function buildMemberMap(vtubers: VTuber[], constellations: Constellation[]): Map<string, VTuber[]> {
+  const map = new Map<string, VTuber[]>()
+  constellations.forEach((c) => map.set(c.id, []))
+  vtubers.forEach((v) => {
+    const bucket = map.get(v.category)
+    if (bucket) bucket.push(v)
+  })
+  return map
 }
