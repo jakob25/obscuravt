@@ -1,5 +1,4 @@
 import { notFound } from 'next/navigation'
-import { getSupabase } from '@/lib/supabase'
 import Link from 'next/link'
 import { ExternalLink, Twitch, Youtube } from 'lucide-react'
 import {
@@ -15,6 +14,9 @@ import { RecommendedStrip } from '@/components/corpo/recommended-strip'
 import { SilhouetteAssetPanel } from '@/components/discovery/silhouette-asset-panel'
 import { fetchDossierSidebarData } from '@/lib/vtuber-dossier-data'
 import { EMPTY } from '@/lib/site-copy'
+import { getSupabaseClient } from '@/lib/supabase'
+
+const supabase = getSupabaseClient()
 
 interface Props {
   params: Promise<{ id: string }>
@@ -22,7 +24,19 @@ interface Props {
 
 export default async function VTuberProfilePage({ params }: Props) {
   const { id } = await params
-  const supabase = getSupabase()
+
+  if (!supabase) {
+    return (
+      <div className="min-h-screen">
+        <div className="container mx-auto px-4 py-8 max-w-6xl">
+          <PageBackNav fallbackHref="/discover" label="Back to Star Map" className="mb-8" />
+          <div className="archive-shell rounded-lg border-2 border-[#1e3a4a] p-8 text-center text-[#c9d9df]">
+            Vault data is temporarily unavailable while Supabase is not configured.
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   const { data: vtuber, error } = await supabase
     .from('vtubers')

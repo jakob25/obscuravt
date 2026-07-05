@@ -6,8 +6,10 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
-import { getSupabase } from '@/lib/supabase'
 import { Upload, X, Loader2, CheckCircle2 } from 'lucide-react'
+import { getSupabaseClient } from '@/lib/supabase'
+
+const supabase = getSupabaseClient()
 
 interface VTuberSubmitFormProps {
   onSuccess?: () => void
@@ -85,8 +87,6 @@ export function VTuberSubmitForm({ onSuccess, onCancel }: VTuberSubmitFormProps)
 
     setSubmitting(true)
     setError('')
-
-    const supabase = getSupabase()
 
     try {
       let avatarUrl: string | null = null

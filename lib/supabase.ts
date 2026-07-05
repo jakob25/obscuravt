@@ -1,63 +1,56 @@
-import { createClient } from '@supabase/supabase-js'
+import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 
-const createBrowserClient = () => {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+const FALLBACK_URL = 'https://example.supabase.co'
+const FALLBACK_ANON_KEY = 'placeholder-anon-key'
+const FALLBACK_SERVICE_ROLE_KEY = 'placeholder-service-role-key'
 
-  if (!supabaseUrl || !supabaseAnonKey) {
-    throw new Error(
-      'Missing Supabase env vars: NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are required.'
-    )
+function getSupabaseEnv() {
+  return {
+    url: process.env.NEXT_PUBLIC_SUPABASE_URL?.trim() ?? '',
+    anonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim() ?? '',
+    serviceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY?.trim() ?? '',
   }
-
-  return createClient(supabaseUrl, supabaseAnonKey)
 }
 
-const createAdminClient = () => {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-
-  if (!supabaseUrl) {
-    throw new Error('Missing Supabase env var: NEXT_PUBLIC_SUPABASE_URL is required.')
-  }
-
-  return supabaseServiceKey
-    ? createClient(supabaseUrl, supabaseServiceKey)
-    : createBrowserClient()
+function looksLikePlaceholder(value: string) {
+  return value.length === 0 || value.includes('your-') || value.includes('placeholder') || value.includes('changeme')
 }
 
-const lazyClient = <T extends object>(factory: () => T): T =>
-  new Proxy({} as T, {
-    get(target, prop, receiver) {
-      const instance = (target as any).__instance || ((target as any).__instance = factory())
-      const value = Reflect.get(instance, prop, receiver)
-      return typeof value === 'function' ? (value as Function).bind(instance) : value
-    },
-    set(target, prop, value, receiver) {
-      const instance = (target as any).__instance || ((target as any).__instance = factory())
-      return Reflect.set(instance, prop, value, receiver)
-    },
-    has(target, prop) {
-      const instance = (target as any).__instance || ((target as any).__instance = factory())
-      return Reflect.has(instance, prop)
-    },
-    ownKeys(target) {
-      const instance = (target as any).__instance || ((target as any).__instance = factory())
-      return Reflect.ownKeys(instance)
-    },
-    getOwnPropertyDescriptor(target, prop) {
-      const instance = (target as any).__instance || ((target as any).__instance = factory())
-      return Reflect.getOwnPropertyDescriptor(instance, prop)
-    },
+export function isSupabaseConfigured() {
+  const { url, anonKey } = getSupabaseEnv()
+
+  return Boolean(
+    url &&
+    anonKey &&
+    url.startsWith('http') &&
+    !looksLikePlaceholder(url) &&
+    !looksLikePlaceholder(anonKey),
+  )
+}
+
+function createSupabaseClient(url: string, key: string) {
+  return createClient(url, key, {
+    auth: { persistSession: false, autoRefreshToken: false },
   })
-
-export function getSupabase() {
-  return createBrowserClient()
 }
 
-export function getSupabaseAdmin() {
-  return createAdminClient()
+export function getSupabaseClient(): SupabaseClient {
+  const { url, anonKey } = getSupabaseEnv()
+  const resolvedUrl = isSupabaseConfigured() ? url : FALLBACK_URL
+  const resolvedKey = isSupabaseConfigured() ? anonKey : FALLBACK_ANON_KEY
+
+  return createSupabaseClient(resolvedUrl, resolvedKey)
 }
 
-export const supabase = lazyClient(createBrowserClient)
-export const supabaseAdmin = lazyClient(createAdminClient)
+export function getSupabaseAdminClient(): SupabaseClient {
+  const { url, serviceRoleKey } = getSupabaseEnv()
+  const resolvedUrl = isSupabaseConfigured() ? url : FALLBACK_URL
+  const resolvedKey = isSupabaseConfigured() && serviceRoleKey && !looksLikePlaceholder(serviceRoleKey)
+    ? serviceRoleKey
+    : FALLBACK_SERVICE_ROLE_KEY
+
+  return createSupabaseClient(resolvedUrl, resolvedKey)
+}
+
+export const supabase = getSupabaseClient()
+export const supabaseAdmin = getSupabaseAdminClient()

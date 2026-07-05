@@ -1,8 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getSupabaseAdmin } from '@/lib/supabase'
+import { getSupabaseAdminClient } from '@/lib/supabase'
+
+const supabaseAdmin = getSupabaseAdminClient()
 
 export async function POST(request: NextRequest) {
-  const supabaseAdmin = getSupabaseAdmin()
+  if (!supabaseAdmin) {
+    return NextResponse.json({ error: 'Supabase is not configured' }, { status: 503 })
+  }
+
   try {
     const body = await request.json()
     const { vtuberId, title, description } = body

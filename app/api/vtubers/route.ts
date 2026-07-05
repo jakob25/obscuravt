@@ -2,10 +2,15 @@ import { NextRequest, NextResponse } from 'next/server'
 import { randomUUID } from 'crypto'
 import { requireAuth } from '@/lib/session'
 import { rateLimits } from '@/lib/rate-limit'
-import { getSupabaseAdmin } from '@/lib/supabase'
+import { getSupabaseAdminClient } from '@/lib/supabase'
+
+const supabaseAdmin = getSupabaseAdminClient()
 
 export async function POST(req: NextRequest) {
-  const supabaseAdmin = getSupabaseAdmin()
+  if (!supabaseAdmin) {
+    return NextResponse.json({ error: 'Supabase is not configured' }, { status: 503 })
+  }
+
   const rl = await rateLimits.write(req)
   if (!rl.ok) return rl.response!
 

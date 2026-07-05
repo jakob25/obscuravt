@@ -1,4 +1,4 @@
-import { getSupabase } from '@/lib/supabase'
+import { getSupabaseClient } from '@/lib/supabase'
 const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
 
 export interface ScheduleSlot {
@@ -104,7 +104,16 @@ export async function fetchDossierSidebarData(
   platform: string,
   channelIdOrLogin: string,
 ): Promise<DossierSidebarData> {
-  const supabase = getSupabase()
+  const supabase = getSupabaseClient()
+
+  if (!supabase) {
+    return {
+      nextScheduleLabel: null,
+      lastStreamLabel: null,
+      activeCmdi: null,
+      openBets: [],
+    }
+  }
 
   const [{ data: scheduleRows }, { data: ideas }, { data: bets }] = await Promise.all([
     supabase
