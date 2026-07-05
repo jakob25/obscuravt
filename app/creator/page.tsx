@@ -165,7 +165,7 @@ export default function CreatorDashboardPage() {
           <p className="text-xs text-muted-foreground mb-3">
             Memes, Q&A, karaoke requests, predictions — all on your public dossier.
           </p>
-          <Link href={`/vtuber/${activeId}`} className="text-sm text-vault-gold hover:underline">
+          <Link href={`/vtuber/${encodeURIComponent(activeId)}`} className="text-sm text-vault-gold hover:underline">
             Open {active?.name ?? 'profile'} engagement hub →
           </Link>
         </VaultFrame>
