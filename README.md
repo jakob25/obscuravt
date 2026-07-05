@@ -1,6 +1,7 @@
 # ObscuraVT
 
-> Find VTubers by vibe and tag, not sub count. Clips, bets, and community tools for fans and creators.
+> The way content creation was meant to be
+> Find VTubers by their content and general vibe. No more slaving away to the algorithm! Clips, bets, and community tools for fans and creators.
 
 **Repo:** https://github.com/jakob25/obscuravt · **Live:** https://obscuravt.com · **Staging:** https://obscuravt-git-staging-jakob25s-projects.vercel.app
 
