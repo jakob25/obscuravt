@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { ExternalLink, Twitch, Youtube } from 'lucide-react'
+import { ExternalLink, Twitch, Youtube, Twitter } from 'lucide-react'
 import {
   DossierFrame,
   CaseFolder,
@@ -64,6 +64,7 @@ export default async function VTuberProfilePage({ params }: Props) {
   const platform = (vtuber.platform ?? '').toLowerCase()
   const isTwitch = platform.includes('twitch')
   const isYoutube = platform.includes('youtube')
+  const isTwitter = platform.includes('twitter')
 
   const caseId = `OVT-${String(vtuber.id).replace(/[^a-zA-Z0-9]/g, '').slice(-5).toUpperCase().padStart(5, '0')}`
 
@@ -92,7 +93,7 @@ export default async function VTuberProfilePage({ params }: Props) {
     <div className="min-h-screen">
       <div className="container mx-auto px-4 py-8 max-w-6xl">
 
-        <PageBackNav fallbackHref="/discover" label="Back to Star Map" className="mb-8" />
+        <PageBackNav fallbackHref="/discover" label="Back to Star Map" className="mb-8" preferFallback />
 
         <div className="archive-shell rounded-lg overflow-hidden border-2 border-[#1e3a4a]">
 
@@ -179,10 +180,11 @@ export default async function VTuberProfilePage({ params }: Props) {
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-2 px-4 py-1.5 text-xs font-mono font-medium border border-[rgba(60,50,20,0.35)] text-[var(--case-ink-dim)] hover:text-[var(--case-ink)] hover:border-[rgba(60,50,20,0.55)] transition-colors bg-white/10"
                     >
-                      {isTwitch ? <Twitch className="h-3.5 w-3.5 text-purple-700" /> :
-                       isYoutube ? <Youtube className="h-3.5 w-3.5 text-red-700" /> :
-                       <ExternalLink className="h-3.5 w-3.5" />}
-                      {isTwitch ? 'OPEN TWITCH CHANNEL' : isYoutube ? 'OPEN YOUTUBE CHANNEL' : (vtuber.platform || 'CHANNEL').toUpperCase()}
+                        {isTwitch ? <Twitch className="h-3.5 w-3.5 text-purple-700" /> :
+                         isYoutube ? <Youtube className="h-3.5 w-3.5 text-red-700" /> :
+                         isTwitter ? <Twitter className="h-3.5 w-3.5 text-sky-500" /> :
+                         <ExternalLink className="h-3.5 w-3.5" />}
+                        {isTwitch ? 'OPEN TWITCH CHANNEL' : isYoutube ? 'OPEN YOUTUBE CHANNEL' : isTwitter ? 'OPEN X' : (vtuber.platform || 'CHANNEL').toUpperCase()}
                     </a>
                   </div>
                 )}

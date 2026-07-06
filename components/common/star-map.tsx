@@ -38,7 +38,7 @@ export function StarMap() {
   const zoomBehaviorRef = useRef<ReturnType<typeof zoom<HTMLCanvasElement, unknown>> | null>(null)
 
   // Only use React state for things that affect overlay UI
-  const [dimensions, setDimensions] = useState({ width: 900, height: 600 })
+  const [dimensions, setDimensions] = useState({ width: 900, height: 400 })
   const [zoomPct, setZoomPct] = useState(100)
   const [tooltip, setTooltip] = useState<{ vtuber: VTuber; sx: number; sy: number } | null>(null)
 
@@ -82,10 +82,10 @@ export function StarMap() {
     const el = containerRef.current
     if (!el) return
     const obs = new ResizeObserver(([entry]) => {
-      if (entry) setDimensions({ width: entry.contentRect.width, height: Math.max(entry.contentRect.height, 500) })
+      if (entry) setDimensions({ width: entry.contentRect.width, height: Math.max(entry.contentRect.height, 300) })
     })
     obs.observe(el)
-    setDimensions({ width: el.clientWidth, height: Math.max(el.clientHeight, 500) })
+    setDimensions({ width: el.clientWidth, height: Math.max(el.clientHeight, 300) })
     return () => obs.disconnect()
   }, [])
 
@@ -496,7 +496,7 @@ export function StarMap() {
   }, [router, dimensions.width, dimensions.height])
 
   return (
-    <div ref={containerRef} className="relative w-full h-full min-h-[500px] bg-[#020408] overflow-hidden">
+    <div ref={containerRef} className="relative w-full h-full min-h-[300px] md:min-h-[500px] bg-[#020408] overflow-hidden">
       <AnalogStaticCanvas
         active
         intensity={0.35}

@@ -37,6 +37,14 @@ export function VTuberSubmitForm({ onSuccess, onCancel }: VTuberSubmitFormProps)
   const constellations = ['clust_chaos', 'clust_cyber', 'clust_fantasy', 'clust_slice_of_life', 'clust_music']
   const vibeTagOptions = ['wholesome', 'chaotic', 'unhinged', 'cozy', 'competitive', 'artistic', 'meme', 'chill']
 
+  const linkPlaceholder = formData.platform.toLowerCase().includes('twitch')
+    ? 'https://twitch.tv/...'
+    : formData.platform.toLowerCase().includes('youtube')
+    ? 'https://youtube.com/channel/...'
+    : formData.platform.toLowerCase().includes('twitter')
+    ? 'https://twitter.com/...'
+    : 'https://...'
+
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }))
   }
@@ -176,7 +184,7 @@ export function VTuberSubmitForm({ onSuccess, onCancel }: VTuberSubmitFormProps)
               </button>
             </div>
           ) : (
-            <label className="flex h-20 w-20 cursor-pointer items-center justify-center rounded-xl border border-dashed hover:bg-muted/50">
+            <label htmlFor="avatar-upload" className="flex h-20 w-20 cursor-pointer items-center justify-center rounded-xl border border-dashed hover:bg-muted/50">
               <div className="text-center">
                 <Upload className="mx-auto h-6 w-6 text-muted-foreground" />
                 <span className="text-[10px] text-muted-foreground mt-1 block">Upload</span>
@@ -233,6 +241,7 @@ export function VTuberSubmitForm({ onSuccess, onCancel }: VTuberSubmitFormProps)
         >
           <option value="Twitch">Twitch</option>
           <option value="YouTube">YouTube</option>
+            <option value="Twitter">Twitter</option>
           <option value="Twitch/YouTube">Twitch + YouTube</option>
           <option value="Other">Other</option>
         </select>
@@ -245,7 +254,7 @@ export function VTuberSubmitForm({ onSuccess, onCancel }: VTuberSubmitFormProps)
           type="url"
           value={formData.link}
           onChange={(e) => handleInputChange('link', e.target.value)}
-          placeholder="https://twitch.tv/..."
+          placeholder={linkPlaceholder}
         />
       </div>
 
