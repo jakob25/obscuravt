@@ -34,6 +34,10 @@ export function NicheMap() {
   const constellationsRef = useRef<Constellation[]>([])
   const vtubersRef = useRef<VTuber[]>([])
   const zoomBehaviorRef = useRef<ReturnType<typeof zoom<HTMLCanvasElement, unknown>> | null>(null)
+  const touchTapTimeoutRef = useRef<number | null>(null)
+  const lastTapClusterIdRef = useRef<string | null>(null)
+  const lastTapTimeRef = useRef(0)
+  const isTouchInteractionRef = useRef(false)
 
   const [dimensions, setDimensions] = useState({ width: 900, height: 600 })
   const [zoomPct, setZoomPct] = useState(100)
@@ -42,6 +46,11 @@ export function NicheMap() {
 
   useEffect(() => { constellationsRef.current = constellations }, [constellations])
   useEffect(() => { vtubersRef.current = vtubers }, [vtubers])
+  useEffect(() => () => {
+    if (touchTapTimeoutRef.current) {
+      window.clearTimeout(touchTapTimeoutRef.current)
+    }
+  }, [])
 
   // Build star positions around clusters
   useEffect(() => {
@@ -270,6 +279,16 @@ export function NicheMap() {
     return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current) }
   }, [dimensions])
 
+  const getClusterFromPoint = useCallback((clientX: number, clientY: number, rect: DOMRect) => {
+    const tr = transformRef.current
+    const mx = (clientX - rect.left - tr.x) / tr.k
+    const my = (clientY - rect.top - tr.y) / tr.k
+
+    return constellationsRef.current.find(c =>
+      (c.position.x - mx) ** 2 + (c.position.y - my) ** 2 < 85 ** 2
+    ) ?? null
+  }, [])
+
   // Mouse move
   const handleMouseMove = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current
@@ -300,10 +319,7 @@ export function NicheMap() {
       hoveredStarRef.current = null
       setTooltip(null)
 
-      const hit = constellationsRef.current.find(c =>
-        (c.position.x - mx) ** 2 + (c.position.y - my) ** 2 < 85 ** 2
-      ) ?? null
-
+      const hit = getClusterFromPoint(e.clientX, e.clientY, rect)
       hoveredConstRef.current = hit
 
       if (hit) {
@@ -312,7 +328,7 @@ export function NicheMap() {
         setClusterHint(null)
       }
     }
-  }, [])
+  }, [getClusterFromPoint])
 
   const handleMouseLeave = useCallback(() => {
     hoveredStarRef.current = null
@@ -321,8 +337,69 @@ export function NicheMap() {
     setClusterHint(null)
   }, [])
 
+  const handleTouchEnd = useCallback((e: React.TouchEvent<HTMLCanvasElement>) => {
+    e.preventDefault()
+    const canvas = canvasRef.current
+    if (!canvas) return
+
+    const touch = e.changedTouches[0]
+    if (!touch) return
+
+    const rect = canvas.getBoundingClientRect()
+    const hit = getClusterFromPoint(touch.clientX, touch.clientY, rect)
+    isTouchInteractionRef.current = true
+
+    if (!hit) {
+      hoveredConstRef.current = null
+      setClusterHint(null)
+      lastTapClusterIdRef.current = null
+      lastTapTimeRef.current = 0
+      return
+    }
+
+    const now = Date.now()
+    const sameCluster = lastTapClusterIdRef.current === hit.id
+    const withinWindow = now - lastTapTimeRef.current < 320
+
+    if (sameCluster && withinWindow) {
+      const zb = zoomBehaviorRef.current
+      if (zb) {
+        const t = zoomIdentity
+          .translate(dimensions.width / 2 - hit.position.x * 2.3, dimensions.height / 2 - hit.position.y * 2.3)
+          .scale(2.3)
+        select(canvas).call(zb.transform, t)
+      }
+      hoveredConstRef.current = null
+      setClusterHint(null)
+      lastTapClusterIdRef.current = null
+      lastTapTimeRef.current = 0
+      return
+    }
+
+    hoveredConstRef.current = hit
+    setClusterHint(hit)
+    lastTapClusterIdRef.current = hit.id
+    lastTapTimeRef.current = now
+
+    if (touchTapTimeoutRef.current) {
+      window.clearTimeout(touchTapTimeoutRef.current)
+    }
+
+    touchTapTimeoutRef.current = window.setTimeout(() => {
+      if (lastTapClusterIdRef.current === hit.id) {
+        lastTapClusterIdRef.current = null
+        lastTapTimeRef.current = 0
+      }
+    }, 360)
+  }, [dimensions.width, dimensions.height, getClusterFromPoint])
+
   // Click handler
   const handleClick = useCallback(() => {
+    if (isTouchInteractionRef.current) {
+      isTouchInteractionRef.current = false
+      return
+    }
+
     const star = hoveredStarRef.current
     const c = hoveredConstRef.current
     const canvas = canvasRef.current
@@ -351,6 +428,7 @@ export function NicheMap() {
         style={{ touchAction: 'none', cursor: 'grab' }}
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
+        onTouchEnd={handleTouchEnd}
         onClick={handleClick}
       />
 
@@ -406,7 +484,7 @@ export function NicheMap() {
 
       {/* Instructions */}
       <div className="absolute top-4 right-4 px-3 py-1.5 rounded-lg bg-black/60 border border-white/10 text-xs text-white/30 select-none">
-        scroll to zoom · drag to pan · click to explore
+        scroll to zoom · drag to pan · tap or click to explore
       </div>
     </div>
   )
