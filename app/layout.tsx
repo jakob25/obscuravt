@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import { Space_Grotesk, Geist_Mono } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
+import { SpeedInsights } from '@vercel/speed-insights/next'
 import { Navbar } from '@/components/layout/navbar'
 import { AddButton } from '@/components/common/add-button'
 import { AuthProvider } from '@/lib/auth-context'
@@ -57,6 +58,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </AuthProvider>
         </div>
         {process.env.NODE_ENV === 'production' && <Analytics />}
+        <SpeedInsights />
       </body>
     </html>
   )
