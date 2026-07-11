@@ -12,6 +12,8 @@ import {
   Calendar, Palette, Lightbulb, Users, BookOpen, BarChart3,
 } from 'lucide-react'
 import { VaultDivider } from '@/components/vault/vault-surfaces'
+import { CollabRequestForm } from '@/components/collab/collab-request-form'
+import { CollabNotifications } from '@/components/collab/collab-notifications'
 
 interface ClaimedProfile {
   id: string
@@ -158,17 +160,22 @@ export default function CreatorDashboardPage() {
       </div>
 
       {activeId && (
-        <VaultFrame className="p-5">
-          <h2 className="text-sm font-semibold text-vault-cream mb-3">
-            Quick engagement
-          </h2>
-          <p className="text-xs text-muted-foreground mb-3">
-            Memes, Q&A, karaoke requests, predictions — all on your public dossier.
-          </p>
-          <Link href={`/vtuber/${encodeURIComponent(activeId)}`} className="text-sm text-vault-gold hover:underline">
-            Open {active?.name ?? 'profile'} engagement hub →
-          </Link>
-        </VaultFrame>
+        <div className="space-y-6">
+          <VaultFrame className="p-5">
+            <h2 className="text-sm font-semibold text-vault-cream mb-3">
+              Quick engagement
+            </h2>
+            <p className="text-xs text-muted-foreground mb-3">
+              Memes, Q&A, karaoke requests, predictions — all on your public dossier.
+            </p>
+            <Link href={`/vtuber/${encodeURIComponent(activeId)}`} className="text-sm text-vault-gold hover:underline">
+              Open {active?.name ?? 'profile'} engagement hub →
+            </Link>
+          </VaultFrame>
+
+          <CollabRequestForm />
+          <CollabNotifications />
+        </div>
       )}
     </div>
   )
