@@ -1,13 +1,10 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { createClient } from '@supabase/supabase-js'
 import type { VTuber, Constellation } from '@/lib/types'
+import { getSupabaseClient } from '@/lib/supabase'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
+const supabase = getSupabaseClient()
 
 // ── Module-level cache — survives re-mounts, cleared on tab close ──────────
 // Prevents re-fetching when user navigates away and back to /discover.

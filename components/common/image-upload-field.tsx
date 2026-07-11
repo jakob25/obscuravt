@@ -54,7 +54,7 @@ export function ImageUploadField({ purpose, onUploaded, onClear, disabled, label
       <div className="flex items-center gap-3">
         {preview ? (
           <div className="relative h-16 w-16 shrink-0">
-            <img src={preview} alt="Preview" className="h-16 w-16 rounded-lg object-cover border border-border" />
+            <img src={preview} alt="Preview" className="h-16 w-16 rounded-lg object-cover border border-border" referrerPolicy="no-referrer" />
             <button
               type="button"
               onClick={clear}

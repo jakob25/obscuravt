@@ -8,6 +8,7 @@ interface PageBackNavProps {
   fallbackHref?: string
   label?: string
   className?: string
+  preferFallback?: boolean
 }
 
 function sameOriginReferrer(): boolean {
@@ -23,6 +24,7 @@ export function PageBackNav({
   fallbackHref = '/discover',
   label = 'Back',
   className = 'mb-6',
+  preferFallback = false,
 }: PageBackNavProps) {
   const router = useRouter()
 
@@ -31,7 +33,8 @@ export function PageBackNav({
       href={fallbackHref}
       onClick={(e) => {
         e.preventDefault()
-        if (sameOriginReferrer()) router.back()
+        if (preferFallback) router.push(fallbackHref)
+        else if (sameOriginReferrer()) router.back()
         else router.push(fallbackHref)
       }}
       className={`inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-vault-gold transition-colors cursor-pointer ${className}`}

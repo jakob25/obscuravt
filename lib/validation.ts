@@ -1,20 +1,35 @@
 import { z } from 'zod'
 
+const HTML_TAG_PATTERN = /<[^>]*>/g
+const SCRIPT_PROTOCOL_PATTERN = /\b(?:javascript|data|vbscript):/gi
+const EVENT_HANDLER_PATTERN = /\bon\w+\s*=\s*/gi
+const NULL_BYTE_PATTERN = /\u0000/g
+const WHITESPACE_PATTERN = /\s{2,}/g
+
 // ── Sanitize text input — strip HTML, trim, normalize whitespace ──────────────
 export function sanitizeText(input: string): string {
   return input
     .trim()
-    .replace(/<[^>]*>/g, '')           // strip HTML tags
-    .replace(/javascript:/gi, '')       // strip JS protocol
-    .replace(/on\w+\s*=/gi, '')         // strip inline event handlers
-    .replace(/\u0000/g, '')             // strip null bytes
-    .replace(/\s{2,}/g, ' ')            // normalize whitespace
+    .replace(HTML_TAG_PATTERN, '')
+    .replace(SCRIPT_PROTOCOL_PATTERN, '')
+    .replace(EVENT_HANDLER_PATTERN, '')
+    .replace(NULL_BYTE_PATTERN, '')
+    .replace(WHITESPACE_PATTERN, ' ')
 }
 
 export function sanitizeUrl(input: string): string | null {
+  const trimmed = input.trim()
+  if (!trimmed) return null
+
   try {
-    const url = new URL(input.trim())
-    if (!['http:', 'https:'].includes(url.protocol)) return null
+    const url = new URL(trimmed)
+    const protocol = url.protocol.toLowerCase()
+
+    if (protocol !== 'http:' && protocol !== 'https:') return null
+
+    const hostname = url.hostname.toLowerCase()
+    if (!hostname) return null
+
     return url.toString()
   } catch {
     return null

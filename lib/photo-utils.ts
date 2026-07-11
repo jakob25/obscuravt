@@ -1,5 +1,7 @@
 // Photo URL parsing and embedding for multiple platforms
 
+import { sanitizeUrl } from '@/lib/validation'
+
 export interface PhotoSource {
   platform: 'glass' | 'flickr' | '500px' | 'instagram' | 'twitter' | 'imgur' | 'direct'
   displayUrl: string    // URL to show the image
@@ -8,44 +10,56 @@ export interface PhotoSource {
   platformLabel: string
 }
 
+function getSafeUrl(input: string): string | null {
+  const sanitized = sanitizeUrl(input)
+  if (!sanitized) return null
+
+  const hostname = new URL(sanitized).hostname.toLowerCase()
+  return hostname.includes('glass.photo') || hostname.includes('flickr.com') || hostname.includes('staticflickr.com') || hostname.includes('imgur.com') || hostname.includes('twitter.com') || hostname.includes('x.com') || /\.(jpe?g|png|webp|gif)$/i.test(sanitized)
+    ? sanitized
+    : null
+}
+
 export function parsePhotoUrl(url: string): PhotoSource | null {
-  if (!url?.trim()) return null
-  const u = url.trim()
+  const safeUrl = getSafeUrl(url)
+  if (!safeUrl) return null
+
+  const hostname = new URL(safeUrl).hostname.toLowerCase()
+  const pathname = new URL(safeUrl).pathname.toLowerCase()
 
   // Glass.app — glass.photo/photo/XXX or glass.photo/@user/XXX
-  if (u.includes('glass.photo')) {
+  if (hostname.includes('glass.photo')) {
     return {
       platform: 'glass',
-      displayUrl: u,
-      sourceUrl: u,
+      displayUrl: safeUrl,
+      sourceUrl: safeUrl,
       platformLabel: 'Glass',
     }
   }
 
   // Flickr — flickr.com/photos/user/id or live.staticflickr.com
-  if (u.includes('flickr.com') || u.includes('staticflickr.com')) {
-    const isDirect = u.includes('staticflickr.com') || /\.jpe?g|\. (png|webp)$/i.test(u)
+  if (hostname.includes('flickr.com') || hostname.includes('staticflickr.com')) {
     return {
       platform: 'flickr',
-      displayUrl: u,
-      sourceUrl: u,
+      displayUrl: safeUrl,
+      sourceUrl: safeUrl,
       platformLabel: 'Flickr',
     }
   }
 
   // Imgur
-  if (u.includes('imgur.com')) {
-    return { platform: 'imgur', displayUrl: u, sourceUrl: u, platformLabel: 'Imgur' }
+  if (hostname.includes('imgur.com')) {
+    return { platform: 'imgur', displayUrl: safeUrl, sourceUrl: safeUrl, platformLabel: 'Imgur' }
   }
 
   // Twitter/X
-  if (u.includes('twitter.com') || u.includes('x.com')) {
-    return { platform: 'twitter', displayUrl: u, sourceUrl: u, platformLabel: 'X' }
+  if (hostname.includes('twitter.com') || hostname.includes('x.com')) {
+    return { platform: 'twitter', displayUrl: safeUrl, sourceUrl: safeUrl, platformLabel: 'X' }
   }
 
   // Direct image
-  if (/\.(jpe?g|png|webp|gif)$/i.test(u)) {
-    return { platform: 'direct', displayUrl: u, sourceUrl: u, platformLabel: 'Image' }
+  if (/\.(jpe?g|png|webp|gif)$/i.test(pathname)) {
+    return { platform: 'direct', displayUrl: safeUrl, sourceUrl: safeUrl, platformLabel: 'Image' }
   }
 
   return null
