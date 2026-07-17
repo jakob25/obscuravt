@@ -6,93 +6,88 @@ import { supabaseAdmin } from '@/lib/supabase'
 
 export const revalidate = 30
 
+async function safeQuery<T>(fn: () => PromiseLike<{ data: T | null }>, fallback: T): Promise<T> {
+  try {
+    const { data } = await fn()
+    return data ?? fallback
+  } catch {
+    return fallback
+  }
+}
+
+async function safeCount(fn: () => PromiseLike<{ count: number | null }>): Promise<number> {
+  try {
+    const { count } = await fn()
+    return count ?? 0
+  } catch {
+    return 0
+  }
+}
+
 async function getPulse() {
-  const empty = { data: [] as any[] }
-
-  const [
-    clipsRes,
-    fanArtRes,
-    vtubersRes,
-    postsRes,
-    betsRes,
-    vtuberCountRes,
-    clipCountRes,
-    userCountRes,
-  ] = await Promise.all([
-    supabaseAdmin
-      .from('clips')
-      .select('id,title,clip_url,profile_id,submitter,upvotes,created_at,vtuber_name')
-      .order('created_at', { ascending: false })
-      .limit(6)
-      .then(r => r)
-      .catch(() => empty),
-
-    supabaseAdmin
-      .from('fan_art')
-      .select('id,vtuber_id,submitted_by,twitter_url,image_url,created_at')
-      .eq('reported', false)
-      .order('created_at', { ascending: false })
-      .limit(6)
-      .then(r => r)
-      .catch(() => empty),
-
-    supabaseAdmin
-      .from('vtubers')
-      .select('id,name,avatar_url,bio,created_at')
-      .eq('approved', true)
-      .order('created_at', { ascending: false })
-      .limit(6)
-      .then(r => r)
-      .catch(() => empty),
-
-    supabaseAdmin
-      .from('cluster_posts')
-      .select('id,constellation_id,username,content,created_at')
-      .order('created_at', { ascending: false })
-      .limit(5)
-      .then(r => r)
-      .catch(() => empty),
-
-    supabaseAdmin
-      .from('bets')
-      .select('id,title,vtuber_name,status,created_at')
-      .eq('status', 'open')
-      .order('created_at', { ascending: false })
-      .limit(5)
-      .then(r => r)
-      .catch(() => empty),
-
-    supabaseAdmin
-      .from('vtubers')
-      .select('id', { count: 'exact', head: true })
-      .eq('approved', true)
-      .then(r => r)
-      .catch(() => ({ count: 0 })),
-
-    supabaseAdmin
-      .from('clips')
-      .select('id', { count: 'exact', head: true })
-      .then(r => r)
-      .catch(() => ({ count: 0 })),
-
-    supabaseAdmin
-      .from('users')
-      .select('username', { count: 'exact', head: true })
-      .then(r => r)
-      .catch(() => ({ count: 0 })),
+  const [clips, fanArt, vtubers, posts, predictions, vtuberCount, clipCount, userCount] = await Promise.all([
+    safeQuery(
+      () =>
+        supabaseAdmin
+          .from('clips')
+          .select('id,title,clip_url,profile_id,submitter,upvotes,created_at,vtuber_name')
+          .order('created_at', { ascending: false })
+          .limit(6),
+      [] as any[],
+    ),
+    safeQuery(
+      () =>
+        supabaseAdmin
+          .from('fan_art')
+          .select('id,vtuber_id,submitted_by,twitter_url,image_url,created_at')
+          .eq('reported', false)
+          .order('created_at', { ascending: false })
+          .limit(6),
+      [] as any[],
+    ),
+    safeQuery(
+      () =>
+        supabaseAdmin
+          .from('vtubers')
+          .select('id,name,avatar_url,bio,created_at')
+          .eq('approved', true)
+          .order('created_at', { ascending: false })
+          .limit(6),
+      [] as any[],
+    ),
+    safeQuery(
+      () =>
+        supabaseAdmin
+          .from('cluster_posts')
+          .select('id,constellation_id,username,content,created_at')
+          .order('created_at', { ascending: false })
+          .limit(5),
+      [] as any[],
+    ),
+    safeQuery(
+      () =>
+        supabaseAdmin
+          .from('bets')
+          .select('id,title,vtuber_name,status,created_at')
+          .eq('status', 'open')
+          .order('created_at', { ascending: false })
+          .limit(5),
+      [] as any[],
+    ),
+    safeCount(() =>
+      supabaseAdmin.from('vtubers').select('id', { count: 'exact', head: true }).eq('approved', true),
+    ),
+    safeCount(() => supabaseAdmin.from('clips').select('id', { count: 'exact', head: true })),
+    safeCount(() => supabaseAdmin.from('users').select('username', { count: 'exact', head: true })),
   ])
 
   return {
-    clips: clipsRes.data ?? [],
-    fanArt: fanArtRes.data ?? [],
-    vtubers: vtubersRes.data ?? [],
-    posts: postsRes.data ?? [],
-    predictions: betsRes.data ?? [],
-    stats: {
-      vtuberCount: vtuberCountRes.count ?? 0,
-      clipCount: clipCountRes.count ?? 0,
-      userCount: userCountRes.count ?? 0,
-    },
+    clips,
+    fanArt,
+    vtubers,
+    posts,
+    predictions,
+    stats: { vtuberCount, clipCount, userCount },
   }
 }
 
@@ -123,7 +118,6 @@ export default async function PulsePage() {
 
   return (
     <div className="min-h-screen">
-      {/* Growth strip */}
       <section className="border-b border-border bg-vault-deep/60">
         <div className="container mx-auto px-4 py-5">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -145,7 +139,6 @@ export default async function PulsePage() {
       </section>
 
       <div className="container mx-auto px-4 py-8 space-y-12">
-        {/* Fresh Clips */}
         <section>
           <SectionHeader icon={Film} title="Fresh Clips" href="/clips" />
           {clips.length === 0 ? (
@@ -173,7 +166,6 @@ export default async function PulsePage() {
           )}
         </section>
 
-        {/* Fan Art */}
         <section>
           <SectionHeader icon={Palette} title="Fan Art" href="/fan-art" />
           {fanArt.length === 0 ? (
@@ -201,7 +193,6 @@ export default async function PulsePage() {
           )}
         </section>
 
-        {/* New in the Vault */}
         <section>
           <SectionHeader icon={Sparkles} title="New in the Vault" href="/discover" />
           {vtubers.length === 0 ? (
@@ -238,7 +229,6 @@ export default async function PulsePage() {
         </section>
 
         <div className="grid md:grid-cols-2 gap-8">
-          {/* Live Predictions */}
           <section>
             <SectionHeader icon={Trophy} title="Live Predictions" href="/bets" />
             {predictions.length === 0 ? (
@@ -255,7 +245,6 @@ export default async function PulsePage() {
             )}
           </section>
 
-          {/* Forums */}
           <section>
             <SectionHeader icon={MessageSquare} title="From the Forums" href="/forums" />
             {posts.length === 0 ? (
