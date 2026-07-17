@@ -1,26 +1,26 @@
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 
-async function safeQuery<T>(fn: () => PromiseLike<{ data: T | null; error?: unknown }>, fallback: T): Promise<T> {
+async function safeQuery<T>(fn: () => PromiseLike<{ data: T | null; error?: any }>, fallback: T): Promise<T> {
   try {
-    const { data } = await fn()
-    return data ?? fallback
+    const res = await fn()
+    return (res.data ?? fallback) as T
   } catch {
     return fallback
   }
 }
 
-async function safeCount(fn: () => PromiseLike<{ count: number | null }>): Promise<number> {
-  try {
-    const { count } = await fn()
-    return count ?? 0
-  } catch {
-    return 0
-  }
-}
-
 export async function GET() {
-  const [clips, fanArt, vtubers, posts, predictions, vtuberCount, clipCount, userCount] = await Promise.all([
+  const [
+    clips,
+    fanArt,
+    vtubers,
+    posts,
+    predictions,
+    vtuberCount,
+    clipCount,
+    userCount,
+  ] = await Promise.all([
     safeQuery(
       () =>
         supabaseAdmin
@@ -28,7 +28,7 @@ export async function GET() {
           .select('id,title,clip_url,profile_id,submitter,upvotes,created_at,vtuber_name')
           .order('created_at', { ascending: false })
           .limit(8),
-      [] as any[],
+      [] as any[]
     ),
     safeQuery(
       () =>
@@ -38,7 +38,7 @@ export async function GET() {
           .eq('reported', false)
           .order('created_at', { ascending: false })
           .limit(8),
-      [] as any[],
+      [] as any[]
     ),
     safeQuery(
       () =>
@@ -48,7 +48,7 @@ export async function GET() {
           .eq('approved', true)
           .order('created_at', { ascending: false })
           .limit(6),
-      [] as any[],
+      [] as any[]
     ),
     safeQuery(
       () =>
@@ -57,7 +57,7 @@ export async function GET() {
           .select('id,constellation_id,username,content,vtuber_id,upvotes,created_at')
           .order('created_at', { ascending: false })
           .limit(6),
-      [] as any[],
+      [] as any[]
     ),
     safeQuery(
       () =>
@@ -67,13 +67,32 @@ export async function GET() {
           .eq('status', 'open')
           .order('created_at', { ascending: false })
           .limit(6),
-      [] as any[],
+      [] as any[]
     ),
-    safeCount(() =>
-      supabaseAdmin.from('vtubers').select('id', { count: 'exact', head: true }).eq('approved', true),
+    safeQuery(
+      async () => {
+        const res = await supabaseAdmin
+          .from('vtubers')
+          .select('id', { count: 'exact', head: true })
+          .eq('approved', true)
+        return { data: res.count ?? 0 }
+      },
+      0
     ),
-    safeCount(() => supabaseAdmin.from('clips').select('id', { count: 'exact', head: true })),
-    safeCount(() => supabaseAdmin.from('users').select('username', { count: 'exact', head: true })),
+    safeQuery(
+      async () => {
+        const res = await supabaseAdmin.from('clips').select('id', { count: 'exact', head: true })
+        return { data: res.count ?? 0 }
+      },
+      0
+    ),
+    safeQuery(
+      async () => {
+        const res = await supabaseAdmin.from('users').select('username', { count: 'exact', head: true })
+        return { data: res.count ?? 0 }
+      },
+      0
+    ),
   ])
 
   return NextResponse.json({

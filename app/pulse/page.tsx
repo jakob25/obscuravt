@@ -6,26 +6,26 @@ import { supabaseAdmin } from '@/lib/supabase'
 
 export const revalidate = 30
 
-async function safeQuery<T>(fn: () => PromiseLike<{ data: T | null }>, fallback: T): Promise<T> {
+async function safeQuery<T>(fn: () => PromiseLike<{ data: T | null; error?: any }>, fallback: T): Promise<T> {
   try {
-    const { data } = await fn()
-    return data ?? fallback
+    const res = await fn()
+    return (res.data ?? fallback) as T
   } catch {
     return fallback
   }
 }
 
-async function safeCount(fn: () => PromiseLike<{ count: number | null }>): Promise<number> {
-  try {
-    const { count } = await fn()
-    return count ?? 0
-  } catch {
-    return 0
-  }
-}
-
 async function getPulse() {
-  const [clips, fanArt, vtubers, posts, predictions, vtuberCount, clipCount, userCount] = await Promise.all([
+  const [
+    clips,
+    fanArt,
+    vtubers,
+    posts,
+    predictions,
+    vtuberCount,
+    clipCount,
+    userCount,
+  ] = await Promise.all([
     safeQuery(
       () =>
         supabaseAdmin
@@ -33,7 +33,7 @@ async function getPulse() {
           .select('id,title,clip_url,profile_id,submitter,upvotes,created_at,vtuber_name')
           .order('created_at', { ascending: false })
           .limit(6),
-      [] as any[],
+      [] as any[]
     ),
     safeQuery(
       () =>
@@ -43,7 +43,7 @@ async function getPulse() {
           .eq('reported', false)
           .order('created_at', { ascending: false })
           .limit(6),
-      [] as any[],
+      [] as any[]
     ),
     safeQuery(
       () =>
@@ -53,7 +53,7 @@ async function getPulse() {
           .eq('approved', true)
           .order('created_at', { ascending: false })
           .limit(6),
-      [] as any[],
+      [] as any[]
     ),
     safeQuery(
       () =>
@@ -62,7 +62,7 @@ async function getPulse() {
           .select('id,constellation_id,username,content,created_at')
           .order('created_at', { ascending: false })
           .limit(5),
-      [] as any[],
+      [] as any[]
     ),
     safeQuery(
       () =>
@@ -72,13 +72,32 @@ async function getPulse() {
           .eq('status', 'open')
           .order('created_at', { ascending: false })
           .limit(5),
-      [] as any[],
+      [] as any[]
     ),
-    safeCount(() =>
-      supabaseAdmin.from('vtubers').select('id', { count: 'exact', head: true }).eq('approved', true),
+    safeQuery(
+      async () => {
+        const res = await supabaseAdmin
+          .from('vtubers')
+          .select('id', { count: 'exact', head: true })
+          .eq('approved', true)
+        return { data: res.count ?? 0 }
+      },
+      0
     ),
-    safeCount(() => supabaseAdmin.from('clips').select('id', { count: 'exact', head: true })),
-    safeCount(() => supabaseAdmin.from('users').select('username', { count: 'exact', head: true })),
+    safeQuery(
+      async () => {
+        const res = await supabaseAdmin.from('clips').select('id', { count: 'exact', head: true })
+        return { data: res.count ?? 0 }
+      },
+      0
+    ),
+    safeQuery(
+      async () => {
+        const res = await supabaseAdmin.from('users').select('username', { count: 'exact', head: true })
+        return { data: res.count ?? 0 }
+      },
+      0
+    ),
   ])
 
   return {
@@ -87,7 +106,11 @@ async function getPulse() {
     vtubers,
     posts,
     predictions,
-    stats: { vtuberCount, clipCount, userCount },
+    stats: {
+      vtuberCount,
+      clipCount,
+      userCount,
+    },
   }
 }
 
