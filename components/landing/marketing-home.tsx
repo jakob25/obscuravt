@@ -32,36 +32,36 @@ interface FeatureCard {
 
 const FEATURES: FeatureCard[] = [
   {
-    title: 'Signal Network',
-    description: 'Track creator threads, fan goals, and hidden engagement paths.',
+    title: 'Your Circle',
+    description: 'Follow creators. One feed for CMDI, memes, Q&A, and schedule votes.',
     icon: Users,
     href: '/help#your-circle',
     accent: 'from-vault-gold/15 to-transparent',
   },
   {
-    title: 'Crowd Commands',
+    title: 'Chat Made Me Do It',
     description: 'Fans pitch ideas. Creators pick one and set a scraps goal.',
     icon: Lightbulb,
     href: '/help#chat-made-me-do-it',
     accent: 'from-[#e056a0]/12 to-transparent',
   },
   {
-    title: 'Decrypt',
-    description: 'Scan tags, search clues, or take the Find My Oshi probe.',
+    title: 'Discover',
+    description: 'Browse by vibe tags, search, or the Find My Oshi quiz.',
     icon: Compass,
     href: '/discover',
     accent: 'from-sky-500/10 to-transparent',
   },
   {
     title: 'Clips & Bets',
-    description: 'Unearth stream fragments and wager on creator outcomes.',
+    description: 'Timestamped clips link to creators. Wager scraps on outcomes.',
     icon: Trophy,
     href: '/bets',
     accent: 'from-vault-gold/12 to-transparent',
   },
   {
-    title: 'Side Channels',
-    description: 'Fan art, memes, karaoke, and dossier-side chatter.',
+    title: 'Fan Corner',
+    description: 'Memes, fan art, karaoke, and predictions on every dossier.',
     icon: Heart,
     href: '/clips',
     accent: 'from-rose-500/10 to-transparent',
@@ -69,9 +69,9 @@ const FEATURES: FeatureCard[] = [
 ]
 
 const FAN_LOOP = [
-  { step: '01', title: 'Find the fragments', body: 'Browse dossiers, tags, and hidden creator clues.', icon: Compass },
-  { step: '02', title: 'Collect evidence', body: 'Save clips, signature moments, and guarded moments.', icon: Film },
-  { step: '03', title: 'Build your signal', body: 'Track goals, votes, and the crew you trust.', icon: Sparkles },
+  { step: '01', title: 'Discover', body: 'Tags, search, or the Find My Oshi quiz.', icon: Compass },
+  { step: '02', title: 'Clip & wager', body: 'Submit clips with timestamps. Bet on stream outcomes.', icon: Film },
+  { step: '03', title: 'Follow your Circle', body: 'CMDI goals, notifications, and daily scraps.', icon: Sparkles },
 ]
 
 function FeatureCardBlock({ feature, staggerIndex }: { feature: FeatureCard; staggerIndex: number }) {
@@ -135,9 +135,9 @@ export function MarketingHome() {
 
       <section className="container mx-auto px-4 py-14">
         <div className="mx-auto mb-10 max-w-3xl text-center">
-          <GlitchHeading as="h2" className="text-2xl md:text-3xl font-bold text-vault-cream">What the archive reveals</GlitchHeading>
+          <GlitchHeading as="h2" className="text-2xl md:text-3xl font-bold text-vault-cream">What you can do here</GlitchHeading>
           <p className="mt-3 text-sm text-muted-foreground md:text-base">
-            Fragments of creator activity, fan-run signals, and the tools to follow them.
+            Discovery, clips, and fan tools in one archive.
           </p>
         </div>
         <VaultDivider className="mb-10" />
@@ -170,16 +170,16 @@ export function MarketingHome() {
 
       <section className="container mx-auto px-4 py-14 md:py-20">
         <VaultFrame className="mx-auto max-w-4xl p-8 md:p-12 text-center">
-          <GlitchHeading as="h2" className="text-3xl md:text-4xl font-bold text-vault-cream">Enter the archive</GlitchHeading>
+          <GlitchHeading as="h2" className="text-3xl md:text-4xl font-bold text-vault-cream">Get started</GlitchHeading>
           <p className="mx-auto mt-4 max-w-xl text-sm text-muted-foreground md:text-base">
-            Start following the hidden threads. Sign in to contribute, or roam the vault with no clearance.
+            Sign in to bet, clip, and follow creators. Browse without an account.
           </p>
           <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
             <Button asChild size="lg" className="bg-vault-gold font-semibold text-vault-deep hover:bg-vault-amber">
-              <Link href="/login">Gain Access</Link>
+              <Link href="/login">Sign In</Link>
             </Button>
             <Button asChild size="lg" variant="outline" className="border-vault-bronze/50 text-vault-cream">
-              <Link href="/discover">Browse the Vault</Link>
+              <Link href="/discover">Explore Discover</Link>
             </Button>
           </div>
         </VaultFrame>

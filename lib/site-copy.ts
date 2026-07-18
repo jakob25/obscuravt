@@ -2,12 +2,12 @@
 
 export const SITE_NAME = 'ObscuraVT'
 
-export const SITE_TAGLINE = 'Find the VTubers the Algorithms dont want you to see.'
+export const SITE_TAGLINE = 'Find VTubers by vibe and tag, not sub count.'
 
-export const SITE_HERO = 'A recovered vault of creator dossiers, clips, and crowd signals.'
+export const SITE_HERO = 'Find VTubers by vibe and tag, not sub count.'
 
 export const SITE_DESCRIPTION =
-  'You stumbled into a secret discovery space. Browse fragments, follow the threads, and keep it hidden.'
+  'Browse dossiers, clips, and community bets. Every clip links back to the creator.'
 
 export const EMPTY = {
   clips: 'No clips yet.',
