@@ -1,0 +1,17 @@
+name: Keep Supabase Alive
+
+on:
+  schedule:
+    - cron: '0 12 * * *'  # Daily at 12:00 UTC
+  workflow_dispatch:  # Allow manual trigger
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Pulse Endpoint
+        run: |
+          curl -I -f https://obscuravt.vercel.app/api/pulse || echo "Ping failed but continuing"
+      - name: Simple Supabase Health Check (optional)
+        run: |
+          echo "Supabase project pinged via app API."
