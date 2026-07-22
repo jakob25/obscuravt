@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useVibeTags, useVTubers } from '@/hooks/use-data'
@@ -30,11 +30,19 @@ export function ClipSubmitForm({ prefillVtuberId, onSuccess, onCancel }: ClipSub
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [done, setDone] = useState(false)
 
+  // Auto-pull meta from link
+  const [metaLoading, setMetaLoading] = useState(false)
+  const [thumbnail, setThumbnail] = useState<string | null>(null)
+  const [titleAutoFilled, setTitleAutoFilled] = useState(false)
+  const titleTouchedRef = useRef(false)
+  const lastFetchedUrlRef = useRef('')
+
   const handleUrlChange = (value: string) => {
     setUrl(value)
     setUrlError(null)
     setUrlValid(false)
     setExtractedInfo(null)
+    setThumbnail(null)
     if (!value) return
     const validation = validateClipUrl(value)
     if (!validation.valid) {
@@ -44,6 +52,33 @@ export function ClipSubmitForm({ prefillVtuberId, onSuccess, onCancel }: ClipSub
       if (info) { setExtractedInfo(info); setUrlValid(true) }
     }
   }
+
+  // Fetch title + thumbnail when URL becomes valid
+  useEffect(() => {
+    if (!urlValid || !url || url === lastFetchedUrlRef.current) return
+
+    let cancelled = false
+    setMetaLoading(true)
+    lastFetchedUrlRef.current = url
+
+    fetch(`/api/clip-meta?url=${encodeURIComponent(url)}`)
+      .then(r => (r.ok ? r.json() : null))
+      .then(data => {
+        if (cancelled || !data) return
+        if (data.thumbnail) setThumbnail(data.thumbnail)
+        // Only auto-fill title if user hasn't typed one yet
+        if (data.title && !titleTouchedRef.current) {
+          setTitle(data.title)
+          setTitleAutoFilled(true)
+        }
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (!cancelled) setMetaLoading(false)
+      })
+
+    return () => { cancelled = true }
+  }, [url, urlValid])
 
   const toggleTag = (tagId: string) => {
     setSelectedTags(prev =>
@@ -116,25 +151,47 @@ export function ClipSubmitForm({ prefillVtuberId, onSuccess, onCancel }: ClipSub
             className={`bg-muted/30 border-border text-vault-cream placeholder:text-muted-foreground pr-10 ${urlError ? 'border-destructive' : ''} ${urlValid ? 'border-vault-gold' : ''}`}
           />
           <div className="absolute right-3 top-1/2 -translate-y-1/2">
-            {urlError && <AlertCircle className="h-4 w-4 text-destructive" />}
-            {urlValid && <CheckCircle className="h-4 w-4 text-vault-gold" />}
+            {metaLoading && <Loader2 className="h-4 w-4 text-vault-gold animate-spin" />}
+            {!metaLoading && urlError && <AlertCircle className="h-4 w-4 text-destructive" />}
+            {!metaLoading && urlValid && <CheckCircle className="h-4 w-4 text-vault-gold" />}
           </div>
         </div>
         {urlError && <p className="mt-1 text-xs text-destructive">{urlError}</p>}
         {extractedInfo && (
           <p className="mt-1 text-xs text-vault-gold flex items-center gap-1">
             <LinkIcon className="h-3 w-3" /> Detected: {extractedInfo.platform}
+            {metaLoading && ' · pulling title…'}
           </p>
         )}
       </div>
 
+      {/* Thumbnail preview when available */}
+      {thumbnail && (
+        <div className="rounded-lg overflow-hidden border border-border bg-muted/20">
+          <img
+            src={thumbnail}
+            alt="Clip preview"
+            className="w-full aspect-video object-cover"
+          />
+        </div>
+      )}
+
       {/* Title */}
       <div>
-        <label className="block text-sm font-medium text-vault-cream mb-1.5">Clip Title</label>
+        <label className="block text-sm font-medium text-vault-cream mb-1.5">
+          Clip Title
+          {titleAutoFilled && !titleTouchedRef.current && (
+            <span className="ml-2 text-xs text-vault-gold font-normal">auto-filled from link</span>
+          )}
+        </label>
         <Input
           placeholder="Give this moment a memorable title..."
           value={title}
-          onChange={e => setTitle(e.target.value)}
+          onChange={e => {
+            titleTouchedRef.current = true
+            setTitleAutoFilled(false)
+            setTitle(e.target.value)
+          }}
           className="bg-muted/30 border-border text-vault-cream placeholder:text-muted-foreground"
         />
       </div>
@@ -148,7 +205,7 @@ export function ClipSubmitForm({ prefillVtuberId, onSuccess, onCancel }: ClipSub
           className="w-full px-3 py-2 rounded-md bg-muted/30 border border-border text-vault-cream text-sm"
         >
           <option value="">Select a VTuber...</option>
-          {vtubers.map(v => <option key={v.id} value={v.id}>{v.name}</option>)}
+          {vtubers.map(v => <option key={v.id} value={v.id>{v.name}</option>)}
         </select>
       </div>
 
