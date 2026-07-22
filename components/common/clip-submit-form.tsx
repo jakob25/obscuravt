@@ -103,6 +103,7 @@ export function ClipSubmitForm({ prefillVtuberId, onSuccess, onCancel }: ClipSub
         title,
         url,
         type: clipType,
+        tags: selectedTags,
       }),
     })
 
@@ -161,6 +162,7 @@ export function ClipSubmitForm({ prefillVtuberId, onSuccess, onCancel }: ClipSub
           <p className="mt-1 text-xs text-vault-gold flex items-center gap-1">
             <LinkIcon className="h-3 w-3" /> Detected: {extractedInfo.platform}
             {metaLoading && ' · pulling title…'}
+            {!metaLoading && titleAutoFilled && ' · title pulled from link'}
           </p>
         )}
       </div>
@@ -205,7 +207,9 @@ export function ClipSubmitForm({ prefillVtuberId, onSuccess, onCancel }: ClipSub
           className="w-full px-3 py-2 rounded-md bg-muted/30 border border-border text-vault-cream text-sm"
         >
           <option value="">Select a VTuber...</option>
-          {vtubers.map(v => <option key={v.id} value={v.id>{v.name}</option>)}
+          {vtubers.map(v => (
+            <option key={v.id} value={v.id}>{v.name}</option>
+          ))}
         </select>
       </div>
 
