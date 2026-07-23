@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useVibeTags, useVTubers } from '@/hooks/use-data'
@@ -24,6 +25,7 @@ export function ClipSubmitForm({ prefillVtuberId, onSuccess, onCancel }: ClipSub
   const [extractedInfo, setExtractedInfo] = useState<{ platform: string; videoId: string } | null>(null)
   const [title, setTitle] = useState('')
   const [selectedVTuber, setSelectedVTuber] = useState(prefillVtuberId ?? '')
+  const [freeTextName, setFreeTextName] = useState('')
   const [selectedTags, setSelectedTags] = useState<string[]>([])
   const [clipType, setClipType] = useState<'raw' | 'edited'>('raw')
   const [submitting, setSubmitting] = useState(false)
@@ -34,7 +36,9 @@ export function ClipSubmitForm({ prefillVtuberId, onSuccess, onCancel }: ClipSub
   const [metaLoading, setMetaLoading] = useState(false)
   const [thumbnail, setThumbnail] = useState<string | null>(null)
   const [titleAutoFilled, setTitleAutoFilled] = useState(false)
+  const [authorFromMeta, setAuthorFromMeta] = useState<string | null>(null)
   const titleTouchedRef = useRef(false)
+  const nameTouchedRef = useRef(false)
   const lastFetchedUrlRef = useRef('')
 
   const handleUrlChange = (value: string) => {
@@ -43,6 +47,7 @@ export function ClipSubmitForm({ prefillVtuberId, onSuccess, onCancel }: ClipSub
     setUrlValid(false)
     setExtractedInfo(null)
     setThumbnail(null)
+    setAuthorFromMeta(null)
     if (!value) return
     const validation = validateClipUrl(value)
     if (!validation.valid) {
@@ -53,7 +58,7 @@ export function ClipSubmitForm({ prefillVtuberId, onSuccess, onCancel }: ClipSub
     }
   }
 
-  // Fetch title + thumbnail when URL becomes valid
+  // Fetch title + thumbnail + author when URL becomes valid
   useEffect(() => {
     if (!urlValid || !url || url === lastFetchedUrlRef.current) return
 
@@ -66,10 +71,22 @@ export function ClipSubmitForm({ prefillVtuberId, onSuccess, onCancel }: ClipSub
       .then(data => {
         if (cancelled || !data) return
         if (data.thumbnail) setThumbnail(data.thumbnail)
-        // Only auto-fill title if user hasn't typed one yet
         if (data.title && !titleTouchedRef.current) {
           setTitle(data.title)
           setTitleAutoFilled(true)
+        }
+        if (data.author) {
+          setAuthorFromMeta(data.author)
+          // Try match existing VTuber by name (case-insensitive)
+          const match = vtubers.find(
+            v => v.name.toLowerCase() === String(data.author).toLowerCase()
+          )
+          if (match && !prefillVtuberId && !selectedVTuber) {
+            setSelectedVTuber(match.id)
+          } else if (!match && !nameTouchedRef.current && !selectedVTuber) {
+            // Unknown creator — prefill free-text name from channel author
+            setFreeTextName(data.author)
+          }
         }
       })
       .catch(() => {})
@@ -78,7 +95,7 @@ export function ClipSubmitForm({ prefillVtuberId, onSuccess, onCancel }: ClipSub
       })
 
     return () => { cancelled = true }
-  }, [url, urlValid])
+  }, [url, urlValid, vtubers, prefillVtuberId, selectedVTuber])
 
   const toggleTag = (tagId: string) => {
     setSelectedTags(prev =>
@@ -89,21 +106,27 @@ export function ClipSubmitForm({ prefillVtuberId, onSuccess, onCancel }: ClipSub
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!user) { setSubmitError('You must be signed in to submit a clip.'); return }
-    if (!urlValid || !extractedInfo || !title || !selectedVTuber) return
+    if (!urlValid || !extractedInfo || !title) return
+    if (!selectedVTuber && !freeTextName.trim()) return
 
     setSubmitting(true)
     setSubmitError(null)
+
+    const selectedName = selectedVTuber
+      ? (vtubers.find(v => v.id === selectedVTuber)?.name ?? '')
+      : freeTextName.trim()
 
     const res = await fetch('/api/clips', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        profile_id: selectedVTuber,
+        profile_id: selectedVTuber || null,
         username: user.username,
         title,
         url,
         type: clipType,
         tags: selectedTags,
+        vtuber_name: selectedName || freeTextName.trim() || null,
       }),
     })
 
@@ -119,7 +142,7 @@ export function ClipSubmitForm({ prefillVtuberId, onSuccess, onCancel }: ClipSub
     setTimeout(() => onSuccess?.(), 1200)
   }
 
-  const isValid = urlValid && !!title && !!selectedVTuber
+  const isValid = urlValid && !!title && (!!selectedVTuber || !!freeTextName.trim())
 
   if (done) {
     return (
@@ -127,6 +150,15 @@ export function ClipSubmitForm({ prefillVtuberId, onSuccess, onCancel }: ClipSub
         <CheckCircle className="h-10 w-10 text-vault-gold" />
         <p className="font-semibold text-vault-cream">Clip submitted!</p>
         <p className="text-sm text-muted-foreground">Thanks for contributing to the Vault.</p>
+        {!selectedVTuber && freeTextName.trim() && (
+          <p className="text-xs text-muted-foreground max-w-sm">
+            This creator isn&apos;t in the Vault yet.{' '}
+            <Link href="/nominator" className="text-vault-gold hover:underline">
+              Nominate them
+            </Link>{' '}
+            so they can get a full profile.
+          </p>
+        )}
       </div>
     )
   }
@@ -198,19 +230,55 @@ export function ClipSubmitForm({ prefillVtuberId, onSuccess, onCancel }: ClipSub
         />
       </div>
 
-      {/* VTuber */}
-      <div>
-        <label className="block text-sm font-medium text-vault-cream mb-1.5">VTuber</label>
-        <select
-          value={selectedVTuber}
-          onChange={e => setSelectedVTuber(e.target.value)}
-          className="w-full px-3 py-2 rounded-md bg-muted/30 border border-border text-vault-cream text-sm"
-        >
-          <option value="">Select a VTuber...</option>
-          {vtubers.map(v => (
-            <option key={v.id} value={v.id}>{v.name}</option>
-          ))}
-        </select>
+      {/* VTuber — existing or not-yet-in-Vault */}
+      <div className="space-y-3">
+        <div>
+          <label className="block text-sm font-medium text-vault-cream mb-1.5">VTuber</label>
+          <select
+            value={selectedVTuber}
+            onChange={e => {
+              setSelectedVTuber(e.target.value)
+              if (e.target.value) {
+                // Clear free-text when picking an existing profile
+                setFreeTextName('')
+                nameTouchedRef.current = false
+              }
+            }}
+            className="w-full px-3 py-2 rounded-md bg-muted/30 border border-border text-vault-cream text-sm"
+          >
+            <option value="">Not in the Vault yet / type name below</option>
+            {vtubers.map(v => (
+              <option key={v.id} value={v.id}>{v.name}</option>
+            ))}
+          </select>
+        </div>
+
+        {!selectedVTuber && (
+          <div>
+            <label className="block text-sm font-medium text-vault-cream mb-1.5">
+              Creator name
+              {authorFromMeta && !nameTouchedRef.current && freeTextName === authorFromMeta && (
+                <span className="ml-2 text-xs text-vault-gold font-normal">from link</span>
+              )}
+            </label>
+            <Input
+              placeholder="Name of the VTuber in this clip"
+              value={freeTextName}
+              onChange={e => {
+                nameTouchedRef.current = true
+                setFreeTextName(e.target.value)
+              }}
+              className="bg-muted/30 border-border text-vault-cream placeholder:text-muted-foreground"
+            />
+            <p className="mt-1 text-xs text-muted-foreground">
+              Clip still goes through. You can{' '}
+              <Link href="/nominator" className="text-vault-gold hover:underline">
+                nominate this creator
+              </Link>{' '}
+              so they get a full profile later.
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Type */}

@@ -22,12 +22,20 @@ export async function POST(req: NextRequest) {
   if (session instanceof NextResponse) return session
 
   const body = await req.json()
-  const { profile_id, title, url, description, tags } = body
+  const { profile_id, title, url, description, tags, vtuber_name } = body
   const username = session.username
   if (!title?.trim())
     return NextResponse.json({ error: 'Title is required.' }, { status: 400 })
   if (!url?.trim())
     return NextResponse.json({ error: 'Video URL is required.' }, { status: 400 })
+
+  const nameFromBody = typeof vtuber_name === 'string' ? vtuber_name.trim() : ''
+  if (!profile_id && !nameFromBody) {
+    return NextResponse.json(
+      { error: 'Select a VTuber or enter their name.' },
+      { status: 400 }
+    )
+  }
 
   // Duplicate URL check
   const { data: existing } = await supabaseAdmin
@@ -39,6 +47,17 @@ export async function POST(req: NextRequest) {
   if (existing)
     return NextResponse.json({ error: 'This clip has already been submitted.' }, { status: 409 })
 
+  // If a profile is selected, prefer their display name for vtuber_name
+  let resolvedName = nameFromBody || null
+  if (profile_id && !resolvedName) {
+    const { data: vtuber } = await supabaseAdmin
+      .from('vtubers')
+      .select('name')
+      .eq('id', profile_id)
+      .single()
+    if (vtuber?.name) resolvedName = vtuber.name
+  }
+
   const { error } = await supabaseAdmin.from('clips').insert({
     id: randomUUID(),
     profile_id: profile_id || null,
@@ -47,6 +66,7 @@ export async function POST(req: NextRequest) {
     clip_url: url.trim(),
     description: description?.trim() ?? null,
     tags: tags ?? [],
+    vtuber_name: resolvedName,
     upvotes: 0,
     created_at: new Date().toISOString(),
   })
