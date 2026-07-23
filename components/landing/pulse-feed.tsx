@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { Film, Palette, Sparkles, Trophy, MessageSquare, ExternalLink, ArrowRight } from 'lucide-react'
+import { Film, Palette, Sparkles, Trophy, MessageSquare, ExternalLink, ArrowRight, HandHelping } from 'lucide-react'
 import { GlitchHeading } from '@/components/vault/glitch-heading'
 import { VaultDivider, VaultPanel, GalleryWall, GalleryWallItem, StatCard } from '@/components/vault/vault-surfaces'
 import { supabaseAdmin } from '@/lib/supabase'
@@ -25,6 +25,7 @@ async function getPulse() {
     vtuberCount,
     clipCount,
     userCount,
+    needsHelp,
   ] = await Promise.all([
     safeQuery(
       () =>
@@ -98,7 +99,24 @@ async function getPulse() {
       },
       0
     ),
+    // Incomplete stubs: approved, empty bio, empty tags — community can help fill them
+    safeQuery(
+      () =>
+        supabaseAdmin
+          .from('vtubers')
+          .select('id,name,avatar_url,bio,tags,created_at')
+          .eq('approved', true)
+          .order('created_at', { ascending: false })
+          .limit(24),
+      [] as any[]
+    ),
   ])
+
+  const needsHelpList = (needsHelp as any[]).filter(v => {
+    const bioEmpty = !(v.bio && String(v.bio).trim())
+    const tagsEmpty = !Array.isArray(v.tags) || v.tags.length === 0
+    return bioEmpty && tagsEmpty
+  }).slice(0, 6)
 
   return {
     clips,
@@ -106,6 +124,7 @@ async function getPulse() {
     vtubers,
     posts,
     predictions,
+    needsHelpList,
     stats: {
       vtuberCount,
       clipCount,
@@ -137,7 +156,7 @@ function SectionHeader({
 }
 
 export default async function PulseFeed() {
-  const { clips, fanArt, vtubers, posts, predictions, stats } = await getPulse()
+  const { clips, fanArt, vtubers, posts, predictions, needsHelpList, stats } = await getPulse()
 
   return (
     <div className="min-h-screen">
@@ -162,6 +181,45 @@ export default async function PulseFeed() {
       </section>
 
       <div className="container mx-auto px-4 py-8 space-y-12">
+        {needsHelpList.length > 0 && (
+          <section>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <HandHelping className="h-5 w-5 text-vault-gold" />
+                <h2 className="text-xl font-bold text-vault-cream">Needs your help</h2>
+              </div>
+            </div>
+            <p className="text-sm text-muted-foreground mb-4">
+              These creators were added from clips and still have empty files. Sign in and fill in what you know.
+            </p>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {needsHelpList.map((v: any) => (
+                <Link
+                  key={v.id}
+                  href={`/vtuber/${v.id}`}
+                  className="vault-card rounded-xl p-4 hover:border-vault-gold/40 transition-all flex items-center gap-3 border border-vault-gold/20"
+                >
+                  {v.avatar_url ? (
+                    <img
+                      src={v.avatar_url}
+                      alt=""
+                      className="h-10 w-10 rounded-full object-cover flex-shrink-0"
+                    />
+                  ) : (
+                    <div className="h-10 w-10 rounded-full bg-vault-gold/20 flex items-center justify-center text-vault-gold font-bold flex-shrink-0">
+                      {v.name?.[0] ?? '?'}
+                    </div>
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <p className="font-semibold text-vault-cream truncate">{v.name}</p>
+                    <p className="text-xs text-vault-gold">Incomplete dossier · help fill it out</p>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
+
         <section>
           <SectionHeader icon={Film} title="Fresh Clips" href="/clips" />
           {clips.length === 0 ? (
