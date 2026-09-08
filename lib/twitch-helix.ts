@@ -1,7 +1,7 @@
 /**
  * Twitch Helix helpers for clip/VOD thumbnails.
- * Uses existing TWITCH_CLIENT_ID + TWITCH_ACCESS_TOKEN.
- * Optionally refreshes via TWITCH_CLIENT_SECRET (client-credentials).
+ * Prefers TWITCH_CLIENT_SECRET (app token that can be refreshed).
+ * Falls back to TWITCH_ACCESS_TOKEN when no secret is set.
  */
 
 const TOKEN_URL = 'https://id.twitch.tv/oauth2/token'
@@ -57,10 +57,14 @@ async function mintAppToken(): Promise<string | null> {
 }
 
 async function resolveAccessToken(): Promise<string | null> {
-  const minted = cachedAppToken && Date.now() < cachedAppToken.expiresAt - 60_000 ? cachedAppToken.token : null
-  if (minted) return minted
-  if (staticAccessToken()) return staticAccessToken() as string
-  return mintAppToken()
+  if (cachedAppToken && Date.now() < cachedAppToken.expiresAt - 60_000) {
+    return cachedAppToken.token
+  }
+  if (clientSecret()) {
+    const minted = await mintAppToken()
+    if (minted) return minted
+  }
+  return staticAccessToken() ?? null
 }
 
 function helixHeaders(token: string): HeadersInit {
@@ -87,63 +91,65 @@ async function helixGet(
 ): Promise<{ status: number; json: any }> {
   const res = await fetch(url, {
     headers: helixHeaders(token),
-    next: { revalidate: 3600 },
-  } as RequestInit)
+    cache: 'no-store',
+  })
   const json = await res.json().catch(() => null)
   return { status: res.status, json }
 }
 
-/** Clip slug from clips.twitch.tv / twitch.tv/{chan}/clip/{slug} */
-export async function helixClipThumbnail(clipId: string): Promise<string | null> {
-  const id = clientId()
-  if (!id || !clipId || clipId.startsWith('v')) return null
-
+async function helixGetWithRefresh(url: string): Promise<{ status: number; json: any } | null> {
   let token = await resolveAccessToken()
-  if (!token) return null
+  if (!token || !clientId()) return null
 
-  const url = `${CLIPS_URL}?id=${encodeURIComponent(clipId)}`
-  let { status, json } = await helixGet(url, token)
-
-  if ((status === 401 || status === 403) && clientSecret()) {
+  let result = await helixGet(url, token)
+  if ((result.status === 401 || result.status === 403) && clientSecret()) {
     cachedAppToken = null
     token = await mintAppToken()
-    if (!token) return null
-    ;({ status, json } = await helixGet(url, token))
+    if (!token) return result
+    result = await helixGet(url, token)
   }
+  return result
+}
 
-  if (status !== 200) {
-    console.error('helix clips status', status, json?.message ?? json)
-    return null
+/** Clip slug from clips.twitch.tv / twitch.tv/{chan}/clip/{slug} */
+export async function helixClipThumbnail(clipId: string): Promise<string | null> {
+  const map = await helixClipThumbnails([clipId])
+  return map[clipId] ?? null
+}
+
+/** Batch Get Clips — max 100 ids per Helix request. */
+export async function helixClipThumbnails(clipIds: string[]): Promise<Record<string, string>> {
+  const ids = [...new Set(clipIds.filter(id => !!id && !id.startsWith('v')))]
+  const out: Record<string, string> = {}
+  if (!clientId() || ids.length === 0) return out
+
+  for (let i = 0; i < ids.length; i += 100) {
+    const chunk = ids.slice(i, i + 100)
+    const url = `${CLIPS_URL}?${chunk.map(id => `id=${encodeURIComponent(id)}`).join('&')}`
+    const result = await helixGetWithRefresh(url)
+    if (!result) continue
+    if (result.status !== 200) {
+      console.error('helix clips status', result.status, result.json?.message ?? result.json)
+      continue
+    }
+    for (const row of result.json?.data ?? []) {
+      const thumb = normalizeThumb(row.thumbnail_url)
+      if (thumb && row.id) out[row.id] = thumb
+    }
   }
-
-  const thumb = json?.data?.[0]?.thumbnail_url as string | undefined
-  return normalizeThumb(thumb)
+  return out
 }
 
 /** Numeric VOD id, with or without leading `v`. */
 export async function helixVodThumbnail(videoId: string): Promise<string | null> {
-  const id = clientId()
   const numeric = videoId.replace(/^v/i, '')
-  if (!id || !/^\d+$/.test(numeric)) return null
+  if (!clientId() || !/^\d+$/.test(numeric)) return null
 
-  let token = await resolveAccessToken()
-  if (!token) return null
-
-  const url = `${VIDEOS_URL}?id=${encodeURIComponent(numeric)}`
-  let { status, json } = await helixGet(url, token)
-
-  if ((status === 401 || status === 403) && clientSecret()) {
-    cachedAppToken = null
-    token = await mintAppToken()
-    if (!token) return null
-    ;({ status, json } = await helixGet(url, token))
-  }
-
-  if (status !== 200) {
-    console.error('helix videos status', status, json?.message ?? json)
+  const result = await helixGetWithRefresh(`${VIDEOS_URL}?id=${encodeURIComponent(numeric)}`)
+  if (!result) return null
+  if (result.status !== 200) {
+    console.error('helix videos status', result.status, result.json?.message ?? result.json)
     return null
   }
-
-  const thumb = json?.data?.[0]?.thumbnail_url as string | undefined
-  return normalizeThumb(thumb)
+  return normalizeThumb(result.json?.data?.[0]?.thumbnail_url)
 }
