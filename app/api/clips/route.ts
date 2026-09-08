@@ -3,6 +3,7 @@ import { requireAuth } from '@/lib/session'
 import { rateLimits } from '@/lib/rate-limit'
 import { supabaseAdmin } from '@/lib/supabase'
 import { extractVideoId, extractTwitchChannel, resolveClipThumbnail } from '@/lib/embed-utils'
+import { helixClipThumbnails } from '@/lib/twitch-helix'
 import { randomUUID } from 'crypto'
 
 function platformLabelFromUrl(url: string): string {
@@ -200,6 +201,22 @@ async function backfillStubProfilesForOrphanClips() {
 
 /** Resolve missing thumbs and cache on the row when column exists. */
 async function enrichClipThumbnails(rows: any[]) {
+  const twitchIds: string[] = []
+  for (const row of rows) {
+    if (row.thumbnail_url || !row.clip_url) continue
+    const extracted = extractVideoId(row.clip_url as string)
+    if (extracted?.platform === 'twitch' && !extracted.videoId.startsWith('v')) {
+      twitchIds.push(extracted.videoId)
+    }
+  }
+
+  let helixMap: Record<string, string> = {}
+  try {
+    helixMap = await helixClipThumbnails(twitchIds)
+  } catch (e) {
+    console.error('helix batch thumb error:', e)
+  }
+
   const out = []
   for (const row of rows) {
     if (row.thumbnail_url) {
@@ -211,9 +228,16 @@ async function enrichClipThumbnails(rows: any[]) {
       out.push(row)
       continue
     }
-    const thumb = await resolveClipThumbnail(url)
+
+    const extracted = extractVideoId(url)
+    let thumb: string | null = null
+    if (extracted?.platform === 'twitch' && helixMap[extracted.videoId]) {
+      thumb = helixMap[extracted.videoId]
+    } else {
+      thumb = await resolveClipThumbnail(url)
+    }
+
     if (thumb) {
-      // Best-effort persist (no-op if column missing)
       await supabaseAdmin.from('clips').update({ thumbnail_url: thumb }).eq('id', row.id)
       out.push({ ...row, thumbnail_url: thumb })
     } else {
@@ -296,7 +320,7 @@ export async function POST(req: NextRequest) {
     submittedBy: username,
   })
 
-  // Resolve preview image (YouTube formula / Twitch og:image)
+  // Resolve preview image (YouTube formula / Twitch Helix / scrape fallback)
   let thumbnail_url: string | null = null
   try {
     thumbnail_url = await resolveClipThumbnail(url.trim())
