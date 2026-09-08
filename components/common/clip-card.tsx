@@ -96,75 +96,62 @@ export function ClipCard({ clip, onPlay }: ClipCardProps) {
 
   return (
     <div className="group flex flex-col items-center">
-      <div
-        className="relative w-full max-w-[320px]"
-        style={{ aspectRatio: '4770 / 5570' }}
-      >
-        <img
-          src="/images/polaroid-frame.jpg"
-          alt=""
-          className="absolute inset-0 h-full w-full object-fill z-10 pointer-events-none"
-        />
-
-        <div className="absolute z-0" style={{ top: '9.3%', left: '12.6%', right: '10.9%', bottom: '23.6%' }}>
-          {isPlaying && embedUrl ? (
-            <iframe
-              src={embedUrl + (platform === 'youtube' ? '&autoplay=1' : '&autoplay=true')}
-              className="absolute inset-0 h-full w-full"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-            />
-          ) : (
-            <button
-              onClick={handlePlay}
-              className="absolute inset-0 h-full w-full overflow-hidden bg-vault-deep"
-              style={
-                thumb
-                  ? {
-                      backgroundImage: `url(${thumb})`,
-                      backgroundSize: 'cover',
-                      backgroundPosition: 'center',
-                    }
-                  : undefined
-              }
+      <div className="relative w-full max-w-[320px] overflow-hidden rounded-md border border-vault-bronze/30 bg-vault-deep" style={{ aspectRatio: '16 / 9' }}>
+        {isPlaying && embedUrl ? (
+          <iframe
+            src={embedUrl + (platform === 'youtube' ? '&autoplay=1' : '&autoplay=true')}
+            className="absolute inset-0 h-full w-full"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+          />
+        ) : (
+          <button
+            onClick={handlePlay}
+            className="absolute inset-0 h-full w-full overflow-hidden bg-vault-deep"
+            style={
+              thumb
+                ? {
+                    backgroundImage: `url(${thumb})`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                  }
+                : undefined
+            }
+          >
+            <div className="absolute inset-0 bg-gradient-to-br from-vault-charcoal/40 to-vault-deep/50" />
+            <div className="relative z-10 flex h-full items-center justify-center">
+              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-vault-gold/90 shadow-lg transition-all group-hover:scale-110 group-hover:bg-vault-gold">
+                <Play className="ml-1 h-7 w-7 text-vault-deep" fill="currentColor" />
+              </div>
+            </div>
+            {duration && (
+              <div className="absolute bottom-2 right-2 flex items-center gap-1 rounded bg-vault-deep/80 px-2 py-1 text-[10px] text-vault-cream">
+                <Clock className="h-3 w-3" />
+                {duration}
+              </div>
+            )}
+            <div
+              className={`absolute left-2 top-2 rounded border px-2 py-1 text-[10px] font-medium ${
+                clip.type === 'raw'
+                  ? 'border-vault-gold/30 bg-vault-gold/20 text-vault-gold'
+                  : 'border-vault-bronze/30 bg-vault-bronze/20 text-vault-bronze'
+              }`}
             >
-              <div className="absolute inset-0 bg-gradient-to-br from-vault-charcoal/40 to-vault-deep/50" />
-              <div className="relative z-10 flex h-full items-center justify-center">
-                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-vault-gold/90 shadow-lg transition-all group-hover:scale-110 group-hover:bg-vault-gold">
-                  <Play className="ml-1 h-7 w-7 text-vault-deep" fill="currentColor" />
-                </div>
-              </div>
-              {duration && (
-                <div className="absolute bottom-2 right-2 flex items-center gap-1 rounded bg-vault-deep/80 px-2 py-1 text-[10px] text-vault-cream">
-                  <Clock className="h-3 w-3" />
-                  {duration}
-                </div>
-              )}
-              <div
-                className={`absolute left-2 top-2 rounded border px-2 py-1 text-[10px] font-medium ${
-                  clip.type === 'raw'
-                    ? 'border-vault-gold/30 bg-vault-gold/20 text-vault-gold'
-                    : 'border-vault-bronze/30 bg-vault-bronze/20 text-vault-bronze'
-                }`}
-              >
-                {clip.type === 'raw' ? 'Raw Clip' : 'Edited'}
-              </div>
-              <div className="absolute right-2 top-2 rounded bg-vault-deep/80 px-2 py-1 text-[10px] capitalize text-muted-foreground">
-                {platform}
-              </div>
-            </button>
-          )}
-        </div>
-
-        <div className="absolute inset-x-0 bottom-0 z-10 flex h-[23.6%] items-center justify-center px-3 pb-3 pt-2">
-          <div className="w-full text-center font-mono text-[#2a2416] line-clamp-2 text-[clamp(8px,1.4vw,13px)] leading-tight">
-            {clip.title}
-          </div>
-        </div>
+              {clip.type === 'raw' ? 'Raw Clip' : 'Edited'}
+            </div>
+            <div className="absolute right-2 top-2 rounded bg-vault-deep/80 px-2 py-1 text-[10px] capitalize text-muted-foreground">
+              {platform}
+            </div>
+          </button>
+        )}
       </div>
 
-      <div className="mt-3 w-full max-w-[320px] px-2 text-left">
-        <div className="flex items-center justify-between gap-2 text-[11px] text-muted-foreground">
+      <div className="mt-2 w-full max-w-[320px] px-2 text-left">
+        <div className="font-mono text-vault-cream line-clamp-2 text-sm leading-tight">
+          {clip.title}
+        </div>
+
+        <div className="mt-2 flex items-center justify-between gap-2 text-[11px] text-muted-foreground">
           <button
             onClick={handleUpvote}
             disabled={!user || voted || voting}
