@@ -30,7 +30,7 @@ export function addSecurityHeaders(res: NextResponse): NextResponse {
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     // Fonts — Google Fonts
     "font-src 'self' https://fonts.gstatic.com",
-    // Images — self + common photo platforms + DiceBear avatars
+    // Images — self + common photo platforms + DiceBear avatars + clip thumbs
     [
       "img-src 'self' data: blob:",
       "https://api.dicebear.com",
@@ -42,6 +42,10 @@ export function addSecurityHeaders(res: NextResponse): NextResponse {
       "https://*.glass.photo",
       "https://supabase.co",
       "https://*.supabase.co",
+      "https://static-cdn.jtvnw.net",
+      "https://*.jtvnw.net",
+      "https://i.ytimg.com",
+      "https://img.youtube.com",
     ].join(' '),
     // Media
     "media-src 'self' https://www.youtube.com https://clips.twitch.tv https://player.twitch.tv",
