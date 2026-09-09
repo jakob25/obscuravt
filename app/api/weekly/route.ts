@@ -36,7 +36,7 @@ export async function GET(req: NextRequest) {
     .from('clips')
     .select('id,title,upvotes,clip_url,profile_id,created_at,vtuber_name')
     .gte('created_at', weekAgo)
-    .order('upvotes', { ascending: false })
+    .order('created_at', { ascending: false })
     .limit(5)
   if (circleIds.length > 0) clipsQuery = clipsQuery.in('profile_id', circleIds)
 
@@ -65,7 +65,7 @@ export async function GET(req: NextRequest) {
     id: c.id,
     title: c.title,
     upvotes: c.upvotes ?? 0,
-    vtuber_name: c.profile_id ?? 'Unknown',
+    vtuber_name: c.vtuber_name ?? c.profile_id ?? 'Unknown',
     clip_url: c.clip_url,
   }))
 

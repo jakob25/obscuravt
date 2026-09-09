@@ -41,7 +41,7 @@ export default function WeeklyPage() {
                   <VaultFrame key={c.id}>
                     <a href={c.clip_url} target="_blank" rel="noopener noreferrer" className="block p-4">
                       <p className="font-medium text-vault-cream text-sm">{c.title}</p>
-                      <p className="text-xs text-muted-foreground">{c.upvotes} upvotes · {c.vtuber_name}</p>
+                      <p className="text-xs text-muted-foreground">{c.vtuber_name}</p>
                     </a>
                   </VaultFrame>
                 ))}

@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react'
 import type { Clip } from '@/lib/types'
 import { useVTuberById } from '@/hooks/use-data'
-import { useAuth } from '@/lib/auth-context'
 import {
   getYouTubeEmbedUrl,
   formatTimestamp,
@@ -11,7 +10,7 @@ import {
   extractVideoId,
   getTwitchClipEmbedUrl,
 } from '@/lib/embed-utils'
-import { Play, ThumbsUp, Clock, ExternalLink } from 'lucide-react'
+import { Play, Clock, ExternalLink } from 'lucide-react'
 import Link from 'next/link'
 
 interface ClipCardProps {
@@ -21,12 +20,8 @@ interface ClipCardProps {
 
 export function ClipCard({ clip, onPlay }: ClipCardProps) {
   const [isPlaying, setIsPlaying] = useState(false)
-  const [upvotes, setUpvotes] = useState(clip.votes.up)
-  const [voted, setVoted] = useState(false)
-  const [voting, setVoting] = useState(false)
   const [thumb, setThumb] = useState<string | null>(clip.thumbnailUrl ?? null)
   const { vtuber } = useVTuberById(clip.vtuberId)
-  const { user } = useAuth()
 
   const extracted = extractVideoId(clip.videoId)
   const platform = clip.platform || extracted?.platform || 'twitch'
@@ -70,22 +65,6 @@ export function ClipCard({ clip, onPlay }: ClipCardProps) {
     clip.startTime !== undefined && clip.endTime !== undefined
       ? formatTimestamp(clip.endTime - clip.startTime)
       : null
-
-  const handleUpvote = async (e: React.MouseEvent) => {
-    e.preventDefault()
-    if (!user || voted || voting) return
-    setVoting(true)
-    const res = await fetch('/api/clips/vote', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ clip_id: clip.id, username: user.username }),
-    })
-    if (res.ok) {
-      setUpvotes(v => v + 1)
-      setVoted(true)
-    }
-    setVoting(false)
-  }
 
   const externalUrl =
     platform === 'youtube'
@@ -151,23 +130,7 @@ export function ClipCard({ clip, onPlay }: ClipCardProps) {
           {clip.title}
         </div>
 
-        <div className="mt-2 flex items-center justify-between gap-2 text-[11px] text-muted-foreground">
-          <button
-            onClick={handleUpvote}
-            disabled={!user || voted || voting}
-            title={!user ? 'Sign in to vote' : voted ? 'Already voted' : 'Upvote'}
-            className={`flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium transition-all ${
-              voted
-                ? 'border-vault-gold bg-vault-gold/20 text-vault-gold'
-                : user
-                  ? 'border-border text-muted-foreground hover:border-vault-gold/50 hover:text-vault-gold cursor-pointer'
-                  : 'border-border text-muted-foreground cursor-default opacity-60'
-            }`}
-          >
-            <ThumbsUp className={`h-3.5 w-3.5 ${voted ? 'fill-vault-gold' : ''}`} />
-            {upvotes}
-          </button>
-
+        <div className="mt-2 flex items-center justify-end gap-2 text-[11px] text-muted-foreground">
           <a
             href={externalUrl}
             target="_blank"

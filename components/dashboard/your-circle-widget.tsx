@@ -85,7 +85,6 @@ function FeedRow({ item }: { item: CircleFeedItem }) {
         <div className="min-w-0">
           <p className="text-[10px] text-muted-foreground uppercase tracking-wide">New clip · {item.vtuberName}</p>
           <p className="text-sm font-medium text-vault-cream line-clamp-1">{item.title}</p>
-          <p className="text-xs text-muted-foreground mt-0.5">↑ {item.upvotes}</p>
         </div>
         <a href={item.clipUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-vault-gold hover:underline shrink-0">
           Watch →

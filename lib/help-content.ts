@@ -86,7 +86,7 @@ export const HELP_SECTIONS: HelpSection[] = [
       },
       {
         q: 'How do clips work?',
-        a: 'Submit clips with a timestamp and platform link. Community upvotes; every clip links to the original upload.',
+        a: 'Submit clips with a timestamp and platform link. Every clip links to the original upload.',
       },
       {
         q: 'What are community bets?',
