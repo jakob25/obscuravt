@@ -274,7 +274,7 @@ export default async function PulseFeed() {
                     <div className="flex items-center justify-between text-xs text-muted-foreground">
                       <span>by {c.submitter ?? c.vtuber_name ?? 'unknown'}</span>
                       <span className="flex items-center gap-1 text-vault-gold">
-                        <ExternalLink className="h-3 w-3" /> {c.upvotes ?? 0} ▲
+                        <ExternalLink className="h-3 w-3" /> Watch
                       </span>
                     </div>
                   </div>
