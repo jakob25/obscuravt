@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { Film, TrendingUp, ArrowRight } from 'lucide-react'
+import { Film, ArrowRight } from 'lucide-react'
 import { useAuth } from '@/lib/auth-context'
 import { normalizeRole } from '@/lib/roles'
 
@@ -66,25 +66,16 @@ export function MyClipsWidget() {
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-3 gap-px bg-border">
-            {[
-              { label: 'Submitted', value: stats.total_clips },
-              { label: 'Total upvotes', value: stats.total_upvotes },
-              { label: 'Avg / clip', value: stats.avg_upvotes },
-            ].map(({ label, value }) => (
-              <div key={label} className="bg-vault-deep/80 px-3 py-3 text-center">
-                <p className="text-lg font-bold text-vault-gold tabular-nums">{value}</p>
-                <p className="text-[10px] text-muted-foreground">{label}</p>
-              </div>
-            ))}
+          <div className="grid grid-cols-1 gap-px bg-border">
+            <div className="bg-vault-deep/80 px-3 py-3 text-center">
+              <p className="text-lg font-bold text-vault-gold tabular-nums">{stats.total_clips}</p>
+              <p className="text-[10px] text-muted-foreground">Submitted</p>
+            </div>
           </div>
           <div className="divide-y divide-border">
             {clips.slice(0, 4).map(c => (
               <div key={c.id} className="px-4 py-3 flex items-center justify-between gap-3">
                 <p className="text-sm text-vault-cream truncate flex-1">{c.title}</p>
-                <span className="text-xs text-vault-gold flex items-center gap-1 flex-shrink-0">
-                  <TrendingUp className="h-3 w-3" />{c.upvotes}
-                </span>
               </div>
             ))}
           </div>
