@@ -77,12 +77,12 @@ function helixHeaders(token: string): HeadersInit {
 }
 
 function isGenericTwitchLogo(url: string): boolean {
-  return /twitch_logo|ttv-static-metadata\\/twitch/i.test(url)
+  return url.includes('twitch_logo') || url.includes('ttv-static-metadata/twitch')
 }
 
 function normalizeThumb(url: string | null | undefined): string | null {
   if (!url) return null
-  const cleaned = url.replace(/%\{width\}/g, '480').replace(/%\{height\}/g, '272').trim()
+  const cleaned = url.replace(/%{width}/g, '480').replace(/%{height}/g, '272').trim()
   if (!cleaned || isGenericTwitchLogo(cleaned)) return null
   return cleaned
 }
