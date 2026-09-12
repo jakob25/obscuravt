@@ -69,7 +69,8 @@ export default async function VTuberProfilePage({ params }: Props) {
 
   const caseId = `OVT-${String(vtuber.id).replace(/[^a-zA-Z0-9]/g, '').slice(-5).toUpperCase().padStart(5, '0')}`
 
-  const { nextScheduleLabel, lastStreamLabel, activeCmdi, openBets } = await fetchDossierSidebarData(id, vtuber.name, vtuber.platform || '', vtuber.link || '')
+  const channelHint = vtuber.link || vtuber.handle || ''
+  const { nextScheduleLabel, lastStreamLabel, lastStreamUrl, liveNow, liveTitle, liveUrl, activeCmdi, openBets } = await fetchDossierSidebarData(id, vtuber.name, vtuber.platform || '', channelHint)
 
   const { data: corpoGroups } = await supabase
     .from('corpo_groups')
@@ -244,9 +245,37 @@ export default async function VTuberProfilePage({ params }: Props) {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="bg-[#e9dfc4] border border-[#5a4f2e]/30 rounded p-4">
                 <div className="section-label mb-1">SCHEDULE / LAST STREAM</div>
-                <div className="text-sm">
-                  {nextScheduleLabel ?? EMPTY.schedule}
-                  {lastStreamLabel && <div className="text-xs text-[#5a4f2e] mt-1">{lastStreamLabel}</div>}
+                <div className="text-sm space-y-1">
+                  {liveNow && (
+                    <div>
+                      {liveUrl ? (
+                        <a
+                          href={liveUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="font-medium text-[#8b1e1e] hover:underline"
+                        >
+                          LIVE NOW{liveTitle ? ` — ${liveTitle}` : ''}
+                        </a>
+                      ) : (
+                        <span className="font-medium text-[#8b1e1e]">
+                          LIVE NOW{liveTitle ? ` — ${liveTitle}` : ''}
+                        </span>
+                      )}
+                    </div>
+                  )}
+                  {nextScheduleLabel ?? (!liveNow && !lastStreamLabel ? EMPTY.schedule : null)}
+                  {lastStreamLabel && (
+                    lastStreamUrl ? (
+                      <div className="text-xs text-[#5a4f2e] mt-1">
+                        <a href={lastStreamUrl} target="_blank" rel="noopener noreferrer" className="hover:underline">
+                          {lastStreamLabel}
+                        </a>
+                      </div>
+                    ) : (
+                      <div className="text-xs text-[#5a4f2e] mt-1">{lastStreamLabel}</div>
+                    )
+                  )}
                 </div>
               </div>
 

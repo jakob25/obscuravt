@@ -7,6 +7,8 @@
 const TOKEN_URL = 'https://id.twitch.tv/oauth2/token'
 const CLIPS_URL = 'https://api.twitch.tv/helix/clips'
 const VIDEOS_URL = 'https://api.twitch.tv/helix/videos'
+const USERS_URL = 'https://api.twitch.tv/helix/users'
+const STREAMS_URL = 'https://api.twitch.tv/helix/streams'
 
 let cachedAppToken: { token: string; expiresAt: number } | null = null
 
@@ -75,12 +77,12 @@ function helixHeaders(token: string): HeadersInit {
 }
 
 function isGenericTwitchLogo(url: string): boolean {
-  return /twitch_logo|ttv-static-metadata\/twitch/i.test(url)
+  return url.includes('twitch_logo') || url.includes('ttv-static-metadata/twitch')
 }
 
 function normalizeThumb(url: string | null | undefined): string | null {
   if (!url) return null
-  const cleaned = url.replace(/%\{width\}/g, '480').replace(/%\{height\}/g, '272').trim()
+  const cleaned = url.replace(/%{width}/g, '480').replace(/%{height}/g, '272').trim()
   if (!cleaned || isGenericTwitchLogo(cleaned)) return null
   return cleaned
 }
@@ -152,4 +154,87 @@ export async function helixVodThumbnail(videoId: string): Promise<string | null>
     return null
   }
   return normalizeThumb(result.json?.data?.[0]?.thumbnail_url)
+}
+
+const TWITCH_RESERVED = new Set([
+  'videos', 'clips', 'directory', 'p', 'settings', 'subs', 'inventory',
+  'downloads', 'jobs', 'turbo', 'prime', 'search', 'popout',
+])
+
+/** Login from a Twitch URL, handle, or raw login. */
+export function parseTwitchLogin(input: string): string | null {
+  const raw = (input || '').trim()
+  if (!raw) return null
+
+  const asUrl = raw.includes('://')
+    ? raw
+    : /twitch\.tv/i.test(raw)
+      ? `https://${raw}`
+      : ''
+
+  if (asUrl) {
+    try {
+      const u = new URL(asUrl)
+      const host = u.hostname.replace(/^www\./i, '').toLowerCase()
+      if (host === 'twitch.tv' || host.endsWith('.twitch.tv')) {
+        const part = u.pathname.split('/').filter(Boolean)[0]
+        if (part && !TWITCH_RESERVED.has(part.toLowerCase()) && /^[a-zA-Z0-9_]{3,25}$/.test(part)) {
+          return part.toLowerCase()
+        }
+      }
+    } catch {
+      /* fall through */
+    }
+  }
+
+  if (/^[a-zA-Z0-9_]{3,25}$/.test(raw)) return raw.toLowerCase()
+  return null
+}
+
+export type HelixChannelPresence = {
+  login: string
+  live: boolean
+  liveTitle: string | null
+  liveStartedAt: string | null
+  liveUrl: string
+  lastTitle: string | null
+  lastAt: string | null
+  lastUrl: string | null
+}
+
+/** Live stream + latest archive for a Twitch login or channel URL. */
+export async function helixChannelPresence(loginOrUrl: string): Promise<HelixChannelPresence | null> {
+  const login = parseTwitchLogin(loginOrUrl)
+  if (!login || !clientId()) return null
+
+  const userRes = await helixGetWithRefresh(`${USERS_URL}?login=${encodeURIComponent(login)}`)
+  if (!userRes || userRes.status !== 200) {
+    if (userRes && userRes.status !== 200) {
+      console.error('helix users status', userRes.status, userRes.json?.message ?? userRes.json)
+    }
+    return null
+  }
+  const user = userRes.json?.data?.[0]
+  if (!user?.id) return null
+
+  const liveUrl = `https://www.twitch.tv/${user.login || login}`
+
+  const [streamRes, videoRes] = await Promise.all([
+    helixGetWithRefresh(`${STREAMS_URL}?user_id=${encodeURIComponent(user.id)}`),
+    helixGetWithRefresh(`${VIDEOS_URL}?user_id=${encodeURIComponent(user.id)}&type=archive&first=1`),
+  ])
+
+  const stream = streamRes?.status === 200 ? streamRes.json?.data?.[0] : null
+  const video = videoRes?.status === 200 ? videoRes.json?.data?.[0] : null
+
+  return {
+    login: user.login || login,
+    live: !!stream,
+    liveTitle: stream?.title ? String(stream.title) : null,
+    liveStartedAt: stream?.started_at ? String(stream.started_at) : null,
+    liveUrl,
+    lastTitle: video?.title ? String(video.title) : null,
+    lastAt: video?.created_at ? String(video.created_at) : null,
+    lastUrl: video?.url ? String(video.url) : video ? `${liveUrl}/videos` : null,
+  }
 }
