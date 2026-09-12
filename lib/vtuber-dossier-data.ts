@@ -1,4 +1,5 @@
 import { getSupabaseClient } from '@/lib/supabase'
+import { helixChannelPresence } from '@/lib/twitch-helix'
 const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
 
 export interface ScheduleSlot {
@@ -25,6 +26,10 @@ export interface DossierBet {
 export interface DossierSidebarData {
   nextScheduleLabel: string | null
   lastStreamLabel: string | null
+  lastStreamUrl: string | null
+  liveNow: boolean
+  liveTitle: string | null
+  liveUrl: string | null
   activeCmdi: DossierCmdiGoal | null
   openBets: DossierBet[]
 }
@@ -34,6 +39,18 @@ function formatTime12h(time24: string) {
   const period = h >= 12 ? 'PM' : 'AM'
   const hour = h % 12 || 12
   return `${hour}:${String(m).padStart(2, '0')} ${period}`
+}
+
+function formatStreamWhen(iso: string): string {
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return ''
+  return d.toLocaleString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  })
 }
 
 export function getNextScheduleSlot(slots: ScheduleSlot[]): ScheduleSlot | null {
@@ -61,28 +78,18 @@ export function formatScheduleLabel(slot: ScheduleSlot | null): string | null {
   return `Next: ${day} ${time}${label}`
 }
 
-// New: Fetch last stream from Twitch or YouTube
 async function fetchLastStream(platform: string, channelIdOrLogin: string): Promise<string | null> {
   if (!channelIdOrLogin) return null
 
   const platformLower = platform.toLowerCase()
 
   if (platformLower.includes('twitch')) {
-    try {
-      const response = await fetch(`https://api.twitch.tv/helix/videos?user_id=${channelIdOrLogin}&first=1`, {
-        headers: {
-          'Client-ID': process.env.TWITCH_CLIENT_ID!,
-          'Authorization': `Bearer ${process.env.TWITCH_ACCESS_TOKEN!}`,
-        },
-      })
-      const data = await response.json()
-      if (data.data && data.data.length > 0) {
-        const video = data.data[0]
-        return `Last stream: ${video.title} (${new Date(video.created_at).toLocaleDateString()})`
-      }
-    } catch (e) {
-      console.error('Twitch last stream fetch error', e)
+    const presence = await helixChannelPresence(channelIdOrLogin)
+    if (presence?.lastTitle && presence.lastAt) {
+      return `Last stream: ${presence.lastTitle} (${formatStreamWhen(presence.lastAt)})`
     }
+    if (presence?.lastTitle) return `Last stream: ${presence.lastTitle}`
+    return null
   } else if (platformLower.includes('youtube')) {
     try {
       const response = await fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelIdOrLogin}&order=date&type=video&maxResults=1&key=${process.env.YOUTUBE_API_KEY!}`)
@@ -110,6 +117,10 @@ export async function fetchDossierSidebarData(
     return {
       nextScheduleLabel: null,
       lastStreamLabel: null,
+      lastStreamUrl: null,
+      liveNow: false,
+      liveTitle: null,
+      liveUrl: null,
       activeCmdi: null,
       openBets: [],
     }
@@ -138,7 +149,20 @@ export async function fetchDossierSidebarData(
   const nextSlot = getNextScheduleSlot((scheduleRows ?? []) as ScheduleSlot[])
   const nextScheduleLabel = formatScheduleLabel(nextSlot)
 
-  const lastStreamLabel = await fetchLastStream(platform, channelIdOrLogin)
+  const twitchPresence = await helixChannelPresence(channelIdOrLogin)
+  const liveNow = !!twitchPresence?.live
+  const liveTitle = twitchPresence?.liveTitle ?? null
+  const liveUrl = twitchPresence?.liveUrl ?? null
+  const lastStreamUrl = twitchPresence?.lastUrl ?? null
+
+  let lastStreamLabel: string | null = null
+  if (twitchPresence?.lastTitle) {
+    lastStreamLabel = twitchPresence.lastAt
+      ? `Last stream: ${twitchPresence.lastTitle} (${formatStreamWhen(twitchPresence.lastAt)})`
+      : `Last stream: ${twitchPresence.lastTitle}`
+  } else {
+    lastStreamLabel = await fetchLastStream(platform, channelIdOrLogin)
+  }
 
   let activeCmdi: DossierCmdiGoal | null = null
   const ideaIds = (ideas ?? []).map(i => i.id)
@@ -171,5 +195,14 @@ export async function fetchDossierSidebarData(
     options: Array.isArray(b.options) ? b.options : [],
   }))
 
-  return { nextScheduleLabel, lastStreamLabel, activeCmdi, openBets }
+  return {
+    nextScheduleLabel,
+    lastStreamLabel,
+    lastStreamUrl,
+    liveNow,
+    liveTitle,
+    liveUrl,
+    activeCmdi,
+    openBets,
+  }
 }
