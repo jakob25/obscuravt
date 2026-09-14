@@ -74,7 +74,7 @@ export function ClipCard({ clip, onPlay }: ClipCardProps) {
         : `https://clips.twitch.tv/${rawId}`
 
   return (
-    <div className="group flex flex-col items-center">
+    <div className="group flex flex-col items-center pb-3">
       <div className="relative w-full max-w-[320px] overflow-hidden rounded-md border border-vault-bronze/30 bg-vault-deep" style={{ aspectRatio: '16 / 9' }}>
         {isPlaying && embedUrl ? (
           <iframe
@@ -130,32 +130,33 @@ export function ClipCard({ clip, onPlay }: ClipCardProps) {
           {clip.title}
         </div>
 
-        <div className="mt-2 flex items-center justify-end gap-2 text-[11px] text-muted-foreground">
+        <div className="mt-2 flex items-center justify-between gap-2 text-[11px] text-muted-foreground">
+          {vtuber ? (
+            <Link
+              href={`/vtuber/${vtuber.id}`}
+              className="flex min-w-0 items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-vault-cream"
+            >
+              <img
+                src={vtuber.avatarUrl}
+                alt={vtuber.name}
+                className="h-6 w-6 shrink-0 rounded-full border border-vault-bronze/30"
+              />
+              <span className="truncate">{vtuber.name}</span>
+            </Link>
+          ) : (
+            <span className="min-w-0" />
+          )}
           <a
             href={externalUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-1 text-vault-gold/90 hover:text-vault-gold"
+            className="flex shrink-0 items-center gap-1 text-vault-gold/90 hover:text-vault-gold"
             onClick={e => e.stopPropagation()}
           >
             <ExternalLink className="h-3 w-3" />
             Watch
           </a>
         </div>
-
-        {vtuber && (
-          <Link
-            href={`/vtuber/${vtuber.id}`}
-            className="mt-2 flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-vault-cream"
-          >
-            <img
-              src={vtuber.avatarUrl}
-              alt={vtuber.name}
-              className="h-6 w-6 rounded-full border border-vault-bronze/30"
-            />
-            <span className="truncate">{vtuber.name}</span>
-          </Link>
-        )}
       </div>
     </div>
   )
