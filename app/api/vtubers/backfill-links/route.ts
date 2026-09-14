@@ -1,10 +1,13 @@
 import { NextResponse } from 'next/server'
-import { backfillMissingVtuberChannelLinks } from '@/lib/vtuber-channel-link'
+import { backfillMissingVtuberChannelLinks, syncExistingTwitchIdentities } from '@/lib/vtuber-channel-link'
+import { reconcileDuplicateEmptyVtuberStubs } from '@/lib/vtuber-stub-reconcile'
 
 export async function GET() {
   try {
+    const stubs = await reconcileDuplicateEmptyVtuberStubs()
     const result = await backfillMissingVtuberChannelLinks(200)
-    return NextResponse.json({ ok: true, ...result })
+    const synced = await syncExistingTwitchIdentities(80)
+    return NextResponse.json({ ok: true, ...result, stubs, synced })
   } catch (e) {
     console.error('vtuber link backfill error:', e)
     return NextResponse.json({ ok: false, error: 'backfill failed' }, { status: 500 })
