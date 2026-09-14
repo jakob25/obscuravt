@@ -14,6 +14,7 @@ import { NeedsHelpContribute } from '@/components/vtuber/needs-help-contribute'
 import { RecommendedStrip } from '@/components/corpo/recommended-strip'
 import { SilhouetteAssetPanel } from '@/components/discovery/silhouette-asset-panel'
 import { fetchDossierSidebarData } from '@/lib/vtuber-dossier-data'
+import { persistTwitchChannelLink } from '@/lib/vtuber-channel-link'
 import { EMPTY } from '@/lib/site-copy'
 import { getSupabaseClient } from '@/lib/supabase'
 
@@ -49,6 +50,18 @@ export default async function VTuberProfilePage({ params }: Props) {
   if (error || !vtuber) {
     console.error('VTuber profile error:', error)
     notFound()
+  }
+
+  const filledLink = await persistTwitchChannelLink({
+    id: vtuber.id,
+    name: vtuber.name,
+    handle: vtuber.handle,
+    link: vtuber.link,
+    platform: vtuber.platform,
+  })
+  if (filledLink) {
+    vtuber.link = filledLink
+    if (!(vtuber.platform && String(vtuber.platform).trim())) vtuber.platform = 'Twitch'
   }
 
   const tags: string[] = vtuber.tags ?? []
@@ -103,7 +116,6 @@ export default async function VTuberProfilePage({ params }: Props) {
 
         <div className="archive-shell rounded-lg overflow-hidden border-2 border-[#1e3a4a]">
 
-          {/* Header */}
           <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-[#1e3a4a]">
             <div>
               <div className="text-[#4fc9d6] text-[10px] tracking-[0.18em] font-govt uppercase">OBSCURAVT • SUBJECT ARCHIVE</div>
@@ -114,7 +126,6 @@ export default async function VTuberProfilePage({ params }: Props) {
 
           <div className="case-folder p-7">
             
-            {/* Top Action Buttons */}
             <div className="flex flex-wrap items-center gap-3 mb-6">
               <Link 
                 href={`/vtuber/${id}/fan-corner`}
@@ -154,7 +165,6 @@ export default async function VTuberProfilePage({ params }: Props) {
               </div>
             )}
 
-            {/* Subject Info */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-8">
               <div className="lg:col-span-5 flex flex-col sm:flex-row gap-5 items-start">
                 <CasePhoto
@@ -203,7 +213,6 @@ export default async function VTuberProfilePage({ params }: Props) {
               </div>
             </div>
 
-            {/* Chat Made Me Do It */}
             <div className="mb-8 border-t border-[#5a4f2e]/30 pt-6">
               <div className="section-label mb-2">CHAT MADE ME DO IT</div>
               
@@ -241,7 +250,6 @@ export default async function VTuberProfilePage({ params }: Props) {
               )}
             </div>
 
-            {/* Schedule LEFT + Bets RIGHT */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="bg-[#e9dfc4] border border-[#5a4f2e]/30 rounded p-4">
                 <div className="section-label mb-1">SCHEDULE / LAST STREAM</div>
@@ -279,7 +287,6 @@ export default async function VTuberProfilePage({ params }: Props) {
                 </div>
               </div>
 
-              {/* Bets - real data per VTuber */}
               <div className="bg-[#e9dfc4] border border-[#5a4f2e]/30 rounded p-4">
                 <div className="section-label mb-2">BETS</div>
                 
