@@ -1,8 +1,49 @@
 import { supabaseAdmin } from '@/lib/supabase'
-import { helixChannelPresence, parseTwitchLogin } from '@/lib/twitch-helix'
+import { extractVideoId } from '@/lib/embed-utils'
+import { helixClipBroadcasters, helixUserLogin, parseTwitchLogin } from '@/lib/twitch-helix'
 
 function hasHttpLink(link: string | null | undefined): boolean {
   return !!(link && /^https?:\/\//i.test(link.trim()))
+}
+
+async function writeChannelLink(
+  row: { id: string; handle?: string | null; platform?: string | null },
+  login: string
+): Promise<string> {
+  const link = `https://www.twitch.tv/${login}`
+  const updates: Record<string, string> = { link }
+  if (!row.platform?.trim()) updates.platform = 'Twitch'
+  if (!row.handle?.trim()) updates.handle = login
+
+  const { error } = await supabaseAdmin.from('vtubers').update(updates).eq('id', row.id)
+  if (error) console.error('persistTwitchChannelLink failed', row.id, error.message)
+  return link
+}
+
+async function broadcasterLoginFromProfileClips(profileId: string): Promise<string | null> {
+  const { data, error } = await supabaseAdmin
+    .from('clips')
+    .select('clip_url')
+    .eq('profile_id', profileId)
+    .not('clip_url', 'is', null)
+    .limit(8)
+
+  if (error) {
+    console.error('profile clips for channel link', profileId, error.message)
+    return null
+  }
+
+  const slugs: string[] = []
+  for (const row of data ?? []) {
+    const extracted = extractVideoId(String(row.clip_url || ''))
+    if (extracted?.platform === 'twitch' && !extracted.videoId.startsWith('v')) {
+      slugs.push(extracted.videoId)
+    }
+  }
+  if (slugs.length === 0) return null
+
+  const map = await helixClipBroadcasters(slugs)
+  return Object.values(map)[0] ?? null
 }
 
 export async function persistTwitchChannelLink(row: {
@@ -19,21 +60,16 @@ export async function persistTwitchChannelLink(row: {
     return row.link?.trim() || null
   }
 
-  const candidates = [row.handle, row.name].filter(Boolean) as string[]
+  const candidates = [row.handle, row.name, row.link].filter(Boolean) as string[]
   for (const raw of candidates) {
     if (!parseTwitchLogin(raw)) continue
-    const presence = await helixChannelPresence(raw)
-    if (!presence?.login) continue
-
-    const link = `https://www.twitch.tv/${presence.login}`
-    const updates: Record<string, string> = { link }
-    if (!row.platform?.trim()) updates.platform = 'Twitch'
-    if (!row.handle?.trim()) updates.handle = presence.login
-
-    const { error } = await supabaseAdmin.from('vtubers').update(updates).eq('id', row.id)
-    if (error) console.error('persistTwitchChannelLink failed', row.id, error.message)
-    return link
+    const login = await helixUserLogin(raw)
+    if (!login) continue
+    return writeChannelLink(row, login)
   }
+
+  const fromClips = await broadcasterLoginFromProfileClips(row.id)
+  if (fromClips) return writeChannelLink(row, fromClips)
 
   return null
 }
@@ -42,8 +78,7 @@ export async function backfillMissingVtuberChannelLinks(limit = 25): Promise<{ s
   const { data, error } = await supabaseAdmin
     .from('vtubers')
     .select('id, name, handle, link, platform')
-    .eq('approved', true)
-    .limit(400)
+    .limit(2000)
 
   if (error || !data) {
     if (error) console.error('backfill channel links select', error.message)

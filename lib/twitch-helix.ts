@@ -238,3 +238,37 @@ export async function helixChannelPresence(loginOrUrl: string): Promise<HelixCha
     lastUrl: video?.url ? String(video.url) : video ? `${liveUrl}/videos` : null,
   }
 }
+
+/** Confirmed Twitch login for a handle/URL. Users lookup only. */
+export async function helixUserLogin(loginOrUrl: string): Promise<string | null> {
+  const login = parseTwitchLogin(loginOrUrl)
+  if (!login || !clientId()) return null
+  const userRes = await helixGetWithRefresh(`${USERS_URL}?login=${encodeURIComponent(login)}`)
+  if (!userRes || userRes.status !== 200) return null
+  const user = userRes.json?.data?.[0]
+  if (!user) return null
+  return String(user.login || login).toLowerCase()
+}
+
+/** Clip slug → broadcaster_login from Helix Get Clips. Never the clipper URL path. */
+export async function helixClipBroadcasters(clipIds: string[]): Promise<Record<string, string>> {
+  const ids = [...new Set(clipIds.filter(id => !!id && !id.startsWith('v')))]
+  const out: Record<string, string> = {}
+  if (!clientId() || ids.length === 0) return out
+
+  for (let i = 0; i < ids.length; i += 100) {
+    const chunk = ids.slice(i, i + 100)
+    const url = `${CLIPS_URL}?${chunk.map(id => `id=${encodeURIComponent(id)}`).join('&')}`
+    const result = await helixGetWithRefresh(url)
+    if (!result) continue
+    if (result.status !== 200) {
+      console.error('helix clip broadcasters status', result.status, result.json?.message ?? result.json)
+      continue
+    }
+    for (const row of result.json?.data ?? []) {
+      const login = String(row.broadcaster_login || '').toLowerCase()
+      if (row.id && login) out[row.id] = login
+    }
+  }
+  return out
+}

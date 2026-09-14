@@ -3,7 +3,7 @@ import { backfillMissingVtuberChannelLinks } from '@/lib/vtuber-channel-link'
 
 export async function GET() {
   try {
-    const result = await backfillMissingVtuberChannelLinks(40)
+    const result = await backfillMissingVtuberChannelLinks(200)
     return NextResponse.json({ ok: true, ...result })
   } catch (e) {
     console.error('vtuber link backfill error:', e)
