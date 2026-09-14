@@ -31,7 +31,7 @@ function isAccountedFile(row: {
   return false
 }
 
-/** Empty clip-stub whose compact name already exists on a filled file. */
+/** Empty clip-stub whose compact name already exists on another approved file. */
 export async function reconcileDuplicateEmptyVtuberStubs(): Promise<{ hidden: number; retargeted: number }> {
   const { data, error } = await supabaseAdmin
     .from('vtubers')
@@ -46,10 +46,10 @@ export async function reconcileDuplicateEmptyVtuberStubs(): Promise<{ hidden: nu
 
   const accountedKeys = new Map<string, string>()
   for (const row of data) {
-    if (!isAccountedFile(row)) continue
     const keys = [compactVtuberKey(row.name || ''), compactVtuberKey(row.handle || '')].filter(k => k.length >= 3)
     for (const key of keys) {
-      if (!accountedKeys.has(key)) accountedKeys.set(key, row.id)
+      const existing = accountedKeys.get(key)
+      if (!existing || isAccountedFile(row)) accountedKeys.set(key, row.id)
     }
   }
 
