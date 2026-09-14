@@ -5,6 +5,7 @@ import { VaultDivider, VaultPanel, GalleryWall, GalleryWallItem, StatCard } from
 import { PulseSectionShell } from '@/components/landing/pulse-section-shell'
 import { supabaseAdmin } from '@/lib/supabase'
 import { resolveClipThumbnail } from '@/lib/embed-utils'
+import { reconcileDuplicateEmptyVtuberStubs, isNeedsHelpFile, compactVtuberKey } from '@/lib/vtuber-stub-reconcile'
 
 export const revalidate = 30
 
@@ -18,6 +19,12 @@ async function safeQuery<T>(fn: () => PromiseLike<{ data: T | null; error?: any 
 }
 
 async function getPulse() {
+  try {
+    await reconcileDuplicateEmptyVtuberStubs()
+  } catch (e) {
+    console.error('stub reconcile', e)
+  }
+
   const [
     clipsRaw,
     fanArt,
@@ -105,10 +112,10 @@ async function getPulse() {
       () =>
         supabaseAdmin
           .from('vtubers')
-          .select('id,name,avatar_url,bio,tags,created_at')
+          .select('id,name,handle,avatar_url,bio,tags,claimed_by,link,created_at')
           .eq('approved', true)
           .order('created_at', { ascending: false })
-          .limit(24),
+          .limit(80),
       [] as any[]
     ),
   ])
@@ -131,12 +138,15 @@ async function getPulse() {
     })
   )
 
+  const accountedKeys = new Set(
+    (needsHelp as any[])
+      .filter(v => !isNeedsHelpFile(v))
+      .flatMap((v: any) => [compactVtuberKey(v.name || ''), compactVtuberKey(v.handle || '')])
+      .filter((k: string) => k.length >= 3)
+  )
+
   const needsHelpList = (needsHelp as any[])
-    .filter(v => {
-      const bioEmpty = !(v.bio && String(v.bio).trim())
-      const tagsEmpty = !Array.isArray(v.tags) || v.tags.length === 0
-      return bioEmpty && tagsEmpty
-    })
+    .filter(v => isNeedsHelpFile(v, accountedKeys))
     .slice(0, 6)
 
   return {
@@ -203,10 +213,10 @@ export default async function PulseFeed() {
 
       <div className="mx-auto w-full max-w-[1600px] px-2 sm:px-3 py-5 space-y-5">
         {needsHelpList.length > 0 && (
-          <PulseSectionShell accent="from-vault-gold/45 via-vault-gold/20 to-transparent" staggerIndex={0}>
+          <PulseSectionShell accent="from-sky-500/45 via-sky-500/20 to-transparent" staggerIndex={0}>
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
-                <HandHelping className="h-5 w-5 text-vault-gold" />
+                <HandHelping className="h-5 w-5 text-sky-400" />
                 <h2 className="text-xl font-bold text-vault-cream">Needs your help</h2>
               </div>
             </div>
@@ -218,7 +228,7 @@ export default async function PulseFeed() {
                 <Link
                   key={v.id}
                   href={`/vtuber/${v.id}`}
-                  className="vault-card rounded-xl p-4 hover:border-vault-gold/40 transition-all flex items-center gap-3 border border-vault-gold/20 bg-vault-deep/40"
+                  className="vault-card rounded-xl p-4 hover:border-sky-400/40 transition-all flex items-center gap-3 border border-sky-400/20 bg-vault-deep/40"
                 >
                   {v.avatar_url ? (
                     <img
@@ -227,13 +237,13 @@ export default async function PulseFeed() {
                       className="h-10 w-10 rounded-full object-cover flex-shrink-0"
                     />
                   ) : (
-                    <div className="h-10 w-10 rounded-full bg-vault-gold/20 flex items-center justify-center text-vault-gold font-bold flex-shrink-0">
+                    <div className="h-10 w-10 rounded-full bg-sky-400/20 flex items-center justify-center text-sky-300 font-bold flex-shrink-0">
                       {v.name?.[0] ?? '?'}
                     </div>
                   )}
                   <div className="min-w-0 flex-1">
                     <p className="font-semibold text-vault-cream truncate">{v.name}</p>
-                    <p className="text-xs text-vault-gold">Incomplete dossier · help fill it out</p>
+                    <p className="text-xs text-sky-300">Incomplete dossier · help fill it out</p>
                   </div>
                 </Link>
               ))}
@@ -382,7 +392,7 @@ export default async function PulseFeed() {
 
         <VaultDivider />
         <p className="text-center text-sm text-muted-foreground">
-          The algorithm didn&apos;t show you this.{' '}
+          The algorithm didn't show you this.{' '}
           <span className="text-vault-gold">You did.</span>
         </p>
       </div>

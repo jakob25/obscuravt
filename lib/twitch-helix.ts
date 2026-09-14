@@ -241,13 +241,8 @@ export async function helixChannelPresence(loginOrUrl: string): Promise<HelixCha
 
 /** Confirmed Twitch login for a handle/URL. Users lookup only. */
 export async function helixUserLogin(loginOrUrl: string): Promise<string | null> {
-  const login = parseTwitchLogin(loginOrUrl)
-  if (!login || !clientId()) return null
-  const userRes = await helixGetWithRefresh(`${USERS_URL}?login=${encodeURIComponent(login)}`)
-  if (!userRes || userRes.status !== 200) return null
-  const user = userRes.json?.data?.[0]
-  if (!user) return null
-  return String(user.login || login).toLowerCase()
+  const profile = await helixUserProfile(loginOrUrl)
+  return profile?.login ?? null
 }
 
 /** Clip slug → broadcaster_login from Helix Get Clips. Never the clipper URL path. */
@@ -271,4 +266,23 @@ export async function helixClipBroadcasters(clipIds: string[]): Promise<Record<s
     }
   }
   return out
+}
+
+export type HelixUserProfile = {
+  login: string
+  displayName: string
+}
+
+/** Current Twitch login + display name. Old logins resolve to the renamed login. */
+export async function helixUserProfile(loginOrUrl: string): Promise<HelixUserProfile | null> {
+  const login = parseTwitchLogin(loginOrUrl)
+  if (!login || !clientId()) return null
+  const userRes = await helixGetWithRefresh(`${USERS_URL}?login=${encodeURIComponent(login)}`)
+  if (!userRes || userRes.status !== 200) return null
+  const user = userRes.json?.data?.[0]
+  if (!user) return null
+  return {
+    login: String(user.login || login).toLowerCase(),
+    displayName: String(user.display_name || user.login || login),
+  }
 }
