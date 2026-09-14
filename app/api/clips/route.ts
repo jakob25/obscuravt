@@ -4,6 +4,7 @@ import { rateLimits } from '@/lib/rate-limit'
 import { supabaseAdmin } from '@/lib/supabase'
 import { extractVideoId, extractTwitchChannel, resolveClipThumbnail } from '@/lib/embed-utils'
 import { helixClipThumbnails } from '@/lib/twitch-helix'
+import { backfillMissingVtuberChannelLinks } from '@/lib/vtuber-channel-link'
 import { randomUUID } from 'crypto'
 
 function platformLabelFromUrl(url: string): string {
@@ -254,6 +255,12 @@ export async function GET() {
     console.error('clip stub backfill error:', e)
   }
 
+  try {
+    await backfillMissingVtuberChannelLinks(25)
+  } catch (e) {
+    console.error('vtuber channel link backfill error:', e)
+  }
+
   const { data, error } = await supabaseAdmin
     .from('clips')
     .select('*')
@@ -320,7 +327,6 @@ export async function POST(req: NextRequest) {
     submittedBy: username,
   })
 
-  // Resolve preview image (YouTube formula / Twitch Helix / scrape fallback)
   let thumbnail_url: string | null = null
   try {
     thumbnail_url = await resolveClipThumbnail(url.trim())
@@ -366,13 +372,11 @@ export async function POST(req: NextRequest) {
     }
     if (/profile_id/i.test(error.message)) minimal.profile_id = null
     if (/tags/i.test(error.message)) delete minimal.tags
-    // Retry without thumbnail if that was the problem
     if (!/thumbnail_url/i.test(error.message) && thumbnail_url) {
       minimal.thumbnail_url = thumbnail_url
     }
     const retry = await supabaseAdmin.from('clips').insert(minimal)
     error = retry.error
-    // Last resort: strip thumbnail
     if (error && /thumbnail_url/i.test(error.message)) {
       delete minimal.thumbnail_url
       const retry2 = await supabaseAdmin.from('clips').insert(minimal)
