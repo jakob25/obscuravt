@@ -5,6 +5,7 @@ import { supabaseAdmin } from '@/lib/supabase'
 import { extractVideoId, extractTwitchChannel, resolveClipThumbnail } from '@/lib/embed-utils'
 import { helixClipThumbnails } from '@/lib/twitch-helix'
 import { backfillMissingVtuberChannelLinks } from '@/lib/vtuber-channel-link'
+import { hydrateVtuberById } from '@/lib/vtuber-twitch-hydrate'
 import { randomUUID } from 'crypto'
 
 function platformLabelFromUrl(url: string): string {
@@ -395,6 +396,14 @@ export async function POST(req: NextRequest) {
       },
       { status: 500 }
     )
+  }
+
+  if (resolved.profileId) {
+    try {
+      await hydrateVtuberById(resolved.profileId)
+    } catch (e) {
+      console.error('clip stub twitch hydrate', e)
+    }
   }
 
   return NextResponse.json(
