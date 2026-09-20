@@ -6,6 +6,7 @@ import { PulseSectionShell } from '@/components/landing/pulse-section-shell'
 import { supabaseAdmin } from '@/lib/supabase'
 import { resolveClipThumbnail } from '@/lib/embed-utils'
 import { reconcileDuplicateEmptyVtuberStubs, isNeedsHelpFile, compactVtuberKey } from '@/lib/vtuber-stub-reconcile'
+import { hydrateEmptyVtubersFromTwitch } from '@/lib/vtuber-twitch-hydrate'
 
 export const revalidate = 30
 
@@ -23,6 +24,12 @@ async function getPulse() {
     await reconcileDuplicateEmptyVtuberStubs()
   } catch (e) {
     console.error('stub reconcile', e)
+  }
+
+  try {
+    await hydrateEmptyVtubersFromTwitch(12)
+  } catch (e) {
+    console.error('twitch hydrate', e)
   }
 
   const [
@@ -224,11 +231,11 @@ export default async function PulseFeed() {
               These creators were added from clips and still have empty files. Sign in and fill in what you know.
             </p>
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {needsHelpList.map((v: any) => (
+              {needsHelpList.map((v: any, i: number) => (
                 <Link
                   key={v.id}
                   href={`/vtuber/${v.id}`}
-                  className="vault-card rounded-xl p-4 hover:border-sky-400/40 transition-all flex items-center gap-3 border border-sky-400/20 bg-vault-deep/40"
+                  className={`vault-card rounded-xl p-4 hover:border-sky-400/40 transition-all flex items-center gap-3 border border-sky-400/20 bg-vault-deep/40${i >= 3 ? ' max-sm:hidden' : ''}`}
                 >
                   {v.avatar_url ? (
                     <img
@@ -257,13 +264,13 @@ export default async function PulseFeed() {
             <p className="text-muted-foreground text-sm">No clips yet. Be the first.</p>
           ) : (
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {clips.map((c: any) => (
+              {clips.map((c: any, i: number) => (
                 <a
                   key={c.id}
                   href={c.clip_url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="vault-card rounded-xl overflow-hidden hover:border-vault-gold/30 transition-all block bg-vault-deep/40 border border-border"
+                  className={`vault-card rounded-xl overflow-hidden hover:border-vault-gold/30 transition-all block bg-vault-deep/40 border border-border${i >= 3 ? ' max-sm:hidden' : ''}`}
                 >
                   <div className="relative aspect-video bg-vault-deep">
                     {c.thumbnail_url ? (
@@ -303,19 +310,20 @@ export default async function PulseFeed() {
               {fanArt
                 .filter((a: any) => a.image_url)
                 .map((a: any, i: number) => (
-                  <GalleryWallItem
-                    key={a.id}
-                    tilt={i % 3 === 0 ? 'right' : i % 3 === 1 ? 'left' : 'none'}
-                  >
-                    <div className="bg-muted/20">
-                      <img src={a.image_url} alt="fan art" className="w-full object-cover" />
-                      <div className="p-2 bg-vault-deep/80">
-                        <span className="text-[10px] text-muted-foreground">
-                          fan art · {a.submitted_by}
-                        </span>
+                  <div key={a.id} className={i >= 3 ? 'max-sm:hidden' : undefined}>
+                    <GalleryWallItem
+                      tilt={i % 3 === 0 ? 'right' : i % 3 === 1 ? 'left' : 'none'}
+                    >
+                      <div className="bg-muted/20">
+                        <img src={a.image_url} alt="fan art" className="w-full object-cover" />
+                        <div className="p-2 bg-vault-deep/80">
+                          <span className="text-[10px] text-muted-foreground">
+                            fan art · {a.submitted_by}
+                          </span>
+                        </div>
                       </div>
-                    </div>
-                  </GalleryWallItem>
+                    </GalleryWallItem>
+                  </div>
                 ))}
             </GalleryWall>
           )}
@@ -327,11 +335,11 @@ export default async function PulseFeed() {
             <p className="text-muted-foreground text-sm">No new creators this cycle.</p>
           ) : (
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {vtubers.map((v: any) => (
+              {vtubers.map((v: any, i: number) => (
                 <Link
                   key={v.id}
                   href={`/vtuber/${v.id}`}
-                  className="vault-card rounded-xl p-4 hover:border-vault-gold/30 transition-all flex items-center gap-3 bg-vault-deep/40"
+                  className={`vault-card rounded-xl p-4 hover:border-vault-gold/30 transition-all flex items-center gap-3 bg-vault-deep/40${i >= 3 ? ' max-sm:hidden' : ''}`}
                 >
                   {v.avatar_url ? (
                     <img
@@ -363,8 +371,8 @@ export default async function PulseFeed() {
               <p className="text-muted-foreground text-sm">No open predictions right now.</p>
             ) : (
               <div className="space-y-2">
-                {predictions.map((p: any) => (
-                  <VaultPanel key={p.id} className="p-3 bg-vault-deep/40">
+                {predictions.map((p: any, i: number) => (
+                  <VaultPanel key={p.id} className={`p-3 bg-vault-deep/40${i >= 3 ? ' max-sm:hidden' : ''}`}>
                     <p className="text-sm text-vault-cream line-clamp-1">{p.title}</p>
                     <p className="text-xs text-vault-gold mt-0.5">{p.vtuber_name}</p>
                   </VaultPanel>
@@ -379,8 +387,8 @@ export default async function PulseFeed() {
               <p className="text-muted-foreground text-sm">Crickets. Say something.</p>
             ) : (
               <div className="space-y-2">
-                {posts.map((p: any) => (
-                  <VaultPanel key={p.id} className="p-3 bg-vault-deep/40">
+                {posts.map((p: any, i: number) => (
+                  <VaultPanel key={p.id} className={`p-3 bg-vault-deep/40${i >= 3 ? ' max-sm:hidden' : ''}`}>
                     <p className="text-sm text-vault-cream line-clamp-2">{p.content}</p>
                     <p className="text-xs text-muted-foreground mt-1">{p.username}</p>
                   </VaultPanel>
