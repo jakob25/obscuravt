@@ -23,15 +23,16 @@ function isAccountedFile(row: {
   claimed_by?: string | null
   avatar_url?: string | null
   link?: string | null
+  handle?: string | null
 }): boolean {
   if (!isEmptyFile(row)) return true
   if (row.claimed_by && String(row.claimed_by).trim()) return true
   if (row.avatar_url && String(row.avatar_url).trim()) return true
   if (hasHttpLink(row.link)) return true
+  if (row.handle && String(row.handle).replace(/^@/, '').trim().length >= 3) return true
   return false
 }
 
-/** Empty clip-stub whose compact name already exists on another approved file. */
 export async function reconcileDuplicateEmptyVtuberStubs(): Promise<{ hidden: number; retargeted: number }> {
   const { data, error } = await supabaseAdmin
     .from('vtubers')
