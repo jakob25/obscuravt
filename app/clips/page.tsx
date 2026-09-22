@@ -1,11 +1,11 @@
 'use client'
 
 import { useState } from 'react'
+import { ClipSubmitForm } from '@/components/common/clip-submit-form'
 import { useClips, useVTubers } from '@/hooks/use-data'
 import { ClipCard } from '@/components/common/clip-card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import Link from 'next/link'
 import { GlitchHeading } from '@/components/vault/glitch-heading'
 import { VaultDivider } from '@/components/vault/vault-surfaces'
 
@@ -13,9 +13,10 @@ export default function ClipsPage() {
   const { clips, loading } = useClips()
   const { vtubers } = useVTubers()
   const [filter, setFilter] = useState('')
+  const [submitOpen, setSubmitOpen] = useState(false)
 
-  const filtered = clips.filter(c => 
-    c.title.toLowerCase().includes(filter.toLowerCase()) || 
+  const filtered = clips.filter(c =>
+    c.title.toLowerCase().includes(filter.toLowerCase()) ||
     (vtubers.find(v => v.id === c.vtuberId)?.name || '').toLowerCase().includes(filter.toLowerCase())
   )
 
@@ -26,9 +27,14 @@ export default function ClipsPage() {
           <GlitchHeading as="h1" className="text-3xl font-bold text-vault-cream">Raw Clips</GlitchHeading>
           <p className="text-sm text-muted-foreground mt-1">Community clips with timestamps and source links.</p>
         </div>
-        <Link href="/clips"><Button variant="vault" size="sm">Submit a clip</Button></Link>
+        <Button variant="vault" size="sm" onClick={() => setSubmitOpen(v => !v)}>Submit a clip</Button>
       </div>
       <VaultDivider className="mb-6" />
+      {submitOpen && (
+        <div className="mb-6 rounded-xl border border-border bg-vault-deep/40 p-4">
+          <ClipSubmitForm onSuccess={() => setSubmitOpen(false)} onCancel={() => setSubmitOpen(false)} />
+        </div>
+      )}
       <div className="mb-4">
         <Input placeholder="Search clips or creators..." value={filter} onChange={e=>setFilter(e.target.value)} className="max-w-md" />
       </div>
