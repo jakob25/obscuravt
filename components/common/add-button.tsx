@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Plus, Film, Trophy, Star, X } from 'lucide-react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { ClipSubmitForm } from '@/components/common/clip-submit-form'
@@ -26,11 +26,15 @@ export function AddButton() {
     setMenuOpen(false)
   }
 
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('compose') === 'clip') openTab('clip')
+  }, [])
+
   return (
     <>
-      {/* Floating action button */}
-      <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-2">
-        {/* Mini menu */}
+      <div className="fixed bottom-20 sm:bottom-6 right-4 sm:right-6 z-50 flex flex-col items-end gap-2">
         {menuOpen && (
           <div className="flex flex-col gap-2 mb-1">
             {tabs.map(t => {
@@ -50,7 +54,6 @@ export function AddButton() {
           </div>
         )}
 
-        {/* Main FAB */}
         <button
           onClick={() => setMenuOpen(prev => !prev)}
           className={`h-14 w-14 rounded-full flex items-center justify-center shadow-2xl transition-all duration-200 ${
@@ -68,7 +71,6 @@ export function AddButton() {
         </button>
       </div>
 
-      {/* Click outside to close menu */}
       {menuOpen && (
         <button
           type="button"
@@ -78,7 +80,6 @@ export function AddButton() {
         />
       )}
 
-      {/* Modal */}
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-lg bg-vault-dark border-border max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -87,7 +88,6 @@ export function AddButton() {
             </DialogTitle>
           </DialogHeader>
 
-          {/* Tab switcher */}
           <div className="flex gap-1 p-1 bg-muted/30 rounded-lg mb-2">
             {tabs.map(t => {
               const Icon = t.icon
@@ -108,12 +108,10 @@ export function AddButton() {
             })}
           </div>
 
-          {/* Description */}
           <p className="text-xs text-muted-foreground mb-4">
             {tabs.find(t => t.id === tab)?.description}
           </p>
 
-          {/* Forms */}
           {tab === 'vtuber' && (
             <VTuberSubmitForm onSuccess={() => setOpen(false)} onCancel={() => setOpen(false)} />
           )}
