@@ -271,6 +271,8 @@ export async function helixClipBroadcasters(clipIds: string[]): Promise<Record<s
 export type HelixUserProfile = {
   login: string
   displayName: string
+  description: string
+  profileImageUrl: string
 }
 
 /** Current Twitch login + display name. Old logins resolve to the renamed login. */
@@ -284,5 +286,44 @@ export async function helixUserProfile(loginOrUrl: string): Promise<HelixUserPro
   return {
     login: String(user.login || login).toLowerCase(),
     displayName: String(user.display_name || user.login || login),
+    description: user.description ? String(user.description) : '',
+    profileImageUrl: user.profile_image_url ? String(user.profile_image_url) : '',
   }
+}
+
+export type HelixClipDetails = {
+  id: string
+  title: string | null
+  thumbnailUrl: string | null
+  broadcasterLogin: string | null
+  broadcasterName: string | null
+  videoId: string | null
+}
+
+/** Helix Get Clips — title, thumb, broadcaster for a clip slug. */
+export async function helixClipDetails(clipId: string): Promise<HelixClipDetails | null> {
+  const id = (clipId || '').trim()
+  if (!id || id.startsWith('v') || !clientId()) return null
+  const result = await helixGetWithRefresh(`${CLIPS_URL}?id=${encodeURIComponent(id)}`)
+  if (!result || result.status !== 200) return null
+  const row = result.json?.data?.[0]
+  if (!row?.id) return null
+  return {
+    id: String(row.id),
+    title: row.title ? String(row.title) : null,
+    thumbnailUrl: normalizeThumb(row.thumbnail_url),
+    broadcasterLogin: row.broadcaster_login ? String(row.broadcaster_login).toLowerCase() : null,
+    broadcasterName: row.broadcaster_name ? String(row.broadcaster_name) : null,
+    videoId: row.video_id ? String(row.video_id) : null,
+  }
+}
+
+/** Helix Get Videos title for a numeric VOD id (with or without leading v). */
+export async function helixVodTitle(videoId: string): Promise<string | null> {
+  const numeric = String(videoId || '').replace(/^v/i, '')
+  if (!clientId() || !/^\d+$/.test(numeric)) return null
+  const result = await helixGetWithRefresh(`${VIDEOS_URL}?id=${encodeURIComponent(numeric)}`)
+  if (!result || result.status !== 200) return null
+  const title = result.json?.data?.[0]?.title
+  return title ? String(title) : null
 }

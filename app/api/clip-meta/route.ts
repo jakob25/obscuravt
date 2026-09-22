@@ -5,6 +5,7 @@ import {
   validateClipUrl,
   resolveClipThumbnail,
 } from '@/lib/embed-utils'
+import { helixClipDetails, helixVodTitle } from '@/lib/twitch-helix'
 
 export async function GET(req: NextRequest) {
   const url = req.nextUrl.searchParams.get('url')?.trim()
@@ -47,6 +48,17 @@ export async function GET(req: NextRequest) {
     } else if (extracted.platform === 'twitch') {
       // Twitch oEmbed is dead — scrape og:image from the clip page
       thumbnail = await resolveClipThumbnail(url)
+      if (!extracted.videoId.startsWith('v')) {
+        const details = await helixClipDetails(extracted.videoId)
+        if (details) {
+          if (details.title) title = details.title
+          if (details.broadcasterName) author = details.broadcasterName
+          if (!thumbnail && details.thumbnailUrl) thumbnail = details.thumbnailUrl
+        }
+      } else {
+        const vodTitle = await helixVodTitle(extracted.videoId)
+        if (vodTitle) title = vodTitle
+      }
     } else if (extracted.platform === 'twitter') {
       const oembedUrl = `https://publish.twitter.com/oembed?url=${encodeURIComponent(url)}&omit_script=true`
       const res = await fetch(oembedUrl, { next: { revalidate: 3600 } })

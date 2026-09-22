@@ -16,6 +16,7 @@ import { SilhouetteAssetPanel } from '@/components/discovery/silhouette-asset-pa
 import { fetchDossierSidebarData } from '@/lib/vtuber-dossier-data'
 import { syncTwitchChannelIdentity } from '@/lib/vtuber-channel-link'
 import { isNeedsHelpFile } from '@/lib/vtuber-stub-reconcile'
+import { hydrateVtuberById } from '@/lib/vtuber-twitch-hydrate'
 import { EMPTY } from '@/lib/site-copy'
 import { getSupabaseClient } from '@/lib/supabase'
 
@@ -65,6 +66,26 @@ export default async function VTuberProfilePage({ params }: Props) {
     vtuber.handle = synced.handle
     vtuber.name = synced.name
     if (!(vtuber.platform && String(vtuber.platform).trim())) vtuber.platform = 'Twitch'
+  }
+
+  try {
+    const filled = await hydrateVtuberById(vtuber.id)
+    if (filled) {
+      const { data: refreshed } = await supabase
+        .from('vtubers')
+        .select('*')
+        .eq('id', id)
+        .maybeSingle()
+      if (refreshed) {
+        vtuber.bio = refreshed.bio
+        vtuber.avatar_url = refreshed.avatar_url
+        vtuber.handle = refreshed.handle
+        vtuber.link = refreshed.link
+        vtuber.platform = refreshed.platform
+      }
+    }
+  } catch (e) {
+    console.error('dossier twitch hydrate', e)
   }
 
   const tags: string[] = vtuber.tags ?? []
