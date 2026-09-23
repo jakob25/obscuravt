@@ -18,7 +18,7 @@ import { syncTwitchChannelIdentity } from '@/lib/vtuber-channel-link'
 import { isNeedsHelpFile } from '@/lib/vtuber-stub-reconcile'
 import { hydrateVtuberById } from '@/lib/vtuber-twitch-hydrate'
 import { EMPTY } from '@/lib/site-copy'
-import { getSupabaseClient } from '@/lib/supabase'
+import { getSupabaseClient, supabaseAdmin } from '@/lib/supabase'
 
 const supabase = getSupabaseClient()
 
@@ -130,11 +130,47 @@ export default async function VTuberProfilePage({ params }: Props) {
 
   const needsHelp = isNeedsHelpFile(vtuber)
 
+  const missing: string[] = []
+  if (!(vtuber.bio && String(vtuber.bio).trim())) missing.push('bio')
+  if (!Array.isArray(vtuber.tags) || vtuber.tags.length === 0) missing.push('tags')
+  if (!(vtuber.handle && String(vtuber.handle).replace(/^@+/, '').trim())) missing.push('handle')
+  if (!(vtuber.link && /^https?:\/\//i.test(String(vtuber.link).trim()))) missing.push('channel link')
+  if (!(vtuber.avatar_url && String(vtuber.avatar_url).trim())) missing.push('avatar')
+
+  const handleLogin = String(vtuber.handle || '').replace(/^@+/, '').trim()
+  const channelUrl =
+    (vtuber.link && String(vtuber.link).trim()) ||
+    (handleLogin
+      ? isYoutube
+        ? `https://www.youtube.com/@${handleLogin}`
+        : isTwitter
+          ? `https://x.com/${handleLogin}`
+          : `https://www.twitch.tv/${handleLogin}`
+      : '')
+
+  let dossierClips: { id: string; title: string; clip_url: string | null; thumbnail_url?: string | null }[] = []
+  const { data: clipsByProfile } = await supabaseAdmin
+    .from('clips')
+    .select('id,title,clip_url,thumbnail_url,vtuber_name,profile_id')
+    .eq('profile_id', id)
+    .order('created_at', { ascending: false })
+    .limit(8)
+  dossierClips = clipsByProfile ?? []
+  if (dossierClips.length === 0 && vtuber.name) {
+    const { data: clipsByName } = await supabaseAdmin
+      .from('clips')
+      .select('id,title,clip_url,thumbnail_url,vtuber_name,profile_id')
+      .ilike('vtuber_name', String(vtuber.name))
+      .order('created_at', { ascending: false })
+      .limit(8)
+    dossierClips = clipsByName ?? []
+  }
+
   return (
     <div className="min-h-screen">
       <div className="container mx-auto px-4 py-8 max-w-6xl">
 
-        <PageBackNav fallbackHref="/discover" label="Back to Star Map" className="mb-8" preferFallback />
+        <PageBackNav fallbackHref="/discover" label="Back" className="mb-8" preferFallback />
 
         <div className="archive-shell rounded-lg overflow-hidden border-2 border-[#1e3a4a]">
 
@@ -143,7 +179,10 @@ export default async function VTuberProfilePage({ params }: Props) {
               <div className="text-[#4fc9d6] text-[10px] tracking-[0.18em] font-govt uppercase">OBSCURAVT • SUBJECT ARCHIVE</div>
               <div className="text-[#4fd6a8] text-[9px] tracking-[0.1em]">{vtuber.claimed_by ? '● VERIFIED SUBJECT' : '● UNCLAIMED FILE'}</div>
             </div>
-            <div className="text-[#5a8a99] text-[10px] mono tracking-[0.08em]">CASE NO. {caseId}</div>
+            <div className="text-right">
+              <div className="text-[#5a8a99] text-[10px] mono tracking-[0.08em]">CASE NO. {caseId}</div>
+              <div className="text-[#4fd6a8] text-[8px] tracking-[0.16em] mt-0.5">FILE ON RECORD</div>
+            </div>
           </div>
 
           <div className="case-folder p-7">
@@ -168,6 +207,7 @@ export default async function VTuberProfilePage({ params }: Props) {
               vtuberId={vtuber.id}
               vtuberName={vtuber.name}
               needsHelp={needsHelp}
+              missing={missing}
             />
 
             <SilhouetteAssetPanel
@@ -216,10 +256,10 @@ export default async function VTuberProfilePage({ params }: Props) {
                 <p className="text-[13.5px] leading-relaxed text-[var(--case-ink)]">
                   {vtuber.bio || 'No field notes on file.'}
                 </p>
-                {vtuber.link && (
+                {channelUrl && (
                   <div className="mt-4">
                     <a
-                      href={vtuber.link}
+                      href={channelUrl}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-2 px-4 py-1.5 text-xs font-mono font-medium border border-[#2a6f74] text-[#1f6f6a] hover:text-[#0d3f42] hover:border-[#1f6f6a] transition-colors bg-white/10"
@@ -234,6 +274,30 @@ export default async function VTuberProfilePage({ params }: Props) {
                 )}
               </div>
             </div>
+
+            {dossierClips.length > 0 && (
+              <div className="mb-8 border-t border-[#5a4f2e]/30 pt-6">
+                <div className="section-label mb-3 text-[#1f6f6a]">CLIPS ON FILE</div>
+                <div className="grid sm:grid-cols-2 gap-3">
+                  {dossierClips.map((clip) => (
+                    <a
+                      key={clip.id}
+                      href={clip.clip_url || '/clips'}
+                      target={clip.clip_url ? '_blank' : undefined}
+                      rel={clip.clip_url ? 'noopener noreferrer' : undefined}
+                      className="block border border-[#5a4f2e]/30 rounded bg-[#e9dfc4]/40 hover:border-[#1f6f6a] transition-colors overflow-hidden"
+                    >
+                      {clip.thumbnail_url && (
+                        <div className="aspect-video bg-[#0d0d14]">
+                          <img src={clip.thumbnail_url} alt="" className="h-full w-full object-cover" />
+                        </div>
+                      )}
+                      <div className="p-3 text-sm font-medium text-[var(--case-ink)] line-clamp-2">{clip.title}</div>
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
 
             <div className="mb-8 border-t border-[#5a4f2e]/30 pt-6">
               <div className="section-label mb-2 text-[#1d6a9a]">CHAT MADE ME DO IT</div>
