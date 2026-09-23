@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import Link from 'next/link'
 import { useVTubers } from '@/hooks/use-data'
 import { useStarMapData } from '@/hooks/use-star-map-data'
@@ -8,10 +8,38 @@ import { GlitchHeading } from '@/components/vault/glitch-heading'
 import { VaultFrame } from '@/components/vault/vault-frame'
 import { VaultDivider } from '@/components/vault/vault-surfaces'
 
+type ApiHit = {
+  id: string
+  name: string
+  handle?: string | null
+  avatar_url?: string | null
+  bio?: string | null
+}
+
 export default function SearchPage() {
   const [query, setQuery] = useState('')
   const { vtubers, loading } = useVTubers()
   const { constellations } = useStarMapData()
+  const [apiHits, setApiHits] = useState<ApiHit[]>([])
+  const [apiLoading, setApiLoading] = useState(false)
+
+  useEffect(() => {
+    const q = query.trim()
+    if (q.length < 2) {
+      setApiHits([])
+      setApiLoading(false)
+      return
+    }
+    const timer = setTimeout(() => {
+      setApiLoading(true)
+      fetch(`/api/vtubers/search?q=${encodeURIComponent(q)}`)
+        .then(r => (r.ok ? r.json() : []))
+        .then((rows: ApiHit[]) => setApiHits(Array.isArray(rows) ? rows : []))
+        .catch(() => setApiHits([]))
+        .finally(() => setApiLoading(false))
+    }, 200)
+    return () => clearTimeout(timer)
+  }, [query])
 
   const results = useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -26,6 +54,11 @@ export default function SearchPage() {
       )
     })
   }, [query, vtubers, constellations])
+
+  const clientIds = new Set(results.map(v => v.id))
+  const extraHits = apiHits.filter(h => !clientIds.has(h.id))
+  const searching = loading || apiLoading
+  const empty = !searching && !!query && results.length === 0 && extraHits.length === 0
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-2xl">
@@ -43,9 +76,9 @@ export default function SearchPage() {
         autoFocus
       />
 
-      {loading && <p className="text-muted-foreground text-sm animate-pulse">Searching the archive…</p>}
+      {searching && <p className="text-muted-foreground text-sm animate-pulse">Searching the archive…</p>}
 
-      {!loading && query && results.length === 0 && (
+      {empty && (
         <p className="text-muted-foreground text-sm">Nothing for &ldquo;{query}&rdquo;. Try a vibe tag.</p>
       )}
 
@@ -66,6 +99,23 @@ export default function SearchPage() {
             </VaultFrame>
           )
         })}
+        {extraHits.map(h => (
+          <VaultFrame key={h.id}>
+            <Link href={`/vtuber/${h.id}`} className="block p-4 hover:border-vault-gold/30 transition-all">
+              <div className="flex items-center gap-3">
+                {h.avatar_url ? (
+                  <img src={h.avatar_url} alt="" className="h-10 w-10 rounded-full border border-vault-bronze/40" />
+                ) : (
+                  <div className="h-10 w-10 rounded-full bg-vault-gold/20 border border-vault-bronze/40" />
+                )}
+                <div className="min-w-0">
+                  <p className="font-semibold text-vault-cream">{h.name}</p>
+                  {h.handle && <p className="text-xs text-muted-foreground">@{String(h.handle).replace(/^@/, '')}</p>}
+                </div>
+              </div>
+            </Link>
+          </VaultFrame>
+        ))}
       </div>
     </div>
   )
