@@ -11,6 +11,7 @@ import { PageBackNav } from '@/components/vault/page-back-nav'
 import { ClaimProfileButton } from '@/components/vtuber/claim-profile-button'
 import { AddToCircleButton } from '@/components/vtuber/add-to-circle-button'
 import { NeedsHelpContribute } from '@/components/vtuber/needs-help-contribute'
+import { DossierClipSubmit } from '@/components/vtuber/dossier-clip-submit'
 import { RecommendedStrip } from '@/components/corpo/recommended-strip'
 import { SilhouetteAssetPanel } from '@/components/discovery/silhouette-asset-panel'
 import { fetchDossierSidebarData } from '@/lib/vtuber-dossier-data'
@@ -274,6 +275,8 @@ export default async function VTuberProfilePage({ params }: Props) {
                 )}
               </div>
             </div>
+
+            <DossierClipSubmit vtuberId={vtuber.id} vtuberName={vtuber.name} />
 
             {dossierClips.length > 0 && (
               <div className="mb-8 border-t border-[#5a4f2e]/30 pt-6">
