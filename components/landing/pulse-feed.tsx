@@ -228,23 +228,23 @@ export default async function PulseFeed() {
           {clips.length === 0 ? (
             <p className="text-muted-foreground text-sm">No clips yet. Be the first.</p>
           ) : (
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
               {clips.map((c: any, i: number) => (
                 <div
                   key={c.id}
-                  className={`vault-card rounded-xl overflow-hidden hover:border-vault-gold/30 transition-all bg-vault-deep/40 border border-border${i >= 3 ? ' max-sm:hidden' : ''}`}
+                  className={`vault-card rounded-lg overflow-hidden hover:border-vault-gold/30 transition-all bg-vault-deep/40 border border-border${i >= 3 ? ' max-sm:hidden' : ''}`}
                 >
                   <a href={c.clip_url} target="_blank" rel="noopener noreferrer" className="relative aspect-video bg-vault-deep block">
                     {c.thumbnail_url ? (
                       <img src={c.thumbnail_url} alt="" className="absolute inset-0 h-full w-full object-cover" />
                     ) : (
-                      <div className="absolute inset-0 flex items-center justify-center text-muted-foreground text-xs">No preview</div>
+                      <div className="absolute inset-0 flex items-center justify-center text-muted-foreground text-[10px]">No preview</div>
                     )}
                     <div className="absolute inset-0 bg-gradient-to-t from-vault-deep/80 via-transparent to-transparent" />
                   </a>
-                  <div className="p-3">
-                    <p className="font-medium text-vault-cream text-sm line-clamp-2 mb-2">{c.title}</p>
-                    <div className="flex items-center justify-between text-xs text-muted-foreground">
+                  <div className="p-1.5">
+                    <p className="font-medium text-vault-cream text-xs line-clamp-1">{c.title}</p>
+                    <div className="flex items-center justify-between gap-1 text-[10px] text-muted-foreground mt-0.5">
                       <span className="truncate">
                         {c.profile_id ? (
                           <Link href={`/vtuber/${c.profile_id}`} className="hover:text-vault-cream">
@@ -254,7 +254,7 @@ export default async function PulseFeed() {
                           c.vtuber_name || 'Unknown creator'
                         )}
                       </span>
-                      <a href={c.clip_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-vault-gold">
+                      <a href={c.clip_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-0.5 text-vault-gold shrink-0">
                         <ExternalLink className="h-3 w-3" /> Watch
                       </a>
                     </div>
