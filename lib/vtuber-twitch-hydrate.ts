@@ -62,6 +62,15 @@ async function applyHelixToRow(row: HydrateRow): Promise<boolean> {
     const fromClip = await loginFromClips(row.id, row.name)
     if (fromClip) profile = await helixUserProfile(fromClip)
   }
+  if (!profile?.login && row.name) {
+    const compact = String(row.name).toLowerCase().replace(/[^a-z0-9_]/g, '')
+    const nameKey = String(row.name).toLowerCase().replace(/[^a-z0-9]/g, '')
+    if (compact.length >= 3 && compact.length <= 25) {
+      const guess = await helixUserProfile(compact)
+      const guessKey = (guess?.displayName || '').toLowerCase().replace(/[^a-z0-9]/g, '')
+      if (guess?.login && (guess.login === compact || guessKey === nameKey)) profile = guess
+    }
+  }
   if (!profile?.login) return false
 
   const updates: Record<string, string> = {}
@@ -96,6 +105,9 @@ export async function hydrateEmptyVtubersFromTwitch(limit = 12): Promise<{ scann
     const platform = (row.platform ?? '').toLowerCase()
     if (platform.includes('youtube') || platform.includes('twitter')) return false
     return emptyText(row.bio) || emptyText(row.avatar_url) || emptyText(row.link) || emptyText(row.handle)
+  }).sort((a, b) => {
+    const score = (row: HydrateRow) => (emptyText(row.handle) && emptyText(row.link) ? 1 : 0)
+    return score(a) - score(b)
   }).slice(0, limit)
 
   let filled = 0
