@@ -127,7 +127,6 @@ async function getPulse() {
     ),
   ])
 
-  // Ensure each clip has a preview image (resolve + cache if missing)
   const clips = await Promise.all(
     (clipsRaw as any[]).map(async c => {
       if (c.thumbnail_url) return c
@@ -145,15 +144,24 @@ async function getPulse() {
     })
   )
 
+  const clipOwnerIds = new Set((clips as any[]).map(c => c.profile_id).filter(Boolean))
+  const clipOwnerKeys = new Set(
+    (clips as any[])
+      .flatMap(c => [compactVtuberKey(c.vtuber_name || '')])
+      .filter((k: string) => k.length >= 3)
+  )
+
   const accountedKeys = new Set(
     (needsHelp as any[])
       .filter(v => !isNeedsHelpFile(v))
       .flatMap((v: any) => [compactVtuberKey(v.name || ''), compactVtuberKey(v.handle || '')])
       .filter((k: string) => k.length >= 3)
   )
+  for (const k of clipOwnerKeys) accountedKeys.add(k)
 
   const needsHelpList = (needsHelp as any[])
     .filter(v => isNeedsHelpFile(v, accountedKeys))
+    .filter(v => !clipOwnerIds.has(v.id))
     .slice(0, 6)
 
   return {
@@ -163,11 +171,7 @@ async function getPulse() {
     posts,
     predictions,
     needsHelpList,
-    stats: {
-      vtuberCount,
-      clipCount,
-      userCount,
-    },
+    stats: { vtuberCount, clipCount, userCount },
   }
 }
 
@@ -206,7 +210,7 @@ export default async function PulseFeed() {
                 The Vault Pulse
               </GlitchHeading>
               <p className="text-sm text-muted-foreground mt-1">
-                Everything the community posted, dropped, and pitched — live. The more people who join and share, the better this gets.
+                Find VTubers by clips and vibe — not subscriber count. Watch a moment, open the file, follow the channel.
               </p>
             </div>
             <div className="grid grid-cols-3 gap-3">
@@ -218,7 +222,49 @@ export default async function PulseFeed() {
         </div>
       </section>
 
-      <div className="mx-auto w-full max-w-[1600px] px-2 sm:px-3 py-5 space-y-5">
+      <div className="mx-auto w-full max-w-[1600px] px-2 sm:px-3 py-5 pb-24 sm:pb-5 space-y-5">
+        <PulseSectionShell accent="from-sky-500/40 via-sky-500/15 to-transparent" staggerIndex={1}>
+          <SectionHeader icon={Film} title="Fresh Clips" href="/clips" />
+          {clips.length === 0 ? (
+            <p className="text-muted-foreground text-sm">No clips yet. Be the first.</p>
+          ) : (
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {clips.map((c: any, i: number) => (
+                <div
+                  key={c.id}
+                  className={`vault-card rounded-xl overflow-hidden hover:border-vault-gold/30 transition-all bg-vault-deep/40 border border-border${i >= 3 ? ' max-sm:hidden' : ''}`}
+                >
+                  <a href={c.clip_url} target="_blank" rel="noopener noreferrer" className="relative aspect-video bg-vault-deep block">
+                    {c.thumbnail_url ? (
+                      <img src={c.thumbnail_url} alt="" className="absolute inset-0 h-full w-full object-cover" />
+                    ) : (
+                      <div className="absolute inset-0 flex items-center justify-center text-muted-foreground text-xs">No preview</div>
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-vault-deep/80 via-transparent to-transparent" />
+                  </a>
+                  <div className="p-3">
+                    <p className="font-medium text-vault-cream text-sm line-clamp-2 mb-2">{c.title}</p>
+                    <div className="flex items-center justify-between text-xs text-muted-foreground">
+                      <span className="truncate">
+                        {c.profile_id ? (
+                          <Link href={`/vtuber/${c.profile_id}`} className="hover:text-vault-cream">
+                            {c.vtuber_name || 'Open file'}
+                          </Link>
+                        ) : (
+                          c.vtuber_name || 'Unknown creator'
+                        )}
+                      </span>
+                      <a href={c.clip_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-vault-gold">
+                        <ExternalLink className="h-3 w-3" /> Watch
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </PulseSectionShell>
+
         {needsHelpList.length > 0 && (
           <PulseSectionShell accent="from-sky-500/45 via-sky-500/20 to-transparent" staggerIndex={0}>
             <div className="flex items-center justify-between mb-4">
@@ -238,11 +284,7 @@ export default async function PulseFeed() {
                   className={`vault-card rounded-xl p-4 hover:border-sky-400/40 transition-all flex items-center gap-3 border border-sky-400/20 bg-vault-deep/40${i >= 3 ? ' max-sm:hidden' : ''}`}
                 >
                   {v.avatar_url ? (
-                    <img
-                      src={v.avatar_url}
-                      alt=""
-                      className="h-10 w-10 rounded-full object-cover flex-shrink-0"
-                    />
+                    <img src={v.avatar_url} alt="" className="h-10 w-10 rounded-full object-cover flex-shrink-0" />
                   ) : (
                     <div className="h-10 w-10 rounded-full bg-sky-400/20 flex items-center justify-center text-sky-300 font-bold flex-shrink-0">
                       {v.name?.[0] ?? '?'}
@@ -258,79 +300,30 @@ export default async function PulseFeed() {
           </PulseSectionShell>
         )}
 
-        <PulseSectionShell accent="from-sky-500/40 via-sky-500/15 to-transparent" staggerIndex={1}>
-          <SectionHeader icon={Film} title="Fresh Clips" href="/clips" />
-          {clips.length === 0 ? (
-            <p className="text-muted-foreground text-sm">No clips yet. Be the first.</p>
-          ) : (
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {clips.map((c: any, i: number) => (
-                <a
-                  key={c.id}
-                  href={c.clip_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={`vault-card rounded-xl overflow-hidden hover:border-vault-gold/30 transition-all block bg-vault-deep/40 border border-border${i >= 3 ? ' max-sm:hidden' : ''}`}
-                >
-                  <div className="relative aspect-video bg-vault-deep">
-                    {c.thumbnail_url ? (
-                      <img
-                        src={c.thumbnail_url}
-                        alt=""
-                        className="absolute inset-0 h-full w-full object-cover"
-                      />
-                    ) : (
-                      <div className="absolute inset-0 flex items-center justify-center text-muted-foreground text-xs">
-                        No preview
-                      </div>
-                    )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-vault-deep/80 via-transparent to-transparent" />
-                  </div>
-                  <div className="p-3">
-                    <p className="font-medium text-vault-cream text-sm line-clamp-2 mb-2">{c.title}</p>
-                    <div className="flex items-center justify-between text-xs text-muted-foreground">
-                      <span>by {c.submitter ?? c.vtuber_name ?? 'unknown'}</span>
-                      <span className="flex items-center gap-1 text-vault-gold">
-                        <ExternalLink className="h-3 w-3" /> Watch
-                      </span>
-                    </div>
-                  </div>
-                </a>
-              ))}
-            </div>
-          )}
-        </PulseSectionShell>
-
-        <PulseSectionShell accent="from-rose-500/40 via-rose-500/15 to-transparent" staggerIndex={2}>
-          <SectionHeader icon={Palette} title="Fan Art" href="/fan-art" />
-          {fanArt.length === 0 ? (
-            <p className="text-muted-foreground text-sm">Blank wall. Hang something.</p>
-          ) : (
+        {(fanArt as any[]).some((a: any) => a.image_url) && (
+          <PulseSectionShell accent="from-rose-500/40 via-rose-500/15 to-transparent" staggerIndex={2}>
+            <SectionHeader icon={Palette} title="Fan Art" href="/fan-art" />
             <GalleryWall>
               {fanArt
                 .filter((a: any) => a.image_url)
                 .map((a: any, i: number) => (
                   <div key={a.id} className={i >= 3 ? 'max-sm:hidden' : undefined}>
-                    <GalleryWallItem
-                      tilt={i % 3 === 0 ? 'right' : i % 3 === 1 ? 'left' : 'none'}
-                    >
+                    <GalleryWallItem tilt={i % 3 === 0 ? 'right' : i % 3 === 1 ? 'left' : 'none'}>
                       <div className="bg-muted/20">
                         <img src={a.image_url} alt="fan art" className="w-full object-cover" />
                         <div className="p-2 bg-vault-deep/80">
-                          <span className="text-[10px] text-muted-foreground">
-                            fan art · {a.submitted_by}
-                          </span>
+                          <span className="text-[10px] text-muted-foreground">fan art · {a.submitted_by}</span>
                         </div>
                       </div>
                     </GalleryWallItem>
                   </div>
                 ))}
             </GalleryWall>
-          )}
-        </PulseSectionShell>
+          </PulseSectionShell>
+        )}
 
         <PulseSectionShell accent="from-[#e056a0]/40 via-[#e056a0]/15 to-transparent" staggerIndex={3}>
-          <SectionHeader icon={Sparkles} title="New in the Vault" href="/discover" />
+          <SectionHeader icon={Sparkles} title="New in the Vault" href="/search" />
           {vtubers.length === 0 ? (
             <p className="text-muted-foreground text-sm">No new creators this cycle.</p>
           ) : (
@@ -342,11 +335,7 @@ export default async function PulseFeed() {
                   className={`vault-card rounded-xl p-4 hover:border-vault-gold/30 transition-all flex items-center gap-3 bg-vault-deep/40${i >= 3 ? ' max-sm:hidden' : ''}`}
                 >
                   {v.avatar_url ? (
-                    <img
-                      src={v.avatar_url}
-                      alt=""
-                      className="h-10 w-10 rounded-full object-cover flex-shrink-0"
-                    />
+                    <img src={v.avatar_url} alt="" className="h-10 w-10 rounded-full object-cover flex-shrink-0" />
                   ) : (
                     <div className="h-10 w-10 rounded-full bg-vault-gold/20 flex items-center justify-center text-vault-gold font-bold flex-shrink-0">
                       {v.name?.[0] ?? '?'}
@@ -354,9 +343,7 @@ export default async function PulseFeed() {
                   )}
                   <div className="min-w-0">
                     <p className="font-semibold text-vault-cream truncate">{v.name}</p>
-                    {v.bio && (
-                      <p className="text-xs text-muted-foreground line-clamp-1">{v.bio}</p>
-                    )}
+                    {v.bio && <p className="text-xs text-muted-foreground line-clamp-1">{v.bio}</p>}
                   </div>
                 </Link>
               ))}
@@ -381,11 +368,9 @@ export default async function PulseFeed() {
             )}
           </PulseSectionShell>
 
-          <PulseSectionShell accent="from-sky-500/40 via-sky-500/15 to-transparent" staggerIndex={5}>
-            <SectionHeader icon={MessageSquare} title="From the Forums" href="/forums" />
-            {posts.length === 0 ? (
-              <p className="text-muted-foreground text-sm">Crickets. Say something.</p>
-            ) : (
+          {posts.length > 0 && (
+            <PulseSectionShell accent="from-sky-500/40 via-sky-500/15 to-transparent" staggerIndex={5}>
+              <SectionHeader icon={MessageSquare} title="From the Forums" href="/forums" />
               <div className="space-y-2">
                 {posts.map((p: any, i: number) => (
                   <VaultPanel key={p.id} className={`p-3 bg-vault-deep/40${i >= 3 ? ' max-sm:hidden' : ''}`}>
@@ -394,8 +379,8 @@ export default async function PulseFeed() {
                   </VaultPanel>
                 ))}
               </div>
-            )}
-          </PulseSectionShell>
+            </PulseSectionShell>
+          )}
         </div>
 
         <VaultDivider />

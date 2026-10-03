@@ -12,9 +12,10 @@ interface NeedsHelpContributeProps {
   vtuberName: string
   /** true when bio empty and tags empty */
   needsHelp: boolean
+  missing?: string[]
 }
 
-export function NeedsHelpContribute({ vtuberId, vtuberName, needsHelp }: NeedsHelpContributeProps) {
+export function NeedsHelpContribute({ vtuberId, vtuberName, needsHelp, missing = [] }: NeedsHelpContributeProps) {
   const { user } = useAuth()
   const [open, setOpen] = useState(false)
   const [bio, setBio] = useState('')
@@ -47,6 +48,13 @@ export function NeedsHelpContribute({ vtuberId, vtuberName, needsHelp }: NeedsHe
           <p className="text-xs text-muted-foreground mt-0.5">
             {vtuberName} was added from a clip and still has almost no details. Signed-in fans can fill in the blanks.
           </p>
+          {missing.length > 0 && (
+            <ul className="mt-2 text-[11px] text-vault-gold/80 space-y-0.5">
+              {missing.map(item => (
+                <li key={item}>Missing: {item}</li>
+              ))}
+            </ul>
+          )}
         </div>
         {!open && (
           <Button

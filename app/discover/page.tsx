@@ -4,7 +4,8 @@ import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { StarMap } from '@/components/common/star-map'
 import { NicheMap } from '@/components/common/niche-map'
-import { Sparkles, BookOpen, Compass } from 'lucide-react'
+import Link from 'next/link'
+import { Sparkles, BookOpen, Compass, List } from 'lucide-react'
 
 
 type MapMode = 'vibe' | 'niche'
@@ -98,6 +99,13 @@ function DiscoverPageContent() {
           <BookOpen className="h-3.5 w-3.5" />
           Niche Map
         </button>
+        <Link
+          href="/search"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-white/50 hover:text-white"
+        >
+          <List className="h-3.5 w-3.5" />
+          List
+        </Link>
       </div>
 
       {/* Map */}

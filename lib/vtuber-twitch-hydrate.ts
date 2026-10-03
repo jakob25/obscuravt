@@ -6,16 +6,27 @@ function emptyText(v: string | null | undefined): boolean {
   return !(v && String(v).trim())
 }
 
-async function loginFromClips(profileId: string): Promise<string | null> {
-  const { data } = await supabaseAdmin
+async function loginFromClips(profileId: string, name?: string | null): Promise<string | null> {
+  const { data: byId } = await supabaseAdmin
     .from('clips')
-    .select('clip_url')
+    .select('clip_url, profile_id, vtuber_name')
     .eq('profile_id', profileId)
     .not('clip_url', 'is', null)
-    .limit(6)
+    .limit(8)
+
+  let rows = byId ?? []
+  if (rows.length === 0 && name && name.trim()) {
+    const { data: byName } = await supabaseAdmin
+      .from('clips')
+      .select('clip_url, profile_id, vtuber_name')
+      .ilike('vtuber_name', name.trim())
+      .not('clip_url', 'is', null)
+      .limit(8)
+    rows = byName ?? []
+  }
 
   const slugs: string[] = []
-  for (const row of data ?? []) {
+  for (const row of rows) {
     const extracted = extractVideoId(String(row.clip_url || ''))
     if (extracted?.platform === 'twitch' && !extracted.videoId.startsWith('v')) {
       slugs.push(extracted.videoId)
@@ -48,7 +59,7 @@ async function applyHelixToRow(row: HydrateRow): Promise<boolean> {
     if (profile?.login) break
   }
   if (!profile?.login) {
-    const fromClip = await loginFromClips(row.id)
+    const fromClip = await loginFromClips(row.id, row.name)
     if (fromClip) profile = await helixUserProfile(fromClip)
   }
   if (!profile?.login) return false
@@ -69,7 +80,6 @@ async function applyHelixToRow(row: HydrateRow): Promise<boolean> {
   return true
 }
 
-/** Fill empty bio / avatar / handle / link from Helix Users. Never overwrite a written bio. */
 export async function hydrateEmptyVtubersFromTwitch(limit = 12): Promise<{ scanned: number; filled: number }> {
   const { data, error } = await supabaseAdmin
     .from('vtubers')
@@ -97,7 +107,6 @@ export async function hydrateEmptyVtubersFromTwitch(limit = 12): Promise<{ scann
   return { scanned: targets.length, filled }
 }
 
-/** Fill one file from Helix when the dossier or a new clip stub is opened. */
 export async function hydrateVtuberById(id: string): Promise<boolean> {
   if (!id) return false
   const { data, error } = await supabaseAdmin

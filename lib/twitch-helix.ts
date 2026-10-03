@@ -163,7 +163,7 @@ const TWITCH_RESERVED = new Set([
 
 /** Login from a Twitch URL, handle, or raw login. */
 export function parseTwitchLogin(input: string): string | null {
-  const raw = (input || '').trim()
+  const raw = (input || '').trim().replace(/^@+/, '')
   if (!raw) return null
 
   const asUrl = raw.includes('://')
