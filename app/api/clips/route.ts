@@ -319,7 +319,19 @@ export async function POST(req: NextRequest) {
     .maybeSingle()
 
   if (existing)
-    return NextResponse.json({ error: 'This clip has already been submitted.' }, { status: 409 })
+    return NextResponse.json({ error: 'This clip is already in the archive.' }, { status: 409 })
+
+  // Same clip under a different URL form (e.g. clips.twitch.tv/X vs twitch.tv/user/clip/X)
+  const submittedId = extractVideoId(url.trim())?.videoId
+  if (submittedId) {
+    const { data: sameId } = await supabaseAdmin
+      .from('clips')
+      .select('clip_url')
+      .ilike('clip_url', `%${submittedId.replace(/^v(\d+)$/, '$1')}%`)
+      .limit(10)
+    if ((sameId ?? []).some(c => extractVideoId(c.clip_url || '')?.videoId === submittedId))
+      return NextResponse.json({ error: 'This clip is already in the archive.' }, { status: 409 })
+  }
 
   const resolved = await resolveOrCreateStubProfile({
     profileId: profile_id,

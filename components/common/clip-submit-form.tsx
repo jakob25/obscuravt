@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useVibeTags, useVTubers } from '@/hooks/use-data'
 import { useAuth } from '@/lib/auth-context'
+import { supabase } from '@/lib/supabase'
 import { validateClipUrl, extractVideoId, extractTwitchChannel } from '@/lib/embed-utils'
 import { Plus, AlertCircle, CheckCircle, Link as LinkIcon, Loader2 } from 'lucide-react'
 import type { VTuber } from '@/lib/types'
@@ -57,6 +58,8 @@ export function ClipSubmitForm({ prefillVtuberId, prefillName, onSuccess, onCanc
   const [url, setUrl] = useState('')
   const [urlError, setUrlError] = useState<string | null>(null)
   const [urlValid, setUrlValid] = useState(false)
+  // Existing clip on file with the same Twitch/YouTube id (link target), if any
+  const [duplicate, setDuplicate] = useState<{ href: string } | null>(null)
   const [extractedInfo, setExtractedInfo] = useState<{ platform: string; videoId: string } | null>(null)
   const [title, setTitle] = useState('')
   const [selectedVTuber, setSelectedVTuber] = useState(prefillVtuberId ?? '')
@@ -114,6 +117,27 @@ export function ClipSubmitForm({ prefillVtuberId, prefillName, onSuccess, onCanc
       }
     }
   }
+
+  // Warn before submit when the same clip id is already on file
+  useEffect(() => {
+    setDuplicate(null)
+    const id = extractedInfo?.videoId
+    if (!id) return
+    let cancelled = false
+    supabase
+      .from('clips')
+      .select('id, clip_url, profile_id')
+      .ilike('clip_url', `%${id.replace(/^v(\d+)$/, '$1')}%`)
+      .limit(10)
+      .then(({ data }) => {
+        if (cancelled) return
+        const hit = (data ?? []).find(
+          (c: { clip_url: string | null }) => extractVideoId(c.clip_url || '')?.videoId === id
+        ) as { profile_id: string | null } | undefined
+        if (hit) setDuplicate({ href: hit.profile_id ? `/vtuber/${hit.profile_id}` : '/clips' })
+      })
+    return () => { cancelled = true }
+  }, [extractedInfo?.videoId])
 
   // Fetch title + thumbnail + author when URL becomes valid
   useEffect(() => {
@@ -197,7 +221,7 @@ export function ClipSubmitForm({ prefillVtuberId, prefillName, onSuccess, onCanc
     setTimeout(() => onSuccess?.(), 1200)
   }
 
-  const isValid = urlValid && !!title && (!!selectedVTuber || !!freeTextName.trim())
+  const isValid = urlValid && !duplicate && !!title && (!!selectedVTuber || !!freeTextName.trim())
 
   if (done) {
     return (
@@ -253,6 +277,12 @@ export function ClipSubmitForm({ prefillVtuberId, prefillName, onSuccess, onCanc
             {authorFromMeta && ` · ${authorFromMeta}`}
             {metaLoading && ' · pulling title…'}
             {!metaLoading && titleAutoFilled && ' · title pulled from link'}
+          </p>
+        )}
+        {duplicate && (
+          <p className="mt-1 text-xs text-destructive flex items-center gap-1">
+            <AlertCircle className="h-3 w-3" /> This clip is already in the archive.{' '}
+            <a href={duplicate.href} className="underline hover:text-vault-cream">View it</a>
           </p>
         )}
       </div>
