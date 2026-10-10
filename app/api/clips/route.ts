@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { requireAuth } from '@/lib/session'
+import { getSession } from '@/lib/session'
+import { allowSignedOutClipSubmit } from '@/lib/flags'
 import { rateLimits } from '@/lib/rate-limit'
 import { supabaseAdmin } from '@/lib/supabase'
 import { extractVideoId, extractTwitchChannel, resolveClipThumbnail } from '@/lib/embed-utils'
@@ -299,8 +300,10 @@ export async function POST(req: NextRequest) {
   const rl = await rateLimits.write(req)
   if (!rl.ok) return rl.response!
 
-  const session = await requireAuth(req)
-  if (session instanceof NextResponse) return session
+  const session = await getSession(req)
+  if (!session && !allowSignedOutClipSubmit()) {
+    return NextResponse.json({ error: 'Authentication required.' }, { status: 401 })
+  }
 
   let body: Record<string, unknown>
   try {
@@ -315,7 +318,7 @@ export async function POST(req: NextRequest) {
   const description = typeof body.description === 'string' ? body.description : null
   const tags = Array.isArray(body.tags) ? body.tags.filter((t): t is string => typeof t === 'string') : []
   const nameFromBody = typeof body.vtuber_name === 'string' ? body.vtuber_name.trim() : ''
-  const username = session.username
+  const username = session?.username ?? 'guest'
 
   if (!title.trim())
     return NextResponse.json({ error: 'Title is required.' }, { status: 400 })
