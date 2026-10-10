@@ -223,7 +223,9 @@ export function ClipSubmitForm({ prefillVtuberId, prefillName, onSuccess, onCanc
       {!user && (
         <div className="flex items-center gap-2 p-3 rounded-lg bg-vault-gold/10 border border-vault-gold/30 text-sm text-vault-gold">
           <AlertCircle className="h-4 w-4 flex-shrink-0" />
-          You need to be signed in to submit clips.
+          <span>
+            You need to be <a href="/login" className="underline hover:text-vault-amber">signed in</a> to submit clips.
+          </span>
         </div>
       )}
 
@@ -410,6 +412,11 @@ export function ClipSubmitForm({ prefillVtuberId, prefillName, onSuccess, onCanc
           Submit Clip
         </Button>
       </div>
+      {!user && (
+        <p className="text-xs text-muted-foreground text-center">
+          <a href="/login" className="text-vault-gold hover:underline">Sign in</a> to submit clips
+        </p>
+      )}
     </form>
   )
 }
