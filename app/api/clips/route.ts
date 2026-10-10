@@ -108,7 +108,7 @@ async function resolveOrCreateStubProfile(opts: {
   const rawLogin = extractTwitchChannel(clipUrl)
   const urlLogin = rawLogin && /^[a-z0-9_]{1,25}$/.test(rawLogin) ? rawLogin : null
   if (urlLogin) {
-    const loginPattern = urlLogin.replace(/_/g, '\\_')
+    const loginPattern = urlLogin.replace(/[\\_%]/g, '\\$&')
     const { data: byLogin } = await supabaseAdmin
       .from('vtubers')
       .select('id, name')
