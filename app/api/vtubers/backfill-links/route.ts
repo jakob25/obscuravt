@@ -8,7 +8,7 @@ export async function GET() {
     const stubs = await reconcileDuplicateEmptyVtuberStubs()
     const result = await backfillMissingVtuberChannelLinks(200)
     const synced = await syncExistingTwitchIdentities(80)
-    const hydrated = await hydrateEmptyVtubersFromTwitch(40)
+    const hydrated = await hydrateEmptyVtubersFromTwitch(80)
     return NextResponse.json({ ok: true, ...result, stubs, synced, hydrated })
   } catch (e) {
     console.error('vtuber link backfill error:', e)

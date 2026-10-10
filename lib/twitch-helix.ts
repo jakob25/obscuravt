@@ -80,6 +80,12 @@ function isGenericTwitchLogo(url: string): boolean {
   return url.includes('twitch_logo') || url.includes('ttv-static-metadata/twitch')
 }
 
+/** Helix profile_image_url is 300x300. The same CDN path serves 600x600. */
+export function helixProfileImage(url: string | null | undefined): string {
+  if (!url) return ''
+  return String(url).replace(/-profile_image-\d+x\d+/i, '-profile_image-600x600')
+}
+
 function normalizeThumb(url: string | null | undefined): string | null {
   if (!url) return null
   const cleaned = url.replace(/%{width}/g, '480').replace(/%{height}/g, '272').trim()
@@ -287,7 +293,7 @@ export async function helixUserProfile(loginOrUrl: string): Promise<HelixUserPro
     login: String(user.login || login).toLowerCase(),
     displayName: String(user.display_name || user.login || login),
     description: user.description ? String(user.description) : '',
-    profileImageUrl: user.profile_image_url ? String(user.profile_image_url) : '',
+    profileImageUrl: helixProfileImage(user.profile_image_url),
   }
 }
 

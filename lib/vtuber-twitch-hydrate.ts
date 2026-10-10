@@ -1,9 +1,14 @@
 import { supabaseAdmin } from '@/lib/supabase'
 import { extractVideoId } from '@/lib/embed-utils'
-import { helixClipBroadcasters, helixUserProfile, parseTwitchLogin } from '@/lib/twitch-helix'
+import { helixClipBroadcasters, helixProfileImage, helixUserProfile, parseTwitchLogin } from '@/lib/twitch-helix'
 
 function emptyText(v: string | null | undefined): boolean {
   return !(v && String(v).trim())
+}
+
+function needsFace(url: string | null | undefined): boolean {
+  if (emptyText(url)) return true
+  return /-profile_image-(70x70|150x150|300x300)/i.test(String(url))
 }
 
 async function loginFromClips(profileId: string, name?: string | null): Promise<string | null> {
@@ -77,7 +82,8 @@ async function applyHelixToRow(row: HydrateRow): Promise<boolean> {
   if (emptyText(row.handle)) updates.handle = profile.login
   if (emptyText(row.link)) updates.link = `https://www.twitch.tv/${profile.login}`
   if (emptyText(row.platform)) updates.platform = 'Twitch'
-  if (emptyText(row.avatar_url) && profile.profileImageUrl) updates.avatar_url = profile.profileImageUrl
+  const face = helixProfileImage(profile.profileImageUrl)
+  if (face && needsFace(row.avatar_url) && face !== row.avatar_url) updates.avatar_url = face
   if (emptyText(row.bio) && profile.description) updates.bio = profile.description.slice(0, 500)
 
   if (Object.keys(updates).length === 0) return false
@@ -104,10 +110,11 @@ export async function hydrateEmptyVtubersFromTwitch(limit = 12): Promise<{ scann
   const targets = data.filter(row => {
     const platform = (row.platform ?? '').toLowerCase()
     if (platform.includes('youtube') || platform.includes('twitter')) return false
-    return emptyText(row.bio) || emptyText(row.avatar_url) || emptyText(row.link) || emptyText(row.handle)
+    return emptyText(row.bio) || needsFace(row.avatar_url) || emptyText(row.link) || emptyText(row.handle)
   }).sort((a, b) => {
-    const score = (row: HydrateRow) => (emptyText(row.handle) && emptyText(row.link) ? 1 : 0)
-    return score(a) - score(b)
+    const face = (row: HydrateRow) => (needsFace(row.avatar_url) ? 0 : 1)
+    const identity = (row: HydrateRow) => (emptyText(row.handle) && emptyText(row.link) ? 1 : 0)
+    return face(a) - face(b) || identity(a) - identity(b)
   }).slice(0, limit)
 
   let filled = 0
