@@ -104,10 +104,27 @@ async function resolveOrCreateStubProfile(opts: {
     }
   }
 
+  // Real Twitch login from twitch.tv/<login>/clip/... (null for clips.twitch.tv/<slug>)
+  const rawLogin = extractTwitchChannel(clipUrl)
+  const urlLogin = rawLogin && /^[a-z0-9_]{1,25}$/.test(rawLogin) ? rawLogin : null
+  if (urlLogin) {
+    const loginPattern = urlLogin.replace(/_/g, '\\_')
+    const { data: byLogin } = await supabaseAdmin
+      .from('vtubers')
+      .select('id, name')
+      .eq('approved', true)
+      .or(`handle.ilike.${loginPattern},handle.ilike.@${loginPattern}`)
+      .limit(1)
+      .maybeSingle()
+    if (byLogin) {
+      return { profileId: byLogin.id, resolvedName: byLogin.name, createdStub: false }
+    }
+  }
+
   const id = `vt_${(compact || 'unknown').slice(0, 16)}_${randomUUID().slice(0, 6)}`
   const platform = platformLabelFromUrl(clipUrl)
   const link = twitchLinkFromUrl(clipUrl)
-  const handle = (compact || id).slice(0, 24)
+  const handle = (urlLogin || compact || id).slice(0, 24)
 
   let insertError = (
     await supabaseAdmin.from('vtubers').insert({
