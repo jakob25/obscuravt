@@ -238,6 +238,17 @@ export default async function VTuberProfilePage({ params }: Props) {
                 />
                 <div className="flex-1 min-w-0 font-mono pt-1">
                   <CaseField label="CODENAME" value={vtuber.name} />
+                  {liveNow && (
+                    <a
+                      href={liveUrl || undefined}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 my-1.5 px-2 py-0.5 rounded-sm bg-[#8a2317] text-[#e9dfc4] text-[11px] font-bold tracking-[0.12em] hover:opacity-90"
+                    >
+                      <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#e9dfc4] animate-pulse" aria-hidden="true" />
+                      LIVE NOW
+                    </a>
+                  )}
                   <CaseField label="HANDLE" value={vtuber.handle || undefined} />
                   <CaseField
                     label="CLUSTER"
