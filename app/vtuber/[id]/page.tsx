@@ -249,7 +249,7 @@ export default async function VTuberProfilePage({ params }: Props) {
                       LIVE NOW
                     </a>
                   )}
-                  <CaseField label="HANDLE" value={vtuber.handle || undefined} />
+                  <CaseField label="HANDLE" value={handleLogin ? `@${handleLogin}` : undefined} />
                   <CaseField
                     label="CLUSTER"
                     value={cluster ? `FILED UNDER ${cluster.tag.toUpperCase()}` : undefined}

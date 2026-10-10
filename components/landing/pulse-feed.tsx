@@ -145,6 +145,12 @@ async function getPulse() {
   )
 
   const clipOwnerIds = new Set((clips as any[]).map(c => c.profile_id).filter(Boolean))
+  // Canonical creator name (vtubers.name) for each clip; clips.vtuber_name is free text typed at submit time.
+  const ownerNameById: Record<string, string> = {}
+  if (clipOwnerIds.size) {
+    const { data: owners } = await supabaseAdmin.from('vtubers').select('id,name').eq('approved', true).in('id', Array.from(clipOwnerIds))
+    for (const o of owners || []) if (o.name) ownerNameById[o.id] = o.name
+  }
   const clipOwnerKeys = new Set(
     (clips as any[])
       .flatMap(c => [compactVtuberKey(c.vtuber_name || '')])
@@ -186,6 +192,7 @@ async function getPulse() {
     predictions,
     needsHelpList,
     clipsOnFile,
+    ownerNameById,
     stats: { vtuberCount, clipCount, userCount },
   }
 }
@@ -213,7 +220,7 @@ function SectionHeader({
 }
 
 export default async function PulseFeed() {
-  const { clips, fanArt, vtubers, posts, predictions, needsHelpList, clipsOnFile, stats } = await getPulse()
+  const { clips, fanArt, vtubers, posts, predictions, needsHelpList, clipsOnFile, ownerNameById, stats } = await getPulse()
 
   return (
     <div className="min-h-screen">
@@ -263,7 +270,7 @@ export default async function PulseFeed() {
                       <span className="truncate">
                         {c.profile_id ? (
                           <Link href={`/vtuber/${c.profile_id}`} className="hover:text-vault-cream">
-                            {c.vtuber_name || 'Open file'}
+                            {ownerNameById[c.profile_id] || c.vtuber_name || 'Open file'}
                           </Link>
                         ) : (
                           c.vtuber_name || 'Unknown creator'
