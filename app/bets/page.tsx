@@ -274,7 +274,7 @@ export default function BetsPage() {
 
   const openBets = bets.filter(b => b.status === 'open')
   const votingBets = bets.filter(b => b.status === 'voting')
-  const resolvedBets = bets.filter(b => b.status === 'resolved')
+  const resolvedBets = bets.filter(b => b.status !== 'open' && b.status !== 'voting')
 
   if (loading) {
     return (

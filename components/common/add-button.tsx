@@ -34,6 +34,9 @@ export function AddButton() {
 
   return (
     <>
+      {/* In-flow spacer so the end of every page can scroll clear of the fixed + button
+          (bottom-20 + h-14 on mobile, bottom-6 + h-14 on sm+, plus a little breathing room). */}
+      <div aria-hidden="true" className="h-36 sm:h-24 shrink-0" />
       <div className="fixed bottom-20 sm:bottom-6 right-4 sm:right-6 z-50 flex flex-col items-end gap-2">
         {menuOpen && (
           <div className="flex flex-col gap-2 mb-1">

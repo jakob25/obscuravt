@@ -11,6 +11,7 @@ import { PageBackNav } from '@/components/vault/page-back-nav'
 import { ClaimProfileButton } from '@/components/vtuber/claim-profile-button'
 import { AddToCircleButton } from '@/components/vtuber/add-to-circle-button'
 import { NeedsHelpContribute } from '@/components/vtuber/needs-help-contribute'
+import { DossierClipSubmit } from '@/components/vtuber/dossier-clip-submit'
 import { RecommendedStrip } from '@/components/corpo/recommended-strip'
 import { SilhouetteAssetPanel } from '@/components/discovery/silhouette-asset-panel'
 import { fetchDossierSidebarData } from '@/lib/vtuber-dossier-data'
@@ -237,7 +238,18 @@ export default async function VTuberProfilePage({ params }: Props) {
                 />
                 <div className="flex-1 min-w-0 font-mono pt-1">
                   <CaseField label="CODENAME" value={vtuber.name} />
-                  <CaseField label="HANDLE" value={vtuber.handle || undefined} />
+                  {liveNow && (
+                    <a
+                      href={liveUrl || undefined}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 my-1.5 px-2 py-0.5 rounded-sm bg-[#8a2317] text-[#e9dfc4] text-[11px] font-bold tracking-[0.12em] hover:opacity-90"
+                    >
+                      <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#e9dfc4] animate-pulse" aria-hidden="true" />
+                      LIVE NOW
+                    </a>
+                  )}
+                  <CaseField label="HANDLE" value={handleLogin ? `@${handleLogin}` : undefined} />
                   <CaseField
                     label="CLUSTER"
                     value={cluster ? `FILED UNDER ${cluster.tag.toUpperCase()}` : undefined}
@@ -274,6 +286,8 @@ export default async function VTuberProfilePage({ params }: Props) {
                 )}
               </div>
             </div>
+
+            <DossierClipSubmit vtuberId={vtuber.id} vtuberName={vtuber.name} />
 
             {dossierClips.length > 0 && (
               <div className="mb-8 border-t border-[#5a4f2e]/30 pt-6">

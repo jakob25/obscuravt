@@ -12,6 +12,7 @@ import type { VTuber } from '@/lib/types'
 
 interface ClipSubmitFormProps {
   prefillVtuberId?: string
+  prefillName?: string
   onSuccess?: () => void
   onCancel?: () => void
 }
@@ -48,7 +49,7 @@ function matchVtuberFromHint(vtubers: VTuber[], hint: string): VTuber | undefine
   return vtubers.find(v => compactName(v.name).includes(compact) || v.name.toLowerCase().includes(h.toLowerCase()))
 }
 
-export function ClipSubmitForm({ prefillVtuberId, onSuccess, onCancel }: ClipSubmitFormProps) {
+export function ClipSubmitForm({ prefillVtuberId, prefillName, onSuccess, onCancel }: ClipSubmitFormProps) {
   const { vibeTags } = useVibeTags()
   const { vtubers } = useVTubers()
   const { user } = useAuth()
@@ -165,7 +166,7 @@ export function ClipSubmitForm({ prefillVtuberId, onSuccess, onCancel }: ClipSub
     setSubmitError(null)
 
     const selectedName = selectedVTuber
-      ? (vtubers.find(v => v.id === selectedVTuber)?.name ?? '')
+      ? (vtubers.find(v => v.id === selectedVTuber)?.name ?? prefillName ?? '')
       : freeTextName.trim()
 
     const res = await fetch('/api/clips', {
@@ -287,7 +288,12 @@ export function ClipSubmitForm({ prefillVtuberId, onSuccess, onCancel }: ClipSub
 
       {/* VTuber — existing or not-yet-in-Vault */}
       <div className="space-y-3">
-        <div>
+        {prefillVtuberId && (
+          <p className="text-sm text-vault-cream">
+            Filing this clip on <span className="font-semibold">{prefillName || 'this file'}</span>
+          </p>
+        )}
+        <div className={prefillVtuberId ? 'hidden' : undefined}>
           <label className="block text-sm font-medium text-vault-cream mb-1.5">VTuber</label>
           <select
             value={selectedVTuber}

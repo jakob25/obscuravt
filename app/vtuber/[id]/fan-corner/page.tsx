@@ -59,7 +59,7 @@ export default function FanCornerPage() {
             <div className="flex items-center justify-between">
               <div>
                 <div className="text-[#4fc9d6] text-[10px] tracking-[0.18em] mono">OBSCURAVT · CASE EVIDENCE</div>
-                <div className="text-[#4fd6a8] text-[9px] tracking-[0.1em] mt-0.5">PAMU — COMMUNITY ARCHIVE</div>
+                <div className="text-[#4fd6a8] text-[9px] tracking-[0.1em] mt-0.5">COMMUNITY ARCHIVE</div>
               </div>
               <Link 
                 href={`/vtuber/${vtuberId}`}
