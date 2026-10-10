@@ -43,7 +43,8 @@ export default function SearchPage() {
 
   const results = useMemo(() => {
     const q = query.trim().toLowerCase()
-    if (!q) return []
+    // Empty box ("List" / "View all" land here): show every approved file A–Z instead of nothing.
+    if (!q) return [...vtubers].sort((a, b) => a.name.localeCompare(b.name))
     return vtubers.filter(v => {
       const c = constellations.find(x => x.id === v.category)
       return (
