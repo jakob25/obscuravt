@@ -1,10 +1,10 @@
 /**
  * Vercel project flag for guest clip submit.
- * Set GUEST_CLIP_SUBMIT=1 in the project env to allow submit while signed out.
- * Unset or 0 keeps the current rule: a session is required.
+ * On by default. Set GUEST_CLIP_SUBMIT=0 (or false/off) to require a session.
  * Flip it in Vercel project settings, then redeploy so the function picks it up.
  */
 export function allowSignedOutClipSubmit(): boolean {
   const raw = (process.env.GUEST_CLIP_SUBMIT ?? '').trim().toLowerCase()
-  return raw === '1' || raw === 'true' || raw === 'on'
+  if (raw === '0' || raw === 'false' || raw === 'off') return false
+  return true
 }
