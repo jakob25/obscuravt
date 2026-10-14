@@ -54,6 +54,7 @@ export function ClipSubmitForm({ prefillVtuberId, prefillName, onSuccess, onCanc
   const { vibeTags } = useVibeTags()
   const { vtubers } = useVTubers()
   const { user } = useAuth()
+  const [guestOk, setGuestOk] = useState(false)
 
   const [url, setUrl] = useState('')
   const [urlError, setUrlError] = useState<string | null>(null)
@@ -78,6 +79,17 @@ export function ClipSubmitForm({ prefillVtuberId, prefillName, onSuccess, onCanc
   const titleTouchedRef = useRef(false)
   const nameTouchedRef = useRef(false)
   const lastFetchedUrlRef = useRef('')
+
+  useEffect(() => {
+    let cancelled = false
+    fetch('/api/flags/guest-clip-submit')
+      .then(r => (r.ok ? r.json() : null))
+      .then(data => {
+        if (!cancelled && data?.enabled) setGuestOk(true)
+      })
+      .catch(() => {})
+    return () => { cancelled = true }
+  }, [])
 
   const applyCreatorHint = (hint: string, displayName?: string | null) => {
     if (!hint || nameTouchedRef.current || prefillVtuberId) return
@@ -180,9 +192,11 @@ export function ClipSubmitForm({ prefillVtuberId, prefillName, onSuccess, onCanc
     )
   }
 
+  const canSubmit = !!user || guestOk
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!user) { setSubmitError('You must be signed in to submit a clip.'); return }
+    if (!canSubmit) { setSubmitError('You must be signed in to submit a clip.'); return }
     if (!urlValid || !extractedInfo || !title) return
     if (!selectedVTuber && !freeTextName.trim()) return
 
@@ -198,7 +212,7 @@ export function ClipSubmitForm({ prefillVtuberId, prefillName, onSuccess, onCanc
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         profile_id: selectedVTuber || null,
-        username: user.username,
+        username: user?.username ?? 'guest',
         title,
         url,
         type: clipType,
@@ -244,7 +258,7 @@ export function ClipSubmitForm({ prefillVtuberId, prefillName, onSuccess, onCanc
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
-      {!user && (
+      {!canSubmit && (
         <div className="flex items-center gap-2 p-3 rounded-lg bg-vault-gold/10 border border-vault-gold/30 text-sm text-vault-gold">
           <AlertCircle className="h-4 w-4 flex-shrink-0" />
           <span>
@@ -435,14 +449,14 @@ export function ClipSubmitForm({ prefillVtuberId, prefillName, onSuccess, onCanc
         )}
         <Button
           type="submit"
-          disabled={!isValid || submitting || !user}
+          disabled={!isValid || submitting || !canSubmit}
           className="flex-1 bg-vault-gold hover:bg-vault-amber text-vault-deep font-semibold disabled:opacity-50"
         >
           {submitting ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Plus className="h-4 w-4 mr-2" />}
           Submit Clip
         </Button>
       </div>
-      {!user && (
+      {!canSubmit && (
         <p className="text-xs text-muted-foreground text-center">
           <a href="/login" className="text-vault-gold hover:underline">Sign in</a> to submit clips
         </p>
