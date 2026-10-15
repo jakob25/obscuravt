@@ -244,7 +244,7 @@ export default async function PulseFeed() {
         </div>
       </section>
 
-      <div className="mx-auto w-full max-w-[1600px] px-2 sm:px-3 py-5 pb-24 sm:pb-5 space-y-5">
+      <div className="mx-auto w-full max-w-[1600px] px-2 sm:px-3 py-5 pb-5 space-y-5">
         <PulseSectionShell accent="from-sky-500/40 via-sky-500/15 to-transparent" staggerIndex={1}>
           <SectionHeader icon={Film} title="Fresh Clips" href="/clips" />
           {clips.length === 0 ? (
