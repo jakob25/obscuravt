@@ -1,5 +1,7 @@
+import generated from './generated-updates.json'
+
 /** Bump when shipping user-facing updates; triggers the announcement modal once per user. */
-export const APP_VERSION = '2026.06.23'
+const HANDWRITTEN_APP_VERSION = '2026.06.23'
 
 export const UPDATE_ANNOUNCEMENTS: Record<string, { title: string; body: string[] }> = {
   '2026.06.21': {
@@ -21,3 +23,13 @@ export const UPDATE_ANNOUNCEMENTS: Record<string, { title: string; body: string[
     ],
   },
 }
+
+const gen = generated as { version: string | null; title: string | null; body: string[] }
+const hasGenerated = !!gen.version && Array.isArray(gen.body) && gen.body.length > 0
+
+if (hasGenerated && gen.version && !UPDATE_ANNOUNCEMENTS[gen.version]) {
+  UPDATE_ANNOUNCEMENTS[gen.version] = { title: gen.title || "What's New on the Vault", body: gen.body }
+}
+
+/** Newest generated Update: version when present, otherwise the hand-written value. */
+export const APP_VERSION = hasGenerated && gen.version ? gen.version : HANDWRITTEN_APP_VERSION
