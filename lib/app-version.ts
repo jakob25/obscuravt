@@ -1,9 +1,20 @@
 import generated from './generated-updates.json'
 
 /** Bump when shipping user-facing updates; triggers the announcement modal once per user. */
-const HANDWRITTEN_APP_VERSION = '2026.06.23'
+const HANDWRITTEN_APP_VERSION = '2026.10.15'
 
 export const UPDATE_ANNOUNCEMENTS: Record<string, { title: string; body: string[] }> = {
+  '2026.10.15': {
+    title: "What's New on the Vault",
+    body: [
+      'Sharing a Vault link on Discord or X now shows a proper preview image.',
+      'The site has its own icon in your browser tab and on your home screen.',
+      "A creator's page shows LIVE NOW at the top when they're streaming.",
+      'Submitting a clip that\'s already in the Vault now warns you first.',
+      "Clips are filed under the right streamer based on the Twitch link, even from another creator's page.",
+      'Signed out? The clip form now links you straight to sign in.',
+    ],
+  },
   '2026.06.21': {
     title: 'Vault Update — Roles, Clip Stats & More',
     body: [
