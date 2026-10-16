@@ -17,6 +17,13 @@ export function TestingBanner() {
     setShow(false)
   }
 
+  // Lets pages add room for this fixed banner only while it is on screen.
+  useEffect(() => {
+    if (!show) return
+    document.documentElement.setAttribute('data-testing-banner', '')
+    return () => document.documentElement.removeAttribute('data-testing-banner')
+  }, [show])
+
   if (!show) return null
 
   return (
