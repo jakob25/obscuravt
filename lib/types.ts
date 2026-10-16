@@ -25,7 +25,7 @@ export interface Clip {
   id: string;
   vtuberId: string;
   title: string;
-  platform: 'youtube' | 'twitch';
+  platform: 'youtube' | 'twitch' | 'twitter' | 'kick';
   /** Full source URL (Twitch) or video id / URL (YouTube). */
   videoId: string;
   startTime?: number; // seconds

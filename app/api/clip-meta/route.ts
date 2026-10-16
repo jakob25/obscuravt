@@ -69,6 +69,10 @@ export async function GET(req: NextRequest) {
           ? `${data.author_name} on X`
           : `X post ${extracted.videoId}`
       }
+    } else if (extracted.platform === 'kick') {
+      // No keyless Kick clip API: best-effort og:image, null (badge) on failure.
+      thumbnail = await resolveClipThumbnail(url)
+      author = url.match(/kick\.com\/([\w-]+)/i)?.[1] ?? null
     }
 
     return NextResponse.json({

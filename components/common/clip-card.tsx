@@ -27,6 +27,22 @@ export function ClipCard({ clip, onPlay }: ClipCardProps) {
   const platform = clip.platform || extracted?.platform || 'twitch'
   const rawId = extracted?.videoId ?? clip.videoId
 
+  const linkOnly = platform === 'kick' || platform === 'twitter'
+  const platformLabel = platform === 'twitter' ? 'X' : platform
+
+  // Kick/X have no reliable preview: verify the image loads, else keep the quiet badge.
+  const [thumbOk, setThumbOk] = useState(!linkOnly)
+  useEffect(() => {
+    if (!linkOnly || !thumb) return
+    let cancelled = false
+    const img = new Image()
+    img.onload = () => { if (!cancelled) setThumbOk(true) }
+    img.onerror = () => { if (!cancelled) setThumbOk(false) }
+    img.src = thumb
+    return () => { cancelled = true }
+  }, [linkOnly, thumb])
+  const shownThumb = thumb && thumbOk ? thumb : null
+
   // Resolve thumbnail: stored → YouTube formula → Twitch via clip-meta
   useEffect(() => {
     if (thumb) return
@@ -35,7 +51,7 @@ export function ClipCard({ clip, onPlay }: ClipCardProps) {
       if (yt) setThumb(yt)
       return
     }
-    if (platform === 'twitch' && clip.videoId.startsWith('http')) {
+    if ((platform === 'twitch' || platform === 'kick') && clip.videoId.startsWith('http')) {
       let cancelled = false
       fetch(`/api/clip-meta?url=${encodeURIComponent(clip.videoId)}`)
         .then(r => (r.ok ? r.json() : null))
@@ -50,6 +66,10 @@ export function ClipCard({ clip, onPlay }: ClipCardProps) {
   }, [clip.videoId, platform, thumb])
 
   const handlePlay = () => {
+    if (linkOnly) {
+      window.open(externalUrl, '_blank', 'noopener,noreferrer')
+      return
+    }
     setIsPlaying(true)
     onPlay?.()
   }
@@ -88,9 +108,9 @@ export function ClipCard({ clip, onPlay }: ClipCardProps) {
             onClick={handlePlay}
             className="absolute inset-0 h-full w-full overflow-hidden bg-vault-deep"
             style={
-              thumb
+              shownThumb
                 ? {
-                    backgroundImage: `url(${thumb})`,
+                    backgroundImage: `url(${shownThumb})`,
                     backgroundSize: 'cover',
                     backgroundPosition: 'center',
                   }
@@ -119,8 +139,13 @@ export function ClipCard({ clip, onPlay }: ClipCardProps) {
               {clip.type === 'raw' ? 'Raw Clip' : 'Edited'}
             </div>
             <div className="absolute right-2 top-2 rounded bg-vault-deep/80 px-2 py-1 text-[10px] capitalize text-muted-foreground">
-              {platform}
+              {platformLabel}
             </div>
+            {linkOnly && !shownThumb && (
+              <div className="absolute bottom-2 left-2 rounded bg-vault-deep/80 px-2 py-1 font-mono text-[10px] uppercase tracking-[0.1em] text-vault-cream/80">
+                Opens on {platformLabel}
+              </div>
+            )}
           </button>
         )}
       </div>

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { extractVideoId } from '@/lib/embed-utils'
 import { supabase } from '@/lib/supabase'
 import type { VTuber, Clip, Bet, BetOption, VibeTag } from '@/lib/types'
 
@@ -226,11 +227,12 @@ export function useClips() {
         const mapped: Clip[] = rows.map((c: DbClip) => {
           const url = c.clip_url ?? ''
           const isYoutube = /youtube\.com|youtu\.be/i.test(url)
+          const parsedPlatform = extractVideoId(url)?.platform
           return {
             id: c.id,
             vtuberId: c.profile_id ?? '',
             title: c.title,
-            platform: isYoutube ? 'youtube' : 'twitch',
+            platform: parsedPlatform === 'kick' || parsedPlatform === 'twitter' ? parsedPlatform : isYoutube ? 'youtube' : 'twitch',
             videoId: url,
             vibeTags: c.tags ?? [],
             type: 'raw' as const,

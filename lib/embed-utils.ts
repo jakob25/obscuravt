@@ -99,7 +99,9 @@ export function extractTwitchChannel(url: string): string | null {
   return null
 }
 
-export function extractVideoId(url: string): { platform: 'youtube' | 'twitch' | 'twitter'; videoId: string } | null {
+export type ClipPlatform = 'youtube' | 'twitch' | 'twitter' | 'kick'
+
+export function extractVideoId(url: string): { platform: ClipPlatform; videoId: string } | null {
   // YouTube patterns
   const youtubePatterns = [
     /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/,
@@ -139,6 +141,12 @@ export function extractVideoId(url: string): { platform: 'youtube' | 'twitch' | 
   if (match) {
     return { platform: 'twitter', videoId: match[1] };
   }
+
+  // Kick clips: kick.com/<user>/clips/<id> or kick.com/<user>?clip=<id>
+  match = url.match(/kick\.com\/[\w-]+\/clips\/([A-Za-z0-9_-]+)/i) || url.match(/kick\.com\/[\w-]+\/?\?(?:[^#]*&)?clip=([A-Za-z0-9_-]+)/i);
+  if (match) {
+    return { platform: 'kick', videoId: match[1] };
+  }
   
   return null;
 }
@@ -152,7 +160,7 @@ export function validateClipUrl(url: string): { valid: boolean; error?: string }
   if (isYouTubeShortsUrl(url)) {
     return { 
       valid: false, 
-      error: 'YouTube Shorts are not accepted. VTVault is focused on raw, unedited clips and longer highlights that preserve context.' 
+      error: 'YouTube Shorts are not accepted. ObscuraVT is focused on raw, unedited clips and longer highlights that preserve context.' 
     };
   }
   
@@ -160,14 +168,14 @@ export function validateClipUrl(url: string): { valid: boolean; error?: string }
   if (!extracted) {
     return { 
       valid: false, 
-      error: 'Could not recognize this URL. Please use a YouTube video/VOD, Twitch clip/VOD, or Twitter status link.' 
+      error: 'Could not recognize this URL. Please use a YouTube video/VOD, Twitch clip/VOD, Kick clip, or X post link.' 
     };
   }
   
   return { valid: true };
 }
 
-export function getEmbedUrl(platform: 'youtube' | 'twitch' | 'twitter', videoId: string, parent?: string): string {
+export function getEmbedUrl(platform: ClipPlatform, videoId: string, parent?: string): string {
   if (platform === 'youtube') {
     return getYouTubeEmbedUrl(videoId);
   } else if (platform === 'twitch') {
@@ -269,5 +277,29 @@ export async function resolveClipThumbnail(url: string): Promise<string | null> 
     }
   }
 
+  if (extracted.platform === 'kick') {
+    return scrapeOgImage(url)
+  }
+
   return null
+}
+
+/** Best-effort og:image for pages with no API (Kick). Returns null on any failure. */
+export async function scrapeOgImage(url: string): Promise<string | null> {
+  try {
+    const res = await fetch(url, {
+      headers: {
+        'User-Agent':
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        Accept: 'text/html,application/xhtml+xml',
+      },
+      signal: AbortSignal.timeout(5000),
+      next: { revalidate: 86400 },
+    } as RequestInit)
+    if (!res.ok) return null
+    const thumb = pickOgImage(await res.text())
+    return thumb && /^https:\/\//i.test(thumb) ? thumb : null
+  } catch {
+    return null
+  }
 }

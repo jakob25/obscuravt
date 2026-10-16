@@ -15,6 +15,7 @@ function platformLabelFromUrl(url: string): string {
   if (extracted.platform === 'youtube') return 'YouTube'
   if (extracted.platform === 'twitch') return 'Twitch'
   if (extracted.platform === 'twitter') return 'Twitter'
+  if (extracted.platform === 'kick') return 'Kick'
   return ''
 }
 
