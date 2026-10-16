@@ -149,7 +149,7 @@ export function extractVideoId(url: string): { platform: ClipPlatform; videoId: 
   }
 
   // Rumble videos: rumble.com/v<id>-<slug>.html or rumble.com/embed/v<id>/ (Shorts not accepted)
-  match = url.match(/rumble\.com\/(?:embed\/)?(v[a-z0-9]+)(?:[-.\/?#]|$)/i);
+  match = url.match(/rumble\.com\/(?:embed\/)?(v[a-z0-9]*[0-9][a-z0-9]*)(?:[-.\/?#]|$)/i);
   if (match) {
     return { platform: 'rumble', videoId: match[1] };
   }
