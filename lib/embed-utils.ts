@@ -99,7 +99,7 @@ export function extractTwitchChannel(url: string): string | null {
   return null
 }
 
-export type ClipPlatform = 'youtube' | 'twitch' | 'twitter' | 'kick'
+export type ClipPlatform = 'youtube' | 'twitch' | 'twitter' | 'kick' | 'rumble'
 
 export function extractVideoId(url: string): { platform: ClipPlatform; videoId: string } | null {
   // YouTube patterns
@@ -147,6 +147,12 @@ export function extractVideoId(url: string): { platform: ClipPlatform; videoId: 
   if (match) {
     return { platform: 'kick', videoId: match[1] };
   }
+
+  // Rumble videos: rumble.com/v<id>-<slug>.html or rumble.com/embed/v<id>/ (Shorts not accepted)
+  match = url.match(/rumble\.com\/(?:embed\/)?(v[a-z0-9]+)(?:[-.\/?#]|$)/i);
+  if (match) {
+    return { platform: 'rumble', videoId: match[1] };
+  }
   
   return null;
 }
@@ -168,7 +174,7 @@ export function validateClipUrl(url: string): { valid: boolean; error?: string }
   if (!extracted) {
     return { 
       valid: false, 
-      error: 'Could not recognize this URL. Please use a YouTube video/VOD, Twitch clip/VOD, Kick clip, or X post link.' 
+      error: 'Could not recognize this URL. Please use a YouTube video/VOD, Twitch clip/VOD, Kick clip, Rumble video, or X post link.' 
     };
   }
   
@@ -279,6 +285,22 @@ export async function resolveClipThumbnail(url: string): Promise<string | null> 
 
   if (extracted.platform === 'kick') {
     return scrapeOgImage(url)
+  }
+
+  if (extracted.platform === 'rumble') {
+    // Rumble blocks page scraping (403) but has a public keyless oEmbed with thumbnail_url.
+    try {
+      const res = await fetch(`https://rumble.com/api/Media/oembed.json?url=${encodeURIComponent(url)}`, {
+        signal: AbortSignal.timeout(5000),
+        next: { revalidate: 86400 },
+      } as RequestInit)
+      if (!res.ok) return null
+      const data = await res.json()
+      const thumb = typeof data?.thumbnail_url === 'string' ? data.thumbnail_url : null
+      return thumb && /^https:\/\//i.test(thumb) ? thumb : null
+    } catch {
+      return null
+    }
   }
 
   return null

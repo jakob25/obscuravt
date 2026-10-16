@@ -232,7 +232,7 @@ export function useClips() {
             id: c.id,
             vtuberId: c.profile_id ?? '',
             title: c.title,
-            platform: parsedPlatform === 'kick' || parsedPlatform === 'twitter' ? parsedPlatform : isYoutube ? 'youtube' : 'twitch',
+            platform: parsedPlatform === 'kick' || parsedPlatform === 'rumble' || parsedPlatform === 'twitter' ? parsedPlatform : isYoutube ? 'youtube' : 'twitch',
             videoId: url,
             vibeTags: c.tags ?? [],
             type: 'raw' as const,

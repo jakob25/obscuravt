@@ -27,7 +27,7 @@ export function ClipCard({ clip, onPlay }: ClipCardProps) {
   const platform = clip.platform || extracted?.platform || 'twitch'
   const rawId = extracted?.videoId ?? clip.videoId
 
-  const linkOnly = platform === 'kick' || platform === 'twitter'
+  const linkOnly = platform === 'kick' || platform === 'rumble' || platform === 'twitter'
   const platformLabel = platform === 'twitter' ? 'X' : platform
 
   // Kick/X have no reliable preview: verify the image loads, else keep the quiet badge.
@@ -51,7 +51,7 @@ export function ClipCard({ clip, onPlay }: ClipCardProps) {
       if (yt) setThumb(yt)
       return
     }
-    if ((platform === 'twitch' || platform === 'kick') && clip.videoId.startsWith('http')) {
+    if ((platform === 'twitch' || platform === 'kick' || platform === 'rumble') && clip.videoId.startsWith('http')) {
       let cancelled = false
       fetch(`/api/clip-meta?url=${encodeURIComponent(clip.videoId)}`)
         .then(r => (r.ok ? r.json() : null))

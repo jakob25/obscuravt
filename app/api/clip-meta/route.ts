@@ -73,6 +73,9 @@ export async function GET(req: NextRequest) {
       // No keyless Kick clip API: best-effort og:image, null (badge) on failure.
       thumbnail = await resolveClipThumbnail(url)
       author = url.match(/kick\.com\/([\w-]+)/i)?.[1] ?? null
+    } else if (extracted.platform === 'rumble') {
+      // Keyless oEmbed thumbnail, null (badge) on failure.
+      thumbnail = await resolveClipThumbnail(url)
     }
 
     return NextResponse.json({
