@@ -6,6 +6,9 @@ import { normalizeRole } from '@/lib/roles'
 import { APP_VERSION } from '@/lib/app-version'
 import { RolePicker } from './role-picker'
 import { UpdateAnnouncement } from './update-announcement'
+
+// What's New pop-up switched off by the owner (Oct 16, 2026). Set to true to turn it back on.
+const SHOW_UPDATE_POPUP = false
 import { TestingBanner } from '@/components/common/testing-banner'
 
 function isStagingHost(): boolean {
@@ -59,7 +62,7 @@ export function OnboardingGate({ children }: { children: React.ReactNode }) {
       {isStagingHost() && <TestingBanner />}
       {children}
       {needsRole && <RolePicker onComplete={onRoleComplete} />}
-      {needsUpdate && !needsRole && <UpdateAnnouncement onDismiss={() => setNeedsUpdate(false)} />}
+      {SHOW_UPDATE_POPUP && needsUpdate && !needsRole && <UpdateAnnouncement onDismiss={() => setNeedsUpdate(false)} />}
     </>
   )
 }
