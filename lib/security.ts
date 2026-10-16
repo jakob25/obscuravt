@@ -46,6 +46,8 @@ export function addSecurityHeaders(res: NextResponse): NextResponse {
       "https://*.jtvnw.net",
       "https://i.ytimg.com",
       "https://img.youtube.com",
+      "https://yt3.ggpht.com",
+      "https://yt3.googleusercontent.com",
     ].join(' '),
     // Media
     "media-src 'self' https://www.youtube.com https://clips.twitch.tv https://player.twitch.tv",
