@@ -299,10 +299,13 @@ export function ClipSubmitForm({ prefillVtuberId, prefillName, onSuccess, onCanc
           </p>
         )}
         {duplicate && (
-          <p className="mt-1 text-xs text-destructive flex items-center gap-1">
-            <AlertCircle className="h-3 w-3" /> This clip is already in the archive.{' '}
-            <a href={duplicate.href} className="underline hover:text-vault-cream">View it</a>
-          </p>
+          <div role="alert" className="mt-2 rounded-lg border border-vault-gold/60 bg-vault-gold/10 px-3 py-2 text-sm text-vault-gold flex items-center gap-2">
+            <AlertCircle className="h-4 w-4 flex-shrink-0" />
+            <span>
+              This clip is already in the archive.{' '}
+              <a href={duplicate.href} className="font-medium underline hover:text-vault-cream">View it</a>
+            </span>
+          </div>
         )}
       </div>
 
