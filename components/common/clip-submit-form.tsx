@@ -361,7 +361,7 @@ export function ClipSubmitForm({ prefillVtuberId, prefillName, onSuccess, onCanc
             className="w-full px-3 py-2 rounded-md bg-muted/30 border border-border text-vault-cream text-sm"
           >
             <option value="">Not in the Vault yet / type name below</option>
-            {vtubers.map(v => (
+            {[...vtubers].sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })).map(v => (
               <option key={v.id} value={v.id}>{v.name}</option>
             ))}
           </select>
