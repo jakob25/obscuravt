@@ -7,6 +7,7 @@ import { VaultFrame } from '@/components/vault/vault-frame'
 import { extractVideoId } from '@/lib/embed-utils'
 import { getSupabaseClient } from '@/lib/supabase'
 import type { Clip } from '@/lib/types'
+import { withYoutubeAvatars } from '@/lib/youtube-avatar'
 
 const supabase = getSupabaseClient()
 
@@ -81,7 +82,7 @@ export default async function ClusterContentWallPage({ params }: ClusterPageProp
       .maybeSingle<ContentWallRow>(),
     supabase
       .from('vtubers')
-      .select('id, name, avatar_url')
+      .select('id, name, avatar_url, platform, link, handle')
       .eq('approved', true)
       .contains('tags', [clusterId])
       .order('name'),
@@ -93,7 +94,7 @@ export default async function ClusterContentWallPage({ params }: ClusterPageProp
 
   const cluster = clusterRes.data
   const wall = wallRes.data
-  const creators = (creatorsRes.data ?? []) as CreatorRow[]
+  const creators = (await withYoutubeAvatars(creatorsRes.data ?? [])) as CreatorRow[]
   const pinnedIds = new Set((wall?.pinned_vtuber_ids ?? []).filter(Boolean))
   const orderedCreators = [...creators].sort((a, b) => {
     const aPinned = pinnedIds.has(a.id) ? 1 : 0
