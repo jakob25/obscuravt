@@ -28,7 +28,8 @@ function FirstTimerBanner() {
           <Compass className="h-5 w-5 text-vault-gold flex-shrink-0" />
           <div>
             <p className="text-sm font-medium text-white">
-              Scroll to zoom. Click a cluster. Find your people.
+              <span className="sm:hidden">Pinch to zoom. Drag to pan. Tap a cluster. Find your people.</span>
+              <span className="hidden sm:inline">Scroll to zoom. Click a cluster. Find your people.</span>
             </p>
             <p className="text-xs text-white/50 mt-0.5">
               Personality constellations — not genre buckets.

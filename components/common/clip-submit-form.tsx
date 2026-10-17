@@ -23,7 +23,7 @@ function compactName(s: string): string {
   return s.toLowerCase().replace(/[^a-z0-9]/g, '')
 }
 
-function matchVtuberFromHint(vtubers: VTuber[], hint: string): VTuber | undefined {
+function matchVtuberFromHint(vtubers: VTuber[], hint: string, strict = false): VTuber | undefined {
   const h = hint.trim()
   if (!h) return undefined
   const compact = compactName(h)
@@ -40,13 +40,15 @@ function matchVtuberFromHint(vtubers: VTuber[], hint: string): VTuber | undefine
   // Twitch/YouTube link contains the login (e.g. twitch.tv/maikyua)
   const byLink = vtubers.find(v =>
     (v.externalLinks ?? []).some(l => {
-      const url = l.url.toLowerCase()
+      const url = l.url.toLowerCase().replace(/\/+$/, '')
+      if (strict) return url.endsWith(`/${h.toLowerCase()}`) || url.endsWith(`/${compact}`)
       return url.includes(`/${compact}`) || url.includes(`/${h.toLowerCase()}`)
     })
   )
   if (byLink) return byLink
 
-  // Name contains login as substring (last resort)
+  // Name contains login as substring (last resort; skipped when strict)
+  if (strict) return undefined
   return vtubers.find(v => compactName(v.name).includes(compact) || v.name.toLowerCase().includes(h.toLowerCase()))
 }
 
@@ -92,9 +94,12 @@ export function ClipSubmitForm({ prefillVtuberId, prefillName, onSuccess, onCanc
   }, [])
 
   const applyCreatorHint = (hint: string, displayName?: string | null) => {
-    if (!hint || nameTouchedRef.current || prefillVtuberId) return
-    const match = matchVtuberFromHint(vtubers, hint)
-      || (displayName ? matchVtuberFromHint(vtubers, displayName) : undefined)
+    if (!hint || nameTouchedRef.current) return
+    // On a creator's page, only switch on a strong match; otherwise keep the page's creator
+    const strict = !!prefillVtuberId
+    const match = matchVtuberFromHint(vtubers, hint, strict)
+      || (displayName ? matchVtuberFromHint(vtubers, displayName, strict) : undefined)
+    if (strict && !match) return
     if (match) {
       setSelectedVTuber(match.id)
       setFreeTextName('')
@@ -294,10 +299,13 @@ export function ClipSubmitForm({ prefillVtuberId, prefillName, onSuccess, onCanc
           </p>
         )}
         {duplicate && (
-          <p className="mt-1 text-xs text-destructive flex items-center gap-1">
-            <AlertCircle className="h-3 w-3" /> This clip is already in the archive.{' '}
-            <a href={duplicate.href} className="underline hover:text-vault-cream">View it</a>
-          </p>
+          <div role="alert" className="mt-2 rounded-lg border border-vault-gold/60 bg-vault-gold/10 px-3 py-2 text-sm text-vault-gold flex items-center gap-2">
+            <AlertCircle className="h-4 w-4 flex-shrink-0" />
+            <span>
+              This clip is already in the archive.{' '}
+              <a href={duplicate.href} className="font-medium underline hover:text-vault-cream">View it</a>
+            </span>
+          </div>
         )}
       </div>
 
@@ -336,7 +344,7 @@ export function ClipSubmitForm({ prefillVtuberId, prefillName, onSuccess, onCanc
       <div className="space-y-3">
         {prefillVtuberId && (
           <p className="text-sm text-vault-cream">
-            Filing this clip on <span className="font-semibold">{prefillName || 'this file'}</span>
+            Filing this clip on <span className="font-semibold">{vtubers.find(v => v.id === selectedVTuber)?.name || prefillName || 'this file'}</span>
           </p>
         )}
         <div className={prefillVtuberId ? 'hidden' : undefined}>
@@ -353,7 +361,7 @@ export function ClipSubmitForm({ prefillVtuberId, prefillName, onSuccess, onCanc
             className="w-full px-3 py-2 rounded-md bg-muted/30 border border-border text-vault-cream text-sm"
           >
             <option value="">Not in the Vault yet / type name below</option>
-            {vtubers.map(v => (
+            {[...vtubers].sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })).map(v => (
               <option key={v.id} value={v.id}>{v.name}</option>
             ))}
           </select>

@@ -484,7 +484,7 @@ export function NicheMap() {
 
       {/* Instructions */}
       <div className="absolute top-4 right-4 px-3 py-1.5 rounded-lg bg-black/60 border border-white/10 text-xs text-white/30 select-none">
-        scroll to zoom · drag to pan · tap or click to explore
+        <span className="sm:hidden">pinch to zoom · drag to pan · tap to explore</span><span className="hidden sm:inline">scroll to zoom · drag to pan · tap or click to explore</span>
       </div>
     </div>
   )

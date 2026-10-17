@@ -244,7 +244,7 @@ export default async function PulseFeed() {
         </div>
       </section>
 
-      <div className="mx-auto w-full max-w-[1600px] px-2 sm:px-3 py-5 pb-24 sm:pb-5 space-y-5">
+      <div className="mx-auto w-full max-w-[1600px] px-2 sm:px-3 py-5 pb-5 space-y-5">
         <PulseSectionShell accent="from-sky-500/40 via-sky-500/15 to-transparent" staggerIndex={1}>
           <SectionHeader icon={Film} title="Fresh Clips" href="/clips" />
           {clips.length === 0 ? (
@@ -265,7 +265,11 @@ export default async function PulseFeed() {
                     <div className="absolute inset-0 bg-gradient-to-t from-vault-deep/80 via-transparent to-transparent" />
                   </a>
                   <div className="p-1.5">
-                    <p className="font-medium text-vault-cream text-xs line-clamp-1">{c.title}</p>
+                    <p className="font-medium text-vault-cream text-xs line-clamp-1">
+                      <a href={c.clip_url} target="_blank" rel="noopener noreferrer" className="hover:text-vault-gold">
+                        {c.title}
+                      </a>
+                    </p>
                     <div className="flex items-center justify-between gap-1 text-[10px] text-muted-foreground mt-0.5">
                       <span className="truncate">
                         {c.profile_id ? (

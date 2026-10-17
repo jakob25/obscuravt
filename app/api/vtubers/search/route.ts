@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
+import { withYoutubeAvatars } from '@/lib/youtube-avatar'
 
 export async function GET(req: NextRequest) {
   const q = (req.nextUrl.searchParams.get('q') || '').trim().toLowerCase()
@@ -7,7 +8,7 @@ export async function GET(req: NextRequest) {
 
   const { data, error } = await supabaseAdmin
     .from('vtubers')
-    .select('id, name, handle, avatar_url, bio')
+    .select('id, name, handle, avatar_url, bio, platform, link')
     .eq('approved', true)
     .limit(400)
 
@@ -28,5 +29,6 @@ export async function GET(req: NextRequest) {
     )
   }).slice(0, 24)
 
-  return NextResponse.json(hits)
+  const withAvatars = (await withYoutubeAvatars(hits)).map(({ platform: _p, link: _l, ...rest }) => rest)
+  return NextResponse.json(withAvatars)
 }

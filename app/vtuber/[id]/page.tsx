@@ -18,6 +18,7 @@ import { fetchDossierSidebarData } from '@/lib/vtuber-dossier-data'
 import { syncTwitchChannelIdentity } from '@/lib/vtuber-channel-link'
 import { isNeedsHelpFile } from '@/lib/vtuber-stub-reconcile'
 import { hydrateVtuberById } from '@/lib/vtuber-twitch-hydrate'
+import { withYoutubeAvatars } from '@/lib/youtube-avatar'
 import { EMPTY } from '@/lib/site-copy'
 import { getSupabaseClient, supabaseAdmin } from '@/lib/supabase'
 
@@ -87,6 +88,11 @@ export default async function VTuberProfilePage({ params }: Props) {
     }
   } catch (e) {
     console.error('dossier twitch hydrate', e)
+  }
+
+  if (!(vtuber.avatar_url && String(vtuber.avatar_url).trim())) {
+    const [withYt] = await withYoutubeAvatars([vtuber])
+    vtuber.avatar_url = withYt.avatar_url
   }
 
   const tags: string[] = vtuber.tags ?? []
