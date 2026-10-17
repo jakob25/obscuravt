@@ -6,6 +6,7 @@
  */
 
 const DAY = 60 * 60 * 24
+import { ALLOWED_HOSTS, safeFetch } from '@/lib/safe-fetch'
 const API = 'https://www.googleapis.com/youtube/v3/channels'
 
 type Row = {
@@ -58,10 +59,10 @@ function bestThumb(t: Record<string, { url?: string }> | undefined): string | nu
 
 async function channels(params: string, key: string): Promise<ChannelsResponse['items']> {
   try {
-    const res = await fetch(`${API}?part=snippet&${params}&key=${encodeURIComponent(key)}`, {
+    const res = await safeFetch(`${API}?part=snippet&${params}&key=${encodeURIComponent(key)}`, ALLOWED_HOSTS.youtubeApi, {
       next: { revalidate: DAY },
-    })
-    if (!res.ok) return []
+    } as RequestInit)
+    if (!res || !res.ok) return []
     const json = (await res.json()) as ChannelsResponse
     return json.items ?? []
   } catch {

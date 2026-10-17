@@ -1,3 +1,4 @@
+import { ALLOWED_HOSTS, isAllowedHttpsUrl, safeFetch } from '@/lib/safe-fetch'
 // Utility functions for handling YouTube/Twitch embeds
 
 import { helixClipThumbnail, helixVodThumbnail } from '@/lib/twitch-helix'
@@ -143,18 +144,48 @@ export function extractVideoId(url: string): { platform: ClipPlatform; videoId: 
   }
 
   // Kick clips: kick.com/<user>/clips/<id> or kick.com/<user>?clip=<id>
-  match = url.match(/kick\.com\/[\w-]+\/clips\/([A-Za-z0-9_-]+)/i) || url.match(/kick\.com\/[\w-]+\/?\?(?:[^#]*&)?clip=([A-Za-z0-9_-]+)/i);
-  if (match) {
-    return { platform: 'kick', videoId: match[1] };
+  const kick = kickClipParts(url);
+  if (kick) {
+    return { platform: 'kick', videoId: kick.id };
   }
 
   // Rumble videos: rumble.com/v<id>-<slug>.html or rumble.com/embed/v<id>/ (Shorts not accepted)
-  match = url.match(/rumble\.com\/(?:embed\/)?(v[a-z0-9]*[0-9][a-z0-9]*)(?:[-.\/?#]|$)/i);
-  if (match) {
-    return { platform: 'rumble', videoId: match[1] };
+  const rumbleId = rumbleVideoId(url);
+  if (rumbleId) {
+    return { platform: 'rumble', videoId: rumbleId };
   }
   
   return null;
+}
+
+function parseHttpsUrl(url: string, hosts: readonly string[]): URL | null {
+  try {
+    const u = new URL(url.trim());
+    if (u.protocol !== 'https:' && u.protocol !== 'http:') return null;
+    return hosts.includes(u.hostname.toLowerCase()) ? u : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Kick clip parts from kick.com/<user>/clips/<id> or kick.com/<user>?clip=<id>, host checked exactly. */
+export function kickClipParts(url: string): { user: string; id: string } | null {
+  const u = parseHttpsUrl(url, ['kick.com', 'www.kick.com']);
+  if (!u) return null;
+  const path = u.pathname.match(/^\/([A-Za-z0-9_-]{1,64})\/clips\/([A-Za-z0-9_-]{1,128})\/?$/);
+  if (path) return { user: path[1], id: path[2] };
+  const user = u.pathname.match(/^\/([A-Za-z0-9_-]{1,64})\/?$/)?.[1];
+  const clip = u.searchParams.get('clip');
+  if (user && clip && /^[A-Za-z0-9_-]{1,128}$/.test(clip)) return { user, id: clip };
+  return null;
+}
+
+/** Rumble video id (v + letters/digits, must contain a digit), host checked exactly. */
+export function rumbleVideoId(url: string): string | null {
+  const u = parseHttpsUrl(url, ['rumble.com', 'www.rumble.com']);
+  if (!u) return null;
+  const id = u.pathname.match(/^\/(?:embed\/)?(v[a-z0-9]{1,32})(?:[-.\/]|$)/i)?.[1];
+  return id && /\d/.test(id) ? id : null;
 }
 
 export function isYouTubeShortsUrl(url: string): boolean {
@@ -244,10 +275,10 @@ export async function resolveClipThumbnail(url: string): Promise<string | null> 
 
     // Fallback: scrape og:image from the clip page (oEmbed is deprecated).
     // Twitch serves the generic logo to bot UAs — use a browser UA.
-    const scrapeUrl = url.includes('twitch.tv') ? url : `https://clips.twitch.tv/${extracted.videoId}`
+    const scrapeUrl = isAllowedHttpsUrl(url, ALLOWED_HOSTS.twitch) ? url : `https://clips.twitch.tv/${encodeURIComponent(extracted.videoId)}`
 
     try {
-      const res = await fetch(scrapeUrl, {
+      const res = await safeFetch(scrapeUrl, ALLOWED_HOSTS.twitch, {
         headers: {
           'User-Agent':
             'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
@@ -256,7 +287,7 @@ export async function resolveClipThumbnail(url: string): Promise<string | null> 
         },
         next: { revalidate: 86400 },
       } as RequestInit)
-      if (!res.ok) return null
+      if (!res || !res.ok) return null
       const html = await res.text()
 
       const fromMeta = pickOgImage(html)
@@ -284,17 +315,21 @@ export async function resolveClipThumbnail(url: string): Promise<string | null> 
   }
 
   if (extracted.platform === 'kick') {
-    return scrapeOgImage(url)
+    // Fetch only a clean, rebuilt kick.com URL, never the user's raw input.
+    const kick = kickClipParts(url)
+    if (!kick) return null
+    return scrapeOgImage(`https://kick.com/${encodeURIComponent(kick.user)}/clips/${encodeURIComponent(kick.id)}`, ALLOWED_HOSTS.kick)
   }
 
   if (extracted.platform === 'rumble') {
     // Rumble blocks page scraping (403) but has a public keyless oEmbed with thumbnail_url.
     try {
-      const res = await fetch(`https://rumble.com/api/Media/oembed.json?url=${encodeURIComponent(url)}`, {
+      const clean = `https://rumble.com/embed/${encodeURIComponent(extracted.videoId)}/`
+      const res = await safeFetch(`https://rumble.com/api/Media/oembed.json?url=${encodeURIComponent(clean)}`, ALLOWED_HOSTS.rumble, {
         signal: AbortSignal.timeout(5000),
         next: { revalidate: 86400 },
       } as RequestInit)
-      if (!res.ok) return null
+      if (!res || !res.ok) return null
       const data = await res.json()
       const thumb = typeof data?.thumbnail_url === 'string' ? data.thumbnail_url : null
       return thumb && /^https:\/\//i.test(thumb) ? thumb : null
@@ -307,9 +342,9 @@ export async function resolveClipThumbnail(url: string): Promise<string | null> 
 }
 
 /** Best-effort og:image for pages with no API (Kick). Returns null on any failure. */
-export async function scrapeOgImage(url: string): Promise<string | null> {
+export async function scrapeOgImage(url: string, hosts: readonly string[]): Promise<string | null> {
   try {
-    const res = await fetch(url, {
+    const res = await safeFetch(url, hosts, {
       headers: {
         'User-Agent':
           'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
@@ -318,7 +353,7 @@ export async function scrapeOgImage(url: string): Promise<string | null> {
       signal: AbortSignal.timeout(5000),
       next: { revalidate: 86400 },
     } as RequestInit)
-    if (!res.ok) return null
+    if (!res || !res.ok) return null
     const thumb = pickOgImage(await res.text())
     return thumb && /^https:\/\//i.test(thumb) ? thumb : null
   } catch {

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { ALLOWED_HOSTS, safeFetch } from '@/lib/safe-fetch'
 import {
   extractVideoId,
   extractTwitchChannel,
@@ -35,8 +36,8 @@ export async function GET(req: NextRequest) {
 
     if (extracted.platform === 'youtube') {
       const oembedUrl = `https://www.youtube.com/oembed?url=${encodeURIComponent(url)}&format=json`
-      const res = await fetch(oembedUrl, { next: { revalidate: 3600 } })
-      if (res.ok) {
+      const res = await safeFetch(oembedUrl, ALLOWED_HOSTS.youtubeOembed, { next: { revalidate: 3600 } } as RequestInit)
+      if (res?.ok) {
         const data = await res.json()
         title = data.title ?? null
         thumbnail = data.thumbnail_url ?? null
@@ -61,8 +62,8 @@ export async function GET(req: NextRequest) {
       }
     } else if (extracted.platform === 'twitter') {
       const oembedUrl = `https://publish.twitter.com/oembed?url=${encodeURIComponent(url)}&omit_script=true`
-      const res = await fetch(oembedUrl, { next: { revalidate: 3600 } })
-      if (res.ok) {
+      const res = await safeFetch(oembedUrl, ALLOWED_HOSTS.twitterOembed, { next: { revalidate: 3600 } } as RequestInit)
+      if (res?.ok) {
         const data = await res.json()
         author = data.author_name ?? null
         title = data.author_name
