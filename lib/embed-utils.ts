@@ -1,4 +1,4 @@
-import { ALLOWED_HOSTS, isAllowedHttpsUrl, safeFetch } from '@/lib/safe-fetch'
+import { ALLOWED_HOSTS, safeFetch } from '@/lib/safe-fetch'
 // Utility functions for handling YouTube/Twitch embeds
 
 import { helixClipThumbnail, helixVodThumbnail } from '@/lib/twitch-helix'
@@ -275,7 +275,11 @@ export async function resolveClipThumbnail(url: string): Promise<string | null> 
 
     // Fallback: scrape og:image from the clip page (oEmbed is deprecated).
     // Twitch serves the generic logo to bot UAs — use a browser UA.
-    const scrapeUrl = isAllowedHttpsUrl(url, ALLOWED_HOSTS.twitch) ? url : `https://clips.twitch.tv/${encodeURIComponent(extracted.videoId)}`
+    // Always fetch a URL rebuilt from the parsed id, never the user's raw input.
+    const vod = extracted.videoId.match(/^v(\d{1,20})$/)
+    const scrapeUrl = vod
+      ? `https://www.twitch.tv/videos/${vod[1]}`
+      : `https://clips.twitch.tv/${encodeURIComponent(extracted.videoId)}`
 
     try {
       const res = await safeFetch(scrapeUrl, ALLOWED_HOSTS.twitch, {
