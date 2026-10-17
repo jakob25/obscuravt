@@ -277,11 +277,14 @@ export async function resolveClipThumbnail(url: string): Promise<string | null> 
     // Twitch serves the generic logo to bot UAs — use a browser UA.
     // Always fetch a URL rebuilt from the parsed id, never the user's raw input.
     const clipId = extracted.videoId
-    const vod = clipId.match(/^v(\d{1,15})$/)
-    if (!vod && !/^[A-Za-z0-9_-]{1,128}$/.test(clipId)) return null
-    const scrapeUrl = vod
-      ? `https://www.twitch.tv/videos/${Number(vod[1])}`
-      : `https://clips.twitch.tv/${clipId}`
+    let scrapeUrl: string
+    if (/^v\d{1,15}$/.test(clipId)) {
+      scrapeUrl = `https://www.twitch.tv/videos/${Number(clipId.slice(1))}`
+    } else if (/^[A-Za-z0-9_-]{1,128}$/.test(clipId)) {
+      scrapeUrl = `https://clips.twitch.tv/${clipId}`
+    } else {
+      return null
+    }
 
     try {
       const res = await safeFetch(scrapeUrl, ALLOWED_HOSTS.twitch, {
