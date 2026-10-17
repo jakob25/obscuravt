@@ -276,10 +276,12 @@ export async function resolveClipThumbnail(url: string): Promise<string | null> 
     // Fallback: scrape og:image from the clip page (oEmbed is deprecated).
     // Twitch serves the generic logo to bot UAs — use a browser UA.
     // Always fetch a URL rebuilt from the parsed id, never the user's raw input.
-    const vod = extracted.videoId.match(/^v(\d{1,20})$/)
+    const clipId = extracted.videoId
+    const vod = clipId.match(/^v(\d{1,15})$/)
+    if (!vod && !/^[A-Za-z0-9_-]{1,128}$/.test(clipId)) return null
     const scrapeUrl = vod
-      ? `https://www.twitch.tv/videos/${vod[1]}`
-      : `https://clips.twitch.tv/${encodeURIComponent(extracted.videoId)}`
+      ? `https://www.twitch.tv/videos/${Number(vod[1])}`
+      : `https://clips.twitch.tv/${clipId}`
 
     try {
       const res = await safeFetch(scrapeUrl, ALLOWED_HOSTS.twitch, {
