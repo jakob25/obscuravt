@@ -535,7 +535,7 @@ export function StarMap() {
           <span className="text-white/40">zoom</span>
           <span className="text-white font-medium tabular-nums">{zoomPct}%</span>
           {zoomPct < ZOOM_THRESHOLD * 100 && (
-            <span className="text-cyan-400/60">· scroll in to see creators</span>
+            <span className="text-cyan-400/60"><span className="sm:hidden">· pinch in to see creators</span><span className="hidden sm:inline">· scroll in to see creators</span></span>
           )}
         </div>
       )}
@@ -543,7 +543,7 @@ export function StarMap() {
       {/* Instructions */}
       {!loading && (
         <div className="absolute top-4 right-4 px-3 py-1.5 rounded-lg bg-black/60 border border-white/10 text-xs text-white/30 select-none">
-          scroll to zoom · drag to pan · click to explore
+          <span className="sm:hidden">pinch to zoom · drag to pan · tap to explore</span><span className="hidden sm:inline">scroll to zoom · drag to pan · click to explore</span>
         </div>
       )}
 
