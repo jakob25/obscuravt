@@ -21,11 +21,30 @@ import { hydrateVtuberById } from '@/lib/vtuber-twitch-hydrate'
 import { withYoutubeAvatars } from '@/lib/youtube-avatar'
 import { EMPTY } from '@/lib/site-copy'
 import { getSupabaseClient, supabaseAdmin } from '@/lib/supabase'
+import type { Metadata } from 'next'
+import { getShareProfile, shareDescription, siteOrigin } from '@/lib/vtuber-share-meta'
+import { ShareButton } from '@/components/common/share-button'
 
 const supabase = getSupabaseClient()
 
 interface Props {
   params: Promise<{ id: string }>
+}
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { id } = await params
+  const profile = await getShareProfile(id)
+  if (!profile) return { metadataBase: new URL(siteOrigin()) }
+  const title = `${profile.name} · ObscuraVT`
+  const description = shareDescription(profile.name, profile.bio)
+  return {
+    metadataBase: new URL(siteOrigin()),
+    title,
+    description,
+    alternates: { canonical: `/vtuber/${encodeURIComponent(id)}` },
+    openGraph: { title, description, type: 'profile', url: `/vtuber/${encodeURIComponent(id)}`, siteName: 'ObscuraVT' },
+    twitter: { card: 'summary_large_image', title, description },
+  }
 }
 
 export default async function VTuberProfilePage({ params }: Props) {
@@ -202,6 +221,13 @@ export default async function VTuberProfilePage({ params }: Props) {
                 FAN CORNER
               </Link>
               <AddToCircleButton vtuberId={vtuber.id} vtuberName={vtuber.name} />
+              <ShareButton
+                path={`/vtuber/${id}`}
+                title={`${vtuber.name} · ObscuraVT`}
+                label="Share"
+                ariaLabel={`Share ${vtuber.name}'s profile`}
+                className="px-4 py-1.5 text-xs border border-[#5a4f2e] hover:bg-[#5a4f2e] hover:text-[#e9dfc4] transition-colors"
+              />
               <ClaimProfileButton 
                 vtuberId={vtuber.id} 
                 vtuberName={vtuber.name} 
