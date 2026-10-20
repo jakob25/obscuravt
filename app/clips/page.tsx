@@ -45,7 +45,7 @@ export default function ClipsPage() {
         <p className="text-muted-foreground">No clips yet. Submit one with a timestamp and link.</p>
       ) : (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filtered.map(clip => <div key={clip.id}><ClipCard clip={clip} /><ClipCredit submitter={clip.submitter} /></div>)}
+          {filtered.map(clip => <div key={clip.id} className="flex flex-col items-center"><ClipCard clip={clip} /><ClipCredit submitter={clip.submitter} /></div>)}
         </div>
       )}
     </div>
