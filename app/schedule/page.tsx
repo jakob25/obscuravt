@@ -255,7 +255,7 @@ function SchedulePageContent() {
       {loading && vtuberId && <p className="text-muted-foreground text-sm animate-pulse text-center py-8">Loading schedule…</p>}
 
       {!loading && vtuberId && sorted.length === 0 && (
-        <p className="text-muted-foreground text-sm text-center py-8">No scheduled times yet.</p>
+        <p className="text-muted-foreground text-sm text-center py-2">No scheduled times yet.</p>
       )}
 
       {isOwner && proposals.length > 0 && (

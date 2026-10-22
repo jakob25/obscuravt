@@ -237,6 +237,7 @@ export function useClips() {
             vibeTags: c.tags ?? [],
             type: 'raw' as const,
             submittedBy: c.submitter ?? c.vtuber_name ?? '',
+            submitter: c.submitter ?? null,
             votes: { up: c.upvotes ?? 0, down: 0 },
             createdAt: c.created_at,
             thumbnailUrl: c.thumbnail_url ?? null,

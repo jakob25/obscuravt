@@ -32,14 +32,14 @@ export default function WeeklyPage() {
       {!loading && digest && (
         <div className="space-y-6">
           <section>
-            <h2 className="text-sm font-semibold text-vault-cream mb-3">Top Clips</h2>
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-vault-cream mb-3">Top Clips</h2>
             {digest.topClips.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Clip drought this week. Submit something cursed.</p>
+              <p className="rounded-xl border border-border bg-vault-deep/40 p-6 text-center text-sm text-muted-foreground">Clip drought this week. Submit something cursed.</p>
             ) : (
               <div className="space-y-2">
                 {digest.topClips.map(c => (
                   <VaultFrame key={c.id}>
-                    <a href={c.clip_url} target="_blank" rel="noopener noreferrer" className="block p-4">
+                    <a href={c.clip_url} target="_blank" rel="noopener noreferrer" className="block p-4 transition-colors hover:bg-vault-deep/40">
                       <p className="font-medium text-vault-cream text-sm">{c.title}</p>
                       <p className="text-xs text-muted-foreground">{c.vtuber_name}</p>
                     </a>
@@ -51,7 +51,7 @@ export default function WeeklyPage() {
 
           {digest.topBet && (
             <section>
-              <h2 className="text-sm font-semibold text-vault-cream mb-3">Hottest Bet</h2>
+              <h2 className="text-sm font-semibold uppercase tracking-wider text-vault-cream mb-3">Hottest Bet</h2>
               <VaultFrame>
                 <Link href="/bets" className="block p-4">
                   <p className="font-medium text-vault-cream">{digest.topBet.title}</p>
@@ -63,7 +63,7 @@ export default function WeeklyPage() {
 
           {digest.topVtuber && (
             <section>
-              <h2 className="text-sm font-semibold text-vault-cream mb-3">Spotlight Creator</h2>
+              <h2 className="text-sm font-semibold uppercase tracking-wider text-vault-cream mb-3">Spotlight Creator</h2>
               <VaultFrame>
                 <Link href={`/vtuber/${digest.topVtuber.id}`} className="block p-4 font-medium text-vault-cream">
                   {digest.topVtuber.name}

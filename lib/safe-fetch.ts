@@ -9,6 +9,8 @@ export const ALLOWED_HOSTS = {
   youtubeOembed: ['www.youtube.com'],
   youtubeApi: ['www.googleapis.com'],
   twitterOembed: ['publish.twitter.com'],
+  // Profile pictures come only from Twitch and YouTube (owner rule).
+  avatar: ['static-cdn.jtvnw.net', 'yt3.ggpht.com', 'yt3.googleusercontent.com'],
 } as const
 
 export function isAllowedHttpsUrl(url: string, hosts: readonly string[]): boolean {

@@ -298,7 +298,7 @@ export default function BetsPage() {
       <VaultDivider className="mb-8" />
 
       {bets.length === 0 && (
-        <p className="text-muted-foreground text-center py-20">
+        <p className="text-muted-foreground text-center py-2">
           Empty board. Hit + and start a wager.
         </p>
       )}
