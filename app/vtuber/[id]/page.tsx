@@ -324,7 +324,7 @@ export default async function VTuberProfilePage({ params }: Props) {
             {dossierClips.length > 0 && (
               <div className="mb-8 border-t border-[#5a4f2e]/30 pt-6">
                 <div className="section-label mb-3 text-[#1f6f6a]">CLIPS ON FILE</div>
-                <div className="grid sm:grid-cols-2 gap-3">
+                <div className="grid sm:grid-cols-2 gap-4">
                   {dossierClips.map((clip) => (
                     <a
                       key={clip.id}
@@ -338,7 +338,7 @@ export default async function VTuberProfilePage({ params }: Props) {
                           <img src={clip.thumbnail_url} alt="" className="h-full w-full object-cover" />
                         </div>
                       )}
-                      <div className="p-3 text-sm font-medium text-[var(--case-ink)] line-clamp-2">{clip.title}</div>
+                      <div className="px-3 py-2.5 text-sm font-medium text-[var(--case-ink)] line-clamp-2">{clip.title}</div>
                     </a>
                   ))}
                 </div>
@@ -346,7 +346,7 @@ export default async function VTuberProfilePage({ params }: Props) {
             )}
 
             <div className="mb-8 border-t border-[#5a4f2e]/30 pt-6">
-              <div className="section-label mb-2 text-[#1d6a9a]">CHAT MADE ME DO IT</div>
+              <div className="section-label mb-3 text-[#1d6a9a]">CHAT MADE ME DO IT</div>
               
               {activeCmdi ? (
                 <div className="bg-[#0d0d14] border border-[#143544] rounded p-4">
@@ -384,7 +384,7 @@ export default async function VTuberProfilePage({ params }: Props) {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="bg-[#e9dfc4] border border-[#5a4f2e]/30 rounded p-4">
-                <div className="section-label mb-1 text-[#8a2317]">SCHEDULE / LAST STREAM</div>
+                <div className="section-label mb-3 text-[#8a2317]">SCHEDULE / LAST STREAM</div>
                 <div className="text-sm space-y-1">
                   {liveNow && (
                     <div>
@@ -420,7 +420,7 @@ export default async function VTuberProfilePage({ params }: Props) {
               </div>
 
               <div className="bg-[#e9dfc4] border border-[#5a4f2e]/30 rounded p-4">
-                <div className="section-label mb-2 text-[#1f6f6a]">BETS</div>
+                <div className="section-label mb-3 text-[#1f6f6a]">BETS</div>
                 
                 {openBets.length > 0 ? (
                   <div className="space-y-2">
