@@ -78,6 +78,14 @@ export function ClipSubmitForm({ prefillVtuberId, prefillName, onSuccess, onCanc
   const [thumbnail, setThumbnail] = useState<string | null>(null)
   const [titleAutoFilled, setTitleAutoFilled] = useState(false)
   const [authorFromMeta, setAuthorFromMeta] = useState<string | null>(null)
+  // Handle-based creator suggestion (never display name) from /api/creator-match
+  const [hintHandles, setHintHandles] = useState<string[]>([])
+  const [suggestion, setSuggestion] = useState<
+    | { status: 'match' | 'pending'; creator: { id: string; name: string } }
+    | { status: 'unsure'; candidates: { id: string; name: string }[] }
+    | { status: 'none' }
+    | null
+  >(null)
   const titleTouchedRef = useRef(false)
   const nameTouchedRef = useRef(false)
   const lastFetchedUrlRef = useRef('')
@@ -119,6 +127,8 @@ export function ClipSubmitForm({ prefillVtuberId, prefillName, onSuccess, onCanc
     setExtractedInfo(null)
     setThumbnail(null)
     setAuthorFromMeta(null)
+    setSuggestion(null)
+    setHintHandles([])
     if (!value) return
     const validation = validateClipUrl(value)
     if (!validation.valid) {
@@ -181,6 +191,27 @@ export function ClipSubmitForm({ prefillVtuberId, prefillName, onSuccess, onCanc
         } else if (author) {
           applyCreatorHint(author)
         }
+        const handles = [channel, data.xHandle, ...(Array.isArray(data.mentions) ? data.mentions : [])]
+          .filter((h): h is string => typeof h === 'string' && !!h)
+        setHintHandles(handles)
+        const qs = new URLSearchParams({ url })
+        handles.forEach(h => qs.append('handle', h))
+        return fetch(`/api/creator-match?${qs}`)
+          .then(r => (r.ok ? r.json() : null))
+          .then(m => {
+            if (cancelled || !m) return
+            setSuggestion(m)
+            if (prefillVtuberId || nameTouchedRef.current) return
+            if (m.status === 'match' && vtubers.some(v => v.id === m.creator.id)) {
+              setSelectedVTuber(m.creator.id)
+              setFreeTextName('')
+              setAuthorFromMeta(m.creator.name)
+            } else if (m.status === 'pending') {
+              setSelectedVTuber('')
+              setFreeTextName(m.creator.name)
+              setAuthorFromMeta(m.creator.name)
+            }
+          })
       })
       .catch(() => {})
       .finally(() => {
@@ -223,6 +254,7 @@ export function ClipSubmitForm({ prefillVtuberId, prefillName, onSuccess, onCanc
         type: clipType,
         tags: selectedTags,
         vtuber_name: selectedName || freeTextName.trim() || null,
+        handles: hintHandles,
       }),
     })
 
@@ -365,6 +397,24 @@ export function ClipSubmitForm({ prefillVtuberId, prefillName, onSuccess, onCanc
               <option key={v.id} value={v.id}>{v.name}</option>
             ))}
           </select>
+          {suggestion && !prefillVtuberId && (
+            <p className="mt-1 text-xs text-muted-foreground" data-testid="creator-suggestion">
+              {suggestion.status === 'match' && (
+                <>Suggested from the link: <span className="text-vault-gold">{suggestion.creator.name}</span>. Change it if that&apos;s not right.</>
+              )}
+              {suggestion.status === 'pending' && (
+                <>{suggestion.creator.name} is waiting on a nomination. This clip will be filed with it and move to their profile once approved.</>
+              )}
+              {suggestion.status === 'unsure' && (
+                <>More than one creator uses this handle. Pick the right one, or the clip posts unlinked for review.</>
+              )}
+              {suggestion.status === 'none' && (
+                <>Not on ObscuraVT yet.{' '}
+                  <Link href="/nominator" className="text-vault-gold hover:underline">Nominate this creator</Link>
+                  {' '}so they get a profile. Your clip still posts right away.</>
+              )}
+            </p>
+          )}
         </div>
 
         {!selectedVTuber && (

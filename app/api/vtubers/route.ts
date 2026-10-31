@@ -3,6 +3,7 @@ import { randomUUID } from 'crypto'
 import { requireAuth } from '@/lib/session'
 import { rateLimits } from '@/lib/rate-limit'
 import { getSupabaseAdminClient } from '@/lib/supabase'
+import { creatorKeys, handleFromUrl, matchCreator } from '@/lib/creator-match'
 
 const supabaseAdmin = getSupabaseAdminClient()
 
@@ -46,6 +47,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: `${byHandle.name} is already in the Vault (same handle).` }, { status: 409 })
   }
 
+  // Handle/channel match across approved + pending (catches pending duplicates)
+  const handleMatch = await matchCreator(creatorKeys({ handle: handle ?? null, link: link ?? null }))
+  if (handleMatch.status === 'match')
+    return NextResponse.json({ error: `${handleMatch.creator.name} is already in the Vault (same handle).` }, { status: 409 })
+  if (handleMatch.status === 'pending')
+    return NextResponse.json({ error: `${handleMatch.creator.name} has already been nominated and is waiting for approval.` }, { status: 409 })
+  if (handleMatch.status === 'unsure')
+    return NextResponse.json({ error: 'That handle already matches more than one creator. An admin will sort it out.' }, { status: 409 })
+
   const id = `vt_${name.trim().toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 16)}_${randomUUID().slice(0, 6)}`
 
   const { error } = await supabaseAdmin.from('vtubers').insert({
@@ -63,5 +73,18 @@ export async function POST(req: NextRequest) {
   })
 
   if (error) return NextResponse.json({ error: 'Failed to submit VTuber.' }, { status: 500 })
+
+  // Attach clips already waiting unlinked for this creator (handle match only)
+  try {
+    const keys = creatorKeys({ handle: handle ?? null, link: link ?? null })
+    if (keys.length) {
+      const { data: orphans } = await supabaseAdmin
+        .from('clips').select('id, clip_url').is('profile_id', null).limit(1000)
+      const ids = (orphans ?? []).filter(c => keys.includes(handleFromUrl(c.clip_url))).map(c => c.id)
+      if (ids.length) await supabaseAdmin.from('clips').update({ profile_id: id }).in('id', ids).is('profile_id', null)
+    }
+  } catch (e) {
+    console.error('nomination clip attach skipped:', e)
+  }
   return NextResponse.json({ ok: true, id, pending: true }, { status: 201 })
 }

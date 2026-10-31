@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { requireAdmin } from '@/lib/session'
 import { recordAuditLog } from '@/lib/audit-log'
+import { creatorKeys, loadCreators } from '@/lib/creator-match'
 
 export async function GET(req: NextRequest) {
   const session = await requireAdmin(req)
@@ -15,7 +16,18 @@ export async function GET(req: NextRequest) {
     .limit(100)
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json({ pending: data ?? [] })
+  // Flag possible duplicates by shared handle/channel (never display name). Admin merges by hand.
+  const creators = await loadCreators()
+  const pending = (data ?? []).map(v => {
+    const keys = creatorKeys(v)
+    const possible_duplicates = keys.length
+      ? creators
+          .filter(c => c.id !== v.id && creatorKeys(c).some(k => keys.includes(k)))
+          .map(c => ({ id: c.id, name: c.name, approved: !!c.approved }))
+      : []
+    return { ...v, possible_duplicates }
+  })
+  return NextResponse.json({ pending })
 }
 
 export async function PATCH(req: NextRequest) {
@@ -33,6 +45,10 @@ export async function PATCH(req: NextRequest) {
     await recordAuditLog(session.username, 'vtuber_approved', 'vtuber', vtuberId)
     return NextResponse.json({ ok: true, approved: true })
   }
+
+  // Rejected nomination: its clips go back to review (unlinked), never re-stubbed
+  const { error: unlinkError } = await supabaseAdmin.from('clips').update({ profile_id: null }).eq('profile_id', vtuberId)
+  if (unlinkError) return NextResponse.json({ error: unlinkError.message }, { status: 500 })
 
   const { error } = await supabaseAdmin.from('vtubers').delete().eq('id', vtuberId)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
