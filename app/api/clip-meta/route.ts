@@ -7,6 +7,7 @@ import {
   resolveClipThumbnail,
 } from '@/lib/embed-utils'
 import { helixClipDetails, helixVodTitle } from '@/lib/twitch-helix'
+import { handleFromUrl, mentionsFromHtml } from '@/lib/creator-match'
 
 export async function GET(req: NextRequest) {
   const url = req.nextUrl.searchParams.get('url')?.trim()
@@ -28,6 +29,8 @@ export async function GET(req: NextRequest) {
     let title: string | null = null
     let thumbnail: string | null = null
     let author: string | null = null
+    let xHandle: string | null = null
+    let mentions: string[] = []
 
     const twitchChannel = extracted.platform === 'twitch' ? extractTwitchChannel(url) : null
     if (twitchChannel) {
@@ -66,6 +69,8 @@ export async function GET(req: NextRequest) {
       if (res?.ok) {
         const data = await res.json()
         author = data.author_name ?? null
+        xHandle = handleFromUrl(data.author_url) || null
+        mentions = mentionsFromHtml(data.html).filter(m => m !== xHandle)
         title = data.author_name
           ? `${data.author_name} on X`
           : `X post ${extracted.videoId}`
@@ -86,6 +91,8 @@ export async function GET(req: NextRequest) {
       thumbnail,
       author,
       channel: twitchChannel,
+      xHandle,
+      mentions,
     })
   } catch (e) {
     console.error('clip-meta error:', e)

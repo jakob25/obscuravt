@@ -3,222 +3,34 @@ import { getSession } from '@/lib/session'
 import { allowSignedOutClipSubmit } from '@/lib/flags'
 import { rateLimits } from '@/lib/rate-limit'
 import { supabaseAdmin } from '@/lib/supabase'
-import { extractVideoId, extractTwitchChannel, resolveClipThumbnail } from '@/lib/embed-utils'
+import { extractVideoId, resolveClipThumbnail } from '@/lib/embed-utils'
 import { helixClipThumbnails } from '@/lib/twitch-helix'
 import { backfillMissingVtuberChannelLinks } from '@/lib/vtuber-channel-link'
 import { hydrateVtuberById } from '@/lib/vtuber-twitch-hydrate'
 import { randomUUID } from 'crypto'
+import { handleFromUrl, matchCreator } from '@/lib/creator-match'
 
-function platformLabelFromUrl(url: string): string {
-  const extracted = extractVideoId(url)
-  if (!extracted) return ''
-  if (extracted.platform === 'youtube') return 'YouTube'
-  if (extracted.platform === 'twitch') return 'Twitch'
-  if (extracted.platform === 'twitter') return 'Twitter'
-  if (extracted.platform === 'kick') return 'Kick'
-  if (extracted.platform === 'rumble') return 'Rumble'
-  return ''
-}
-
-function compactName(s: string): string {
-  return s.toLowerCase().replace(/[^a-z0-9]/g, '')
-}
-
-function twitchLinkFromUrl(clipUrl: string): string {
-  const channel = extractTwitchChannel(clipUrl)
-  return channel ? `https://www.twitch.tv/${channel}` : ''
-}
-
-async function resolveOrCreateStubProfile(opts: {
-  profileId: string | null | undefined
+/**
+ * Link a clip to a creator by handle only (never display name).
+ * Approved or pending-nomination matches link; none/unsure stays unlinked for review.
+ * Never creates creators.
+ */
+async function resolveClipProfile(opts: {
+  profileId: string | null
   nameFromBody: string
   clipUrl: string
-  submittedBy: string
-}): Promise<{ profileId: string | null; resolvedName: string | null; createdStub: boolean; stubError?: string }> {
-  const { profileId, nameFromBody, clipUrl, submittedBy } = opts
-
+  hintHandles: string[]
+}): Promise<{ profileId: string | null; resolvedName: string | null; matchStatus: string }> {
+  const { profileId, nameFromBody, clipUrl, hintHandles } = opts
   if (profileId) {
-    const { data: vtuber } = await supabaseAdmin
-      .from('vtubers')
-      .select('id, name')
-      .eq('id', profileId)
-      .maybeSingle()
-    if (vtuber) {
-      return {
-        profileId: vtuber.id,
-        resolvedName: nameFromBody || vtuber.name,
-        createdStub: false,
-      }
-    }
+    const { data: vtuber } = await supabaseAdmin.from('vtubers').select('id, name').eq('id', profileId).maybeSingle()
+    if (vtuber) return { profileId: vtuber.id, resolvedName: nameFromBody || vtuber.name, matchStatus: 'chosen' }
   }
-
-  if (!nameFromBody) {
-    return { profileId: null, resolvedName: null, createdStub: false }
+  const r = await matchCreator([handleFromUrl(clipUrl), ...hintHandles])
+  if (r.status === 'match' || r.status === 'pending') {
+    return { profileId: r.creator.id, resolvedName: r.creator.name, matchStatus: r.status }
   }
-
-  const compact = compactName(nameFromBody)
-
-  const { data: existingExact } = await supabaseAdmin
-    .from('vtubers')
-    .select('id, name')
-    .ilike('name', nameFromBody)
-    .limit(1)
-    .maybeSingle()
-
-  if (existingExact) {
-    return {
-      profileId: existingExact.id,
-      resolvedName: existingExact.name,
-      createdStub: false,
-    }
-  }
-
-  if (compact) {
-    const { data: byHandle } = await supabaseAdmin
-      .from('vtubers')
-      .select('id, name, handle')
-      .ilike('handle', compact)
-      .limit(1)
-      .maybeSingle()
-
-    if (byHandle) {
-      return {
-        profileId: byHandle.id,
-        resolvedName: byHandle.name,
-        createdStub: false,
-      }
-    }
-
-    const { data: candidates } = await supabaseAdmin
-      .from('vtubers')
-      .select('id, name, handle')
-      .limit(3000)
-
-    const byCompact = (candidates ?? []).find(
-      (v: { id: string; name: string; handle?: string }) =>
-        compactName(v.name) === compact || compactName(v.handle ?? '') === compact
-    )
-    if (byCompact) {
-      return {
-        profileId: byCompact.id,
-        resolvedName: byCompact.name,
-        createdStub: false,
-      }
-    }
-  }
-
-  // Real Twitch login from twitch.tv/<login>/clip/... (null for clips.twitch.tv/<slug>)
-  const rawLogin = extractTwitchChannel(clipUrl)
-  const urlLogin = rawLogin && /^[a-z0-9_]{1,25}$/.test(rawLogin) ? rawLogin : null
-  if (urlLogin) {
-    const loginPattern = urlLogin.replace(/[\\_%]/g, '\\$&')
-    const { data: byLogin } = await supabaseAdmin
-      .from('vtubers')
-      .select('id, name')
-      .eq('approved', true)
-      .or(`handle.ilike.${loginPattern},handle.ilike.@${loginPattern}`)
-      .limit(1)
-      .maybeSingle()
-    if (byLogin) {
-      return { profileId: byLogin.id, resolvedName: byLogin.name, createdStub: false }
-    }
-  }
-
-  const id = `vt_${(compact || 'unknown').slice(0, 16)}_${randomUUID().slice(0, 6)}`
-  const platform = platformLabelFromUrl(clipUrl)
-  const link = twitchLinkFromUrl(clipUrl)
-  const handle = (urlLogin || compact || id).slice(0, 24)
-
-  let insertError = (
-    await supabaseAdmin.from('vtubers').insert({
-      id,
-      name: nameFromBody,
-      handle,
-      platform,
-      link,
-      bio: '',
-      tags: [],
-      avatar_url: null,
-      approved: true,
-      nominated_by: submittedBy,
-      spotlight: false,
-    })
-  ).error
-
-  if (insertError && /nominated_by|foreign key|users/i.test(insertError.message)) {
-    insertError = (
-      await supabaseAdmin.from('vtubers').insert({
-        id,
-        name: nameFromBody,
-        handle,
-        platform,
-        link,
-        bio: '',
-        tags: [],
-        avatar_url: null,
-        approved: true,
-        spotlight: false,
-      })
-    ).error
-  }
-
-  if (insertError) {
-    insertError = (
-      await supabaseAdmin.from('vtubers').insert({
-        id,
-        name: nameFromBody,
-        handle,
-        approved: true,
-      })
-    ).error
-  }
-
-  if (insertError) {
-    console.error('stub vtuber create failed:', insertError.message, insertError.code)
-    return {
-      profileId: null,
-      resolvedName: nameFromBody,
-      createdStub: false,
-      stubError: insertError.message,
-    }
-  }
-
-  return { profileId: id, resolvedName: nameFromBody, createdStub: true }
-}
-
-async function backfillStubProfilesForOrphanClips() {
-  const { data: orphans } = await supabaseAdmin
-    .from('clips')
-    .select('id, vtuber_name, clip_url, submitter, profile_id')
-    .is('profile_id', null)
-    .not('vtuber_name', 'is', null)
-    .limit(50)
-
-  if (!orphans?.length) return
-
-  for (const row of orphans) {
-    const name = (row.vtuber_name as string | null)?.trim()
-    if (!name) continue
-
-    const resolved = await resolveOrCreateStubProfile({
-      profileId: null,
-      nameFromBody: name,
-      clipUrl: (row.clip_url as string) || '',
-      submittedBy: (row.submitter as string) || 'system',
-    })
-
-    if (!resolved.profileId) continue
-
-    const { error } = await supabaseAdmin
-      .from('clips')
-      .update({ profile_id: resolved.profileId })
-      .eq('id', row.id)
-      .is('profile_id', null)
-
-    if (error) {
-      console.error('orphan clip profile_id link skipped:', row.id, error.message)
-    }
-  }
+  return { profileId: null, resolvedName: nameFromBody || null, matchStatus: r.status === 'unsure' ? 'needs_review_unsure' : 'needs_review' }
 }
 
 /** Resolve missing thumbs and cache on the row when column exists. */
@@ -270,12 +82,6 @@ async function enrichClipThumbnails(rows: any[]) {
 }
 
 export async function GET() {
-  try {
-    await backfillStubProfilesForOrphanClips()
-  } catch (e) {
-    console.error('clip stub backfill error:', e)
-  }
-
   try {
     await backfillMissingVtuberChannelLinks(25)
   } catch (e) {
@@ -355,11 +161,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'This clip is already in the archive.' }, { status: 409 })
   }
 
-  const resolved = await resolveOrCreateStubProfile({
+  const hintHandles = Array.isArray(body.handles)
+    ? body.handles.filter((h): h is string => typeof h === 'string').slice(0, 10)
+    : []
+  const resolved = await resolveClipProfile({
     profileId: profile_id,
     nameFromBody,
     clipUrl: url.trim(),
-    submittedBy: username,
+    hintHandles,
   })
 
   let thumbnail_url: string | null = null
@@ -444,8 +253,7 @@ export async function POST(req: NextRequest) {
     {
       ok: true,
       profile_id: resolved.profileId,
-      created_stub: resolved.createdStub,
-      stub_error: resolved.stubError ?? null,
+      match_status: resolved.matchStatus,
       thumbnail_url,
     },
     { status: 201 }
