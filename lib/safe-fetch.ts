@@ -8,7 +8,7 @@ export const ALLOWED_HOSTS = {
   rumble: ['rumble.com'],
   youtubeOembed: ['www.youtube.com'],
   youtubeApi: ['www.googleapis.com'],
-  twitterOembed: ['publish.twitter.com'],
+  twitterOembed: ['publish.twitter.com', 'publish.x.com'],
   // Profile pictures come only from Twitch and YouTube (owner rule).
   avatar: ['static-cdn.jtvnw.net', 'yt3.ggpht.com', 'yt3.googleusercontent.com'],
 } as const

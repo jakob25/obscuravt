@@ -64,7 +64,7 @@ export async function GET(req: NextRequest) {
         if (vodTitle) title = vodTitle
       }
     } else if (extracted.platform === 'twitter') {
-      const oembedUrl = `https://publish.twitter.com/oembed?url=${encodeURIComponent(url)}&omit_script=true`
+      const oembedUrl = `https://publish.x.com/oembed?url=${encodeURIComponent(url)}&omit_script=true`
       const res = await safeFetch(oembedUrl, ALLOWED_HOSTS.twitterOembed, { next: { revalidate: 3600 } } as RequestInit)
       if (res?.ok) {
         const data = await res.json()
