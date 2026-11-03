@@ -4,7 +4,7 @@ import { GlitchHeading } from '@/components/vault/glitch-heading'
 import { VaultDivider, VaultPanel, GalleryWall, GalleryWallItem, StatCard } from '@/components/vault/vault-surfaces'
 import { supabaseAdmin } from '@/lib/supabase'
 
-export const revalidate = 30
+export const revalidate = 0
 
 async function safeQuery<T>(fn: () => PromiseLike<{ data: T | null; error?: any }>, fallback: T): Promise<T> {
   try {
