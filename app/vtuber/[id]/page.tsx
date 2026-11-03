@@ -24,6 +24,7 @@ import { getSupabaseClient, supabaseAdmin } from '@/lib/supabase'
 import type { Metadata } from 'next'
 import { getShareProfile, shareDescription, siteOrigin } from '@/lib/vtuber-share-meta'
 import { ShareButton } from '@/components/common/share-button'
+import { CreatorOverview } from '@/components/vtuber/creator-overview'
 
 const supabase = getSupabaseClient()
 
@@ -294,6 +295,7 @@ export default async function VTuberProfilePage({ params }: Props) {
               </div>
 
               <div className="lg:col-span-7">
+                <CreatorOverview id={vtuber.id} />
                 <div className="font-mono text-[10px] uppercase tracking-[0.1em] text-[#1f6f6a] mb-1.5">
                   FIELD NOTES
                 </div>
