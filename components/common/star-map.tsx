@@ -41,6 +41,8 @@ export function StarMap() {
   const [dimensions, setDimensions] = useState({ width: 900, height: 400 })
   const [zoomPct, setZoomPct] = useState(100)
   const [tooltip, setTooltip] = useState<{ vtuber: VTuber; sx: number; sy: number } | null>(null)
+  const [retrying, setRetrying] = useState(false)
+  useEffect(() => { if (!loading) setRetrying(false) }, [loading])
 
   // Keep refs in sync
   useEffect(() => { constellationsRef.current = constellations }, [constellations])
@@ -530,12 +532,14 @@ export function StarMap() {
       )}
 
       {/* Load failure / empty overlay */}
-      {!loading && (error || !vtubers.length) && (
+      {(!loading || retrying) && (error || !vtubers.length) && (
         <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-[#020408]/80">
-          <p className="text-sm text-cyan-400/70">Couldn&apos;t load the vibe map.</p>
-          <button type="button" onClick={reload} className="px-3 py-1.5 rounded-lg bg-black/70 border border-white/10 text-xs text-white hover:border-cyan-400/40 transition-colors">
-            Retry
-          </button>
+          <p className="text-sm text-cyan-400/70">{error || retrying ? 'Couldn\u2019t load the vibe map.' : 'No creators to show yet.'}</p>
+          {(error || retrying) && (
+            <button type="button" onClick={() => { setRetrying(true); reload() }} disabled={retrying} className="px-3 py-1.5 rounded-lg bg-black/70 border border-white/10 text-xs text-white hover:border-cyan-400/40 transition-colors disabled:opacity-50 disabled:cursor-default">
+              {retrying ? 'Loading\u2026' : 'Retry'}
+            </button>
+          )}
         </div>
       )}
 
