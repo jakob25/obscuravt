@@ -19,7 +19,7 @@ const MIN_ZOOM = 0.4
 const MAX_ZOOM = 5
 
 export function StarMap() {
-  const { vtubers, constellations, loading } = useStarMapData()
+  const { vtubers, constellations, loading, error, reload } = useStarMapData()
   const router = useRouter()
 
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -526,6 +526,16 @@ export function StarMap() {
           <p className="text-sm text-cyan-400/60 animate-pulse tracking-widest uppercase text-xs">
             Mapping constellations…
           </p>
+        </div>
+      )}
+
+      {/* Load failure / empty overlay */}
+      {!loading && (error || !vtubers.length || !constellations.length) && (
+        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-[#020408]/80">
+          <p className="text-sm text-cyan-400/70">Couldn&apos;t load the vibe map.</p>
+          <button type="button" onClick={reload} className="px-3 py-1.5 rounded-lg bg-black/70 border border-white/10 text-xs text-white hover:border-cyan-400/40 transition-colors">
+            Retry
+          </button>
         </div>
       )}
 
