@@ -530,7 +530,7 @@ export function StarMap() {
       )}
 
       {/* Load failure / empty overlay */}
-      {!loading && (error || !vtubers.length || !constellations.length) && (
+      {!loading && (error || !vtubers.length) && (
         <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-[#020408]/80">
           <p className="text-sm text-cyan-400/70">Couldn&apos;t load the vibe map.</p>
           <button type="button" onClick={reload} className="px-3 py-1.5 rounded-lg bg-black/70 border border-white/10 text-xs text-white hover:border-cyan-400/40 transition-colors">
