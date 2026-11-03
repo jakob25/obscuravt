@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
+import { approvedCreatorCount } from '@/lib/creator-count'
 
 async function safeQuery<T>(fn: () => PromiseLike<{ data: T | null; error?: any }>, fallback: T): Promise<T> {
   try {
@@ -71,11 +72,7 @@ export async function GET() {
     ),
     safeQuery(
       async () => {
-        const res = await supabaseAdmin
-          .from('vtubers')
-          .select('id', { count: 'exact', head: true })
-          .eq('approved', true)
-        return { data: res.count ?? 0 }
+        return approvedCreatorCount()
       },
       0
     ),

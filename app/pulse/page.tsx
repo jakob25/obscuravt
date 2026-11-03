@@ -3,6 +3,7 @@ import { Film, Palette, Sparkles, Trophy, MessageSquare, ExternalLink, ArrowRigh
 import { GlitchHeading } from '@/components/vault/glitch-heading'
 import { VaultDivider, VaultPanel, GalleryWall, GalleryWallItem, StatCard } from '@/components/vault/vault-surfaces'
 import { supabaseAdmin } from '@/lib/supabase'
+import { approvedCreatorCount } from '@/lib/creator-count'
 
 export const revalidate = 0
 
@@ -76,11 +77,7 @@ async function getPulse() {
     ),
     safeQuery(
       async () => {
-        const res = await supabaseAdmin
-          .from('vtubers')
-          .select('id', { count: 'exact', head: true })
-          .eq('approved', true)
-        return { data: res.count ?? 0 }
+        return approvedCreatorCount()
       },
       0
     ),
