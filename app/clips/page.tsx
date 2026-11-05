@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { GlitchHeading } from '@/components/vault/glitch-heading'
 import { VaultDivider } from '@/components/vault/vault-surfaces'
+import { ClipCredit } from '@/components/common/clip-credit'
 
 export default function ClipsPage() {
   const { clips, loading } = useClips()
@@ -36,15 +37,15 @@ export default function ClipsPage() {
         </div>
       )}
       <div className="mb-4">
-        <Input placeholder="Search clips or creators..." value={filter} onChange={e=>setFilter(e.target.value)} className="max-w-md" />
+        <Input placeholder="Search clips or creators..." value={filter} onChange={e=>setFilter(e.target.value)} className="w-full sm:max-w-md" />
       </div>
       {loading ? (
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">{[1,2,3,4,5,6].map(i=><div key={i} className="vault-panel aspect-video animate-pulse bg-muted/30" />)}</div>
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">{[1,2,3,4,5,6].map(i=><div key={i} className="vault-panel aspect-video animate-pulse bg-muted/30" />)}</div>
       ) : filtered.length === 0 ? (
-        <p className="text-muted-foreground">No clips yet. Submit one with a timestamp and link.</p>
+        <p className="rounded-xl border border-border bg-vault-deep/40 p-6 text-center text-muted-foreground">No clips yet. Submit one with a timestamp and link.</p>
       ) : (
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filtered.map(clip => <ClipCard key={clip.id} clip={clip} />)}
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          {filtered.map(clip => <ClipCard key={clip.id} clip={clip} credit={<ClipCredit submitter={clip.submitter} />} />)}
         </div>
       )}
     </div>

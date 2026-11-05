@@ -12,13 +12,15 @@ import {
 } from '@/lib/embed-utils'
 import { Play, Clock, ExternalLink } from 'lucide-react'
 import Link from 'next/link'
+import { ShareButton } from '@/components/common/share-button'
 
 interface ClipCardProps {
   clip: Clip
   onPlay?: () => void
+  credit?: React.ReactNode
 }
 
-export function ClipCard({ clip, onPlay }: ClipCardProps) {
+export function ClipCard({ clip, onPlay, credit }: ClipCardProps) {
   const [isPlaying, setIsPlaying] = useState(false)
   const [thumb, setThumb] = useState<string | null>(clip.thumbnailUrl ?? null)
   const { vtuber } = useVTuberById(clip.vtuberId)
@@ -171,6 +173,13 @@ export function ClipCard({ clip, onPlay }: ClipCardProps) {
           ) : (
             <span className="min-w-0" />
           )}
+          <ShareButton
+            url={externalUrl}
+            title={clip.title}
+            label="Share"
+            ariaLabel={`Share clip: ${clip.title}`}
+            className="flex shrink-0 items-center gap-1 text-vault-gold/90 hover:text-vault-gold"
+          />
           <a
             href={externalUrl}
             target="_blank"
@@ -182,6 +191,7 @@ export function ClipCard({ clip, onPlay }: ClipCardProps) {
             Watch
           </a>
         </div>
+        {credit}
       </div>
     </div>
   )

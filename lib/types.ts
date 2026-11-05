@@ -37,6 +37,7 @@ export interface Clip {
   createdAt: string;
   /** Cached preview — YouTube i.ytimg or Twitch og:image */
   thumbnailUrl?: string | null;
+  submitter?: string | null;
 }
 
 export interface VibeTag {

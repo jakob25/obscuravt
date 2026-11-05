@@ -18,6 +18,7 @@ interface PendingVtuber {
   bio: string
   nominated_by: string
   avatar_url: string | null
+  possible_duplicates?: { id: string; name: string; approved: boolean }[]
 }
 
 interface AuditEntry {
@@ -134,6 +135,18 @@ export default function AdminPage() {
                       {v.handle && <p className="text-xs text-muted-foreground">{v.handle}</p>}
                       {v.bio && <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{v.bio}</p>}
                       <p className="text-[10px] text-muted-foreground mt-1">Nominated by @{v.nominated_by}</p>
+                      {!!v.possible_duplicates?.length && (
+                        <p className="text-[10px] text-amber-400 mt-1">
+                          Possible duplicate (same handle):{' '}
+                          {v.possible_duplicates.map((d, i) => (
+                            <span key={d.id}>
+                              {i > 0 && ', '}
+                              <a href={`/vtuber/${d.id}`} target="_blank" rel="noopener noreferrer" className="underline">{d.name}</a>
+                              {!d.approved && ' (pending)'}
+                            </span>
+                          ))}
+                        </p>
+                      )}
                       {v.link && (
                         <a href={v.link} target="_blank" rel="noopener noreferrer" className="text-[10px] text-vault-gold flex items-center gap-1 mt-1">
                           <ExternalLink className="h-3 w-3" />{v.platform || 'Link'}

@@ -57,6 +57,7 @@ interface StarMapData {
   memberMap: Map<string, VTuber[]>
   loading: boolean
   error: string | null
+  reload: () => void
 }
 
 export function useStarMapData(): StarMapData {
@@ -66,6 +67,8 @@ export function useStarMapData(): StarMapData {
   const [loading, setLoading] = useState(_cache === null)
   const [error, setError] = useState<string | null>(null)
   const abortRef = useRef<AbortController | null>(null)
+  const [attemptKey, setAttemptKey] = useState(0)
+  const reload = () => { _cache = null; setError(null); setLoading(true); setAttemptKey((k) => k + 1) }
 
   useEffect(() => {
     // Cache hit — nothing to do
@@ -76,7 +79,7 @@ export function useStarMapData(): StarMapData {
 
     abortRef.current = new AbortController()
 
-    async function load() {
+    async function load(attempt = 0): Promise<void> {
       try {
         // Only select columns the star map actually uses — not select('*')
         const [vtRes, clusterRes] = await Promise.all([
@@ -126,6 +129,11 @@ export function useStarMapData(): StarMapData {
         setConstellations(mappedConstellations)
         setMemberMap(map)
       } catch (err) {
+        if (attempt === 0 && !abortRef.current?.signal.aborted) {
+          await new Promise((r) => setTimeout(r, 1500))
+          if (!abortRef.current?.signal.aborted) return load(1)
+          return
+        }
         if (!abortRef.current?.signal.aborted) {
           console.error('Star map error:', err)
           setError('Failed to load.')
@@ -139,9 +147,9 @@ export function useStarMapData(): StarMapData {
 
     load()
     return () => { abortRef.current?.abort() }
-  }, [])
+  }, [attemptKey])
 
-  return { vtubers, constellations, memberMap, loading, error }
+  return { vtubers, constellations, memberMap, loading, error, reload }
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────

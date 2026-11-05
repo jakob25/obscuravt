@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useEffect } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { useVTubers } from '@/hooks/use-data'
 import { useStarMapData } from '@/hooks/use-star-map-data'
 import { GlitchHeading } from '@/components/vault/glitch-heading'
@@ -22,6 +23,24 @@ export default function SearchPage() {
   const { constellations } = useStarMapData()
   const [apiHits, setApiHits] = useState<ApiHit[]>([])
   const [apiLoading, setApiLoading] = useState(false)
+  const router = useRouter()
+  const [urlRead, setUrlRead] = useState(false)
+
+  // Read ?q= once on load so shared/linked searches open pre-filled.
+  useEffect(() => {
+    const q = new URLSearchParams(window.location.search).get('q')
+    if (q) setQuery(q)
+    setUrlRead(true)
+  }, [])
+
+  // Keep ?q= in sync while typing; replace (not push) so Back still leaves the page.
+  useEffect(() => {
+    if (!urlRead) return
+    const q = query.trim()
+    const current = new URLSearchParams(window.location.search).get('q') ?? ''
+    if (q === current) return
+    router.replace(q ? `/search?q=${encodeURIComponent(q)}` : '/search', { scroll: false })
+  }, [query, urlRead, router])
 
   useEffect(() => {
     const q = query.trim()
