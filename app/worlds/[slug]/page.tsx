@@ -17,7 +17,9 @@ export default async function WorldPage({ params }: { params: Promise<{ slug: st
     ? await supabase.from('vtubers').select('id,name').in('id', world.member_vtuber_ids).eq('approved', true)
     : { data: [], error: null }
   const byId = new Map((dossiers ?? []).map(d => [d.id, d]))
-  return <main className="max-w-4xl mx-auto p-4 sm:p-6 space-y-6 text-vault-cream">
+  // Reserve a side lane for the fixed Add content button on compact screens.
+  // Unlike bottom padding, this keeps cards clear while scrolling, too.
+  return <main className="max-w-4xl mx-auto py-4 pl-4 pr-24 sm:py-6 sm:pl-6 sm:pr-28 xl:pr-6 space-y-6 text-vault-cream">
     <header><p className="text-sm text-muted-foreground">Fictional world</p><h1 className="text-3xl break-words">{world.name}</h1></header>
     <p className="whitespace-pre-wrap break-words">{world.bio}</p>
     <Sources urls={world.world_details.sources} />
@@ -25,7 +27,7 @@ export default async function WorldPage({ params }: { params: Promise<{ slug: st
     <section className="space-y-3"><h2 className="text-xl">Explore the dossiers</h2>
       {error && <p>Dossiers could not load. Please try again later.</p>}
       {!error && !dossiers?.length && <p>No linked dossiers yet.</p>}
-      {world.member_vtuber_ids.map(id => { const dossier = byId.get(id); return dossier ? <article key={id} className="rounded-lg border border-border p-4 space-y-2"><Link className="text-vault-gold underline" href={`/vtuber/${encodeURIComponent(id)}`}>{dossier.name}</Link><Sources urls={world.world_details.membership_sources[id]} /></article> : null })}
+      {world.member_vtuber_ids.map(id => { const dossier = byId.get(id); return dossier ? <article key={id} className="rounded-lg border border-border p-4 space-y-2"><Link className="text-vault-gold underline break-words" href={`/vtuber/${encodeURIComponent(id)}`}>{dossier.name}</Link><Sources urls={world.world_details.membership_sources[id]} /></article> : null })}
     </section>
     {!!world.world_details.cast.length && <section className="space-y-3"><h2 className="text-xl">Characters</h2><p className="text-sm text-muted-foreground">Characters can share an account and do not need separate dossiers.</p>{world.world_details.cast.map((character, i) => <article key={i} className="rounded-lg border border-border p-4 space-y-2"><h3 className="text-lg break-words">{character.name}</h3><p className="whitespace-pre-wrap break-words">{character.description}</p><Sources urls={character.sources} /></article>)}</section>}
   </main>
