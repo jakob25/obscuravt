@@ -17,11 +17,12 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
 
   const { data: group } = await supabaseAdmin
     .from('corpo_groups')
-    .select('created_by')
+    .select('created_by,kind')
     .eq('slug', slug)
     .single()
 
   if (!group) return NextResponse.json({ error: 'Group not found.' }, { status: 404 })
+  if (group.kind === 'world') return NextResponse.json({ error: 'Worlds are managed by admins.' }, { status: 403 })
   if (group.created_by !== session.username) {
     return NextResponse.json({ error: 'Only the group creator can edit.' }, { status: 403 })
   }
