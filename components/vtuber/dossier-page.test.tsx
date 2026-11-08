@@ -32,7 +32,7 @@ vi.mock('@/components/vault/page-back-nav', () => ({ PageBackNav: () => <a href=
 
 import VTuberProfilePage from '@/app/vtuber/[id]/page'
 
-beforeEach(() => { db.artError = false; db.calls.length = 0 })
+beforeEach(() => { db.artError = false; db.calls.length = 0; db.profile.bio = 'Real field notes from the profile.' })
 
 describe('server-composed live dossier', () => {
   it('uses existing profile, clips and art records without inventing world tables or fictional content', async () => {
@@ -51,6 +51,17 @@ describe('server-composed live dossier', () => {
     expect(db.calls).toContain('fan_art')
     expect(db.calls).not.toContain('worlds')
     expect(db.calls).not.toContain('characters')
+  })
+
+  it('uses real profile bio for the cover snapshot and an honest empty state when none exists', async () => {
+    const html = renderToStaticMarkup(await VTuberProfilePage({ params: Promise.resolve({ id: 'existing' }) }))
+    const cover = html.match(/<button[^>]*aria-label="Open dossier[^]*?<\/button>/)?.[0]
+    expect(cover).toContain('Subject snapshot')
+    expect(cover).toContain('Real field notes from the profile.')
+    expect(cover).toContain('FILE ON RECORD')
+    db.profile.bio = ''
+    const empty = renderToStaticMarkup(await VTuberProfilePage({ params: Promise.resolve({ id: 'existing' }) }))
+    expect(empty).toContain('No subject snapshot on file.')
   })
 
   it('keeps the complete real dossier available when the optional art query fails', async () => {

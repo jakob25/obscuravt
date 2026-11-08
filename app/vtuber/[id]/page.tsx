@@ -2,8 +2,6 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { ExternalLink, Twitch, Youtube, Twitter } from 'lucide-react'
 import {
-  DossierFrame,
-  CaseFolder,
   CasePhoto,
   CaseField,
 } from '@/components/vault/vault-surfaces'
@@ -24,6 +22,7 @@ import type { Metadata } from 'next'
 import { getShareProfile, shareDescription, siteOrigin } from '@/lib/vtuber-share-meta'
 import { ShareButton } from '@/components/common/share-button'
 import { CreatorOverview } from '@/components/vtuber/creator-overview'
+import creatorSummaries from '@/lib/creator-summaries.json'
 import { DossierFolio } from '@/components/vtuber/dossier-folio'
 import { DossierArtSheet, type DossierArt } from '@/components/vtuber/dossier-art-sheet'
 import styles from '@/components/vtuber/dossier-folio.module.css'
@@ -201,6 +200,9 @@ export default async function VTuberProfilePage({ params }: Props) {
   const { art: dossierArt, unavailable: artUnavailable } = await dossierArtPromise
 
   const accessLine = vtuber.claimed_by ? DOSSIER.claimed : DOSSIER.unclaimed
+  // Reuse the existing curated creator overview; otherwise quote the actual bio.
+  // Never synthesize a new description or treat collective membership as lore.
+  const coverSnapshot = creatorSummaries.find(entry => entry.id === vtuber.id)?.text || vtuber.bio || null
 
   return (
     <div className="min-h-screen">
@@ -213,32 +215,12 @@ export default async function VTuberProfilePage({ params }: Props) {
           avatarUrl={vtuber.avatar_url ?? null}
           handle={handleLogin ? `@${handleLogin}` : ''}
           platform={vtuber.platform || ''}
+          cluster={cluster?.tag ?? null}
+          collective={corpo?.name ?? null}
+          snapshot={coverSnapshot}
           profile={
-          <DossierFrame caseId={caseId} accessLine={accessLine}>
-            <CaseFolder className={styles.profilePaper}>
-            <div className={styles.actions}>
-              <Link 
-                href={`/vtuber/${id}/fan-corner`}
-                className="px-4 py-1.5 text-xs border border-[#5a4f2e] hover:bg-[#5a4f2e] hover:text-[#e9dfc4] transition-colors"
-              >
-                FAN CORNER
-              </Link>
-              <AddToCircleButton vtuberId={vtuber.id} vtuberName={vtuber.name} />
-              <ShareButton
-                path={`/vtuber/${id}`}
-                title={`${vtuber.name} · ObscuraVT`}
-                label="Share"
-                ariaLabel={`Share ${vtuber.name}'s profile`}
-                className="px-4 py-1.5 text-xs border border-[#5a4f2e] hover:bg-[#5a4f2e] hover:text-[#e9dfc4] transition-colors"
-              />
-              <ClaimProfileButton 
-                vtuberId={vtuber.id} 
-                vtuberName={vtuber.name} 
-                claimedBy={vtuber.claimed_by ?? null}
-                approved={vtuber.approved !== false}
-              />
-            </div>
-
+          <>
+            <div className={styles.sectionKicker}>{DOSSIER.subjectRecord}</div>
               <div className={styles.profileTop}>
                 <CasePhoto
                   src={vtuber.avatar_url}
@@ -247,7 +229,8 @@ export default async function VTuberProfilePage({ params }: Props) {
                   size="lg"
                 />
                 <div className={styles.profileFields}>
-                  <CaseField label="CODENAME" value={<h1 className="inline text-inherit">{vtuber.name}</h1>} />
+                  <span className={styles.smallLabel}>{DOSSIER.codename}</span>
+                  <h2 className={styles.identityName}>{vtuber.name}</h2>
                   {liveNow && (
                     <a
                       href={liveUrl || undefined}
@@ -295,9 +278,32 @@ export default async function VTuberProfilePage({ params }: Props) {
                   </div>
                 )}
               </div>
+            <div className={styles.actions}>
+              <Link
+                href={`/vtuber/${id}/fan-corner`}
+                className="px-4 py-1.5 text-xs border border-[#5a4f2e] hover:bg-[#5a4f2e] hover:text-[#e9dfc4] transition-colors"
+              >
+                FAN CORNER
+              </Link>
+              <AddToCircleButton vtuberId={vtuber.id} vtuberName={vtuber.name} />
+              <ShareButton
+                path={`/vtuber/${id}`}
+                title={`${vtuber.name} · ObscuraVT`}
+                label="Share"
+                ariaLabel={`Share ${vtuber.name}'s profile`}
+                className="px-4 py-1.5 text-xs border border-[#5a4f2e] hover:bg-[#5a4f2e] hover:text-[#e9dfc4] transition-colors"
+              />
+              <ClaimProfileButton
+                vtuberId={vtuber.id}
+                vtuberName={vtuber.name}
+                claimedBy={vtuber.claimed_by ?? null}
+                approved={vtuber.approved !== false}
+              />
+            </div>
+
             <div className="mb-8 border-t border-[#5a4f2e]/30 pt-6">
               <div className="section-label mb-3 text-[#1d6a9a]">CHAT MADE ME DO IT</div>
-              
+
               {activeCmdi ? (
                 <div className="bg-[#0d0d14] border border-[#143544] rounded p-4">
                   <div className="flex justify-between text-sm mb-2">
@@ -309,8 +315,8 @@ export default async function VTuberProfilePage({ params }: Props) {
                     </span>
                   </div>
                   <div className="h-2 bg-[#143544] rounded mb-1">
-                    <div 
-                      className="h-2 bg-[#4fd6a8] rounded transition-all" 
+                    <div
+                      className="h-2 bg-[#4fd6a8] rounded transition-all"
                       style={{
                         width: `${activeCmdi.goal_amount > 0
                           ? Math.min((activeCmdi.funded_amount / activeCmdi.goal_amount) * 100, 100)
@@ -323,7 +329,7 @@ export default async function VTuberProfilePage({ params }: Props) {
                   </div>
                 </div>
               ) : (
-                <Link 
+                <Link
                   href={`/vtuber/${id}/fan-corner#submit`}
                   className="px-5 py-2.5 text-sm border border-[#1d6a9a] text-[#1d6a9a] hover:bg-[#1d6a9a] hover:text-[#e9dfc4] transition-colors font-medium"
                 >
@@ -371,7 +377,7 @@ export default async function VTuberProfilePage({ params }: Props) {
 
               <div className="bg-[#e9dfc4] border border-[#5a4f2e]/30 rounded p-4">
                 <div className="section-label mb-3 text-[#1f6f6a]">BETS</div>
-                
+
                 {openBets.length > 0 ? (
                   <div className="space-y-2">
                     {openBets.map((bet) => (
@@ -384,7 +390,7 @@ export default async function VTuberProfilePage({ params }: Props) {
                         )}
                       </div>
                     ))}
-                    <Link 
+                    <Link
                       href="/bets"
                       className="inline-block mt-1 text-xs text-[#1d6a9a] hover:underline"
                     >
@@ -412,8 +418,7 @@ export default async function VTuberProfilePage({ params }: Props) {
               initialSilhouetteUrl={vtuber.silhouette_url ?? null}
             />
 
-            </CaseFolder>
-          </DossierFrame>
+          </>
           }
           world={
           <>
