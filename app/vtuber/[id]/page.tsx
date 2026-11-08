@@ -1,3 +1,5 @@
+import { Suspense } from 'react'
+import { WorldLinks } from '@/components/worlds/world-links'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { ExternalLink, Twitch, Youtube, Twitter } from 'lucide-react'
@@ -140,10 +142,10 @@ export default async function VTuberProfilePage({ params }: Props) {
 
   const { data: corpoGroups } = await supabase
     .from('corpo_groups')
-    .select('slug,name,member_vtuber_ids')
+    .select('slug,name,member_vtuber_ids,kind')
     .contains('member_vtuber_ids', [id])
 
-  const corpo = (corpoGroups ?? []).find(g => (g.member_vtuber_ids ?? []).includes(id))
+  const corpo = (corpoGroups ?? []).find(g => g.kind !== 'world' && (g.member_vtuber_ids ?? []).includes(id))
   let corpoSiblings: { id: string; name: string; avatar_url: string | null }[] = []
   if (corpo) {
     const siblingIds = (corpo.member_vtuber_ids ?? []).filter((mid: string) => mid !== id)
@@ -262,6 +264,7 @@ export default async function VTuberProfilePage({ params }: Props) {
               initialSilhouetteUrl={vtuber.silhouette_url ?? null}
             />
 
+            <Suspense fallback={null}><WorldLinks id={id} /></Suspense>
             {corpo && corpoSiblings.length > 0 && (
               <div className="mb-6">
                 <RecommendedStrip
