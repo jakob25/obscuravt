@@ -25,6 +25,8 @@ import type { Metadata } from 'next'
 import { getShareProfile, shareDescription, siteOrigin } from '@/lib/vtuber-share-meta'
 import { ShareButton } from '@/components/common/share-button'
 import { CreatorOverview } from '@/components/vtuber/creator-overview'
+import { DossierBinder } from '@/components/vtuber/dossier-binder'
+import { WorldCore } from '@/components/vtuber/world-core'
 
 const supabase = getSupabaseClient()
 
@@ -192,6 +194,15 @@ export default async function VTuberProfilePage({ params }: Props) {
       .limit(8)
     dossierClips = clipsByName ?? []
   }
+
+  const { data: fanArtRows } = await supabaseAdmin
+    .from('fan_art')
+    .select('id,image_url,twitter_url')
+    .eq('vtuber_id', id)
+    .eq('reported', false)
+    .order('created_at', { ascending: false })
+    .limit(6)
+  const dossierArt = fanArtRows ?? []
 
   return (
     <div className="min-h-screen">
@@ -450,6 +461,26 @@ export default async function VTuberProfilePage({ params }: Props) {
                 )}
               </div>
             </div>
+
+            <DossierBinder
+              name={vtuber.name}
+              bio={vtuber.bio ?? null}
+              avatarUrl={vtuber.avatar_url ?? null}
+              clips={dossierClips}
+              art={dossierArt}
+            />
+
+            {corpo && (
+              <WorldCore
+                worldName={corpo.name}
+                worldSlug={corpo.slug}
+                lore={null}
+                characters={[
+                  { id: vtuber.id, name: vtuber.name, avatar_url: vtuber.avatar_url ?? null },
+                  ...corpoSiblings,
+                ]}
+              />
+            )}
 
           </div>
         </div>
