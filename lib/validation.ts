@@ -1,20 +1,22 @@
 import { z } from 'zod'
 
+const SCRIPT_STYLE_BLOCK_PATTERN = /<(script|style)\b[^>]*>[\s\S]*?<\/\1\s*>/gi
 const HTML_TAG_PATTERN = /<[^>]*>/g
 const SCRIPT_PROTOCOL_PATTERN = /\b(?:javascript|data|vbscript):/gi
-const EVENT_HANDLER_PATTERN = /\bon\w+\s*=\s*/gi
+const EVENT_HANDLER_PATTERN = /\bon\w+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]*)/gi
 const NULL_BYTE_PATTERN = /\u0000/g
 const WHITESPACE_PATTERN = /\s{2,}/g
 
 // ── Sanitize text input — strip HTML, trim, normalize whitespace ──────────────
 export function sanitizeText(input: string): string {
   return input
-    .trim()
+    .replace(SCRIPT_STYLE_BLOCK_PATTERN, '')
     .replace(HTML_TAG_PATTERN, '')
     .replace(SCRIPT_PROTOCOL_PATTERN, '')
     .replace(EVENT_HANDLER_PATTERN, '')
     .replace(NULL_BYTE_PATTERN, '')
     .replace(WHITESPACE_PATTERN, ' ')
+    .trim()
 }
 
 export function sanitizeUrl(input: string): string | null {
