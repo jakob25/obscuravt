@@ -5,8 +5,7 @@ import { CaseFolder, CasePhoto, DossierFrame } from '@/components/vault/vault-su
 import { DOSSIER } from '@/lib/site-copy'
 import styles from './dossier-folio.module.css'
 
-const tabs = ['profile', 'world', 'clips', 'art'] as const
-type Tab = typeof tabs[number]
+type Tab = string
 type Turn = { from: Tab; to: Tab; backward: boolean }
 type Swipe = { x: number; y: number; time: number; id: number; horizontal: boolean; surface: HTMLElement }
 const narrowQuery = '(max-width: 800px)'
@@ -22,18 +21,35 @@ interface Props {
   collective?: string | null
   snapshot?: string | null
   profile: ReactNode
-  world: ReactNode
+  /** The niche-specific page (e.g. World), when this creator's niche has one
+   * and there is real content for it. Omitted or null means no such page. */
+  nichePage?: NichePage | null
+  /** @deprecated Shorthand for nichePage with key 'world'. */
+  world?: ReactNode
   clips: ReactNode
   art: ReactNode
 }
 
-/** A warm cover, a stationary desktop profile, and four mobile swipe sheets.
+export interface NichePage { key: string; label: string; content: ReactNode }
+
+/** A warm cover, a stationary desktop profile, and mobile swipe sheets:
+ * Profile, an optional niche page, Clips and Art.
  * Every real action/content instance stays mounted once, including while turning.
  */
-export function DossierFolio({ name, caseId, accessLine, avatarUrl, handle, platform, cluster, collective, snapshot, profile, world, clips, art }: Props) {
+export function DossierFolio({ name, caseId, accessLine, avatarUrl, handle, platform, cluster, collective, snapshot, profile, nichePage, world, clips, art }: Props) {
   const [open, setOpen] = useState(false)
   const [narrow, setNarrow] = useState(false)
-  const [tab, setTab] = useState<Tab>('world')
+  const extra = nichePage ?? (world != null ? { key: 'world', label: DOSSIER.world, content: world } : null)
+  const pages = [
+    { key: 'profile', label: DOSSIER.profile, content: profile },
+    ...(extra ? [extra] : []),
+    { key: 'clips', label: DOSSIER.clips, content: clips },
+    { key: 'art', label: DOSSIER.art, content: art },
+  ]
+  const tabs = pages.map(page => page.key)
+  // The first page beside the stationary desktop profile.
+  const firstSheet = tabs[1]
+  const [tab, setTab] = useState<Tab>(firstSheet)
   const [turn, setTurn] = useState<Turn | null>(null)
   const id = useId()
   const openButton = useRef<HTMLButtonElement>(null)
@@ -43,7 +59,6 @@ export function DossierFolio({ name, caseId, accessLine, avatarUrl, handle, plat
   const suppressClickUntil = useRef(0)
   const panelRefs = useRef<Partial<Record<Tab, HTMLElement | null>>>({})
   const scrollNextPage = useRef(false)
-  const sheets = { profile, world, clips, art }
   const available = narrow ? tabs : tabs.slice(1)
 
   useEffect(() => {
@@ -53,8 +68,8 @@ export function DossierFolio({ name, caseId, accessLine, avatarUrl, handle, plat
       setTurn(null)
       swipe.current = null
       if (!media.matches) {
-        setTab(current => current === 'profile' ? 'world' : current)
-        if (document.activeElement === tabButtons.current.profile) tabButtons.current.world?.focus({ preventScroll: true })
+        setTab(current => current === 'profile' ? firstSheet : current)
+        if (document.activeElement === tabButtons.current.profile) tabButtons.current[firstSheet]?.focus({ preventScroll: true })
       }
     }
     update()
@@ -63,15 +78,16 @@ export function DossierFolio({ name, caseId, accessLine, avatarUrl, handle, plat
     media.addEventListener('change', update)
     motion.addEventListener('change', stopMotion)
     return () => { media.removeEventListener('change', update); motion.removeEventListener('change', stopMotion) }
-  }, [])
+  }, [firstSheet])
 
   useEffect(() => {
     if (open) {
       hasOpened.current = true
-      tabButtons.current[window.matchMedia(narrowQuery).matches ? 'profile' : 'world']?.focus({ preventScroll: true })
+      tabButtons.current[window.matchMedia(narrowQuery).matches ? 'profile' : firstSheet]?.focus({ preventScroll: true })
     } else if (hasOpened.current) {
       openButton.current?.focus({ preventScroll: true })
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- focus only when opening or closing
   }, [open])
 
   useEffect(() => {
@@ -165,7 +181,7 @@ export function DossierFolio({ name, caseId, accessLine, avatarUrl, handle, plat
         <button ref={openButton} type="button" className={styles.warmCover} aria-label={`${DOSSIER.open}: ${name}`} aria-expanded={open} aria-controls={tabs.map(key => `${id}-${key}-panel`).join(' ')} aria-hidden={open} inert={open} tabIndex={open ? -1 : 0} onClick={() => {
           const mobile = window.matchMedia(narrowQuery).matches
           setNarrow(mobile)
-          setTab(mobile ? 'profile' : 'world')
+          setTab(mobile ? 'profile' : firstSheet)
           setOpen(true)
         }}>
           <span className={styles.coverTab}>{DOSSIER.archiveTab}</span>
@@ -192,15 +208,15 @@ export function DossierFolio({ name, caseId, accessLine, avatarUrl, handle, plat
 
         <div id={`${id}-pages`} className={styles.controls} hidden={!open} inert={!open}>
           <div className={styles.tabs} role="tablist" aria-label={DOSSIER.pages}>
-            {tabs.map(key => (
-              <button key={key} type="button" role="tab" className={key === 'profile' ? styles.mobileTab : undefined} id={`${id}-${key}-tab`} aria-controls={`${id}-${key}-panel`} aria-selected={tab === key} tabIndex={tab === key ? 0 : -1} ref={node => { tabButtons.current[key] = node }} aria-disabled={Boolean(turn)} onClick={() => choose(key)} onKeyDown={event => navigate(event, key)}>{DOSSIER[key]}</button>
+            {pages.map(({ key, label }) => (
+              <button key={key} type="button" role="tab" className={key === 'profile' ? styles.mobileTab : undefined} id={`${id}-${key}-tab`} aria-controls={`${id}-${key}-panel`} aria-selected={tab === key} tabIndex={tab === key ? 0 : -1} ref={node => { tabButtons.current[key] = node }} aria-disabled={Boolean(turn)} onClick={() => choose(key)} onKeyDown={event => navigate(event, key)}>{label}</button>
             ))}
           </div>
           <button type="button" className={styles.close} aria-label={DOSSIER.close} onClick={() => { setOpen(false); setTurn(null); swipe.current = null }}>×</button>
           <p className={styles.swipeHint}>{DOSSIER.swipeHint}</p>
         </div>
 
-        {tabs.map(key => {
+        {pages.map(({ key, label, content }) => {
           const stationary = key === 'profile' && !narrow
           const active = stationary || tab === key
           const visible = active || turn?.from === key
@@ -209,9 +225,9 @@ export function DossierFolio({ name, caseId, accessLine, avatarUrl, handle, plat
             <section key={key} ref={node => { panelRefs.current[key] = node }} id={`${id}-${key}-panel`} data-swipe-page={key} data-turn-direction={animated ? (turn.backward ? 'backward' : 'forward') : undefined} role={stationary ? 'region' : 'tabpanel'} aria-label={stationary ? DOSSIER.profile : undefined} aria-labelledby={stationary ? undefined : `${id}-${key}-tab`} tabIndex={stationary ? undefined : 0} hidden={!open || !visible} aria-hidden={!open || !active} inert={!open || !active} aria-busy={Boolean(turn) && !stationary} className={`${styles.sheet} ${key === 'profile' ? styles.profilePanel : ''} ${animated ? `${styles.turning} ${turn.backward ? styles.backward : ''}` : ''}`} onAnimationEnd={event => { if (event.target === event.currentTarget) setTurn(null) }}>
               <DossierFrame caseId={caseId} accessLine={accessLine}>
                 <CaseFolder className={`${key === 'profile' ? styles.profilePaper : styles.paper} ${key === 'art' ? styles.artPaper : ''}`}>
-                  {sheets[key]}
+                  {content}
                   <footer className={`${styles.pageBottom} ${key === 'profile' ? styles.profileNavigation : ''}`} data-no-swipe>
-                    <span>{String(tabs.indexOf(key) + 1).padStart(2, '0')} / 04 · {DOSSIER[key]}</span>
+                    <span>{String(tabs.indexOf(key) + 1).padStart(2, '0')} / {String(tabs.length).padStart(2, '0')} · {label}</span>
                     <div className={styles.pageNavigation}>
                       <button type="button" disabled={Boolean(turn) || index <= first} onClick={() => choose(tabs[index - 1])}>{DOSSIER.previous}</button>
                       <button type="button" disabled={Boolean(turn) || index === tabs.length - 1} onClick={() => choose(tabs[index + 1])}>{DOSSIER.next}</button>

@@ -307,4 +307,27 @@ describe('real art sheet', () => {
     await act(async () => { await new Promise(resolve => setTimeout(resolve, 0)) })
     expect(document.activeElement).toBe(trigger)
   })
+
+  it('shows only the pages a creator has when there is no niche page', async () => {
+    await act(async () => root.render(
+      <DossierFolio name="No niche creator" caseId="OVT-00001" accessLine="● CLAIMED FILE" avatarUrl={null} handle="@real" platform="Twitch"
+        profile={<Profile />} clips={<p>Real clip</p>} art={<p>No art on file.</p>} />
+    ))
+    await click(button('Open dossier: No niche creator'))
+    expect(host.querySelector('[data-swipe-page="world"]')).toBeNull()
+    expect(tab('clips').getAttribute('aria-selected')).toBe('true')
+    expect(panel('clips').textContent).toContain('02 / 03 · Clips')
+    expect(panel('art').textContent).toContain('03 / 03 · Art')
+  })
+
+  it('places a named niche page second, after the profile', async () => {
+    await act(async () => root.render(
+      <DossierFolio name="Niche creator" caseId="OVT-00002" accessLine="● CLAIMED FILE" avatarUrl={null} handle="@real" platform="Twitch"
+        profile={<Profile />} nichePage={{ key: 'pictures', label: 'Pictures', content: <p>Real photo post</p> }} clips={<p>Real clip</p>} art={<p>No art on file.</p>} />
+    ))
+    await click(button('Open dossier: Niche creator'))
+    expect(tab('pictures').textContent).toBe('Pictures')
+    expect(tab('pictures').getAttribute('aria-selected')).toBe('true')
+    expect(panel('pictures').textContent).toContain('02 / 04 · Pictures')
+  })
 })

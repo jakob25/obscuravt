@@ -42,8 +42,10 @@ describe('server-composed live dossier', () => {
     expect(html).toContain('Existing clip')
     expect(html).toContain('https://example.com/art.jpg')
     expect(html).not.toContain('javascript:')
-    expect(html).toContain('No world lore on file.')
-    expect(html).toContain('No characters on file.')
+    // No niche page without real niche content: Profile, Clips and Art only.
+    expect(html).not.toContain('No world lore on file.')
+    expect(html).not.toContain('-world-panel')
+    expect(html).toContain('01 / 03 · Profile')
     expect(html).toContain('/vtuber/existing/fan-corner')
     expect(html).toContain('Submit clip')
     expect(html).not.toContain('Mara Vale')

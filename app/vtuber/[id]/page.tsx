@@ -26,6 +26,8 @@ import creatorSummaries from '@/lib/creator-summaries.json'
 import { DossierFolio } from '@/components/vtuber/dossier-folio'
 import { DossierArtSheet, type DossierArt } from '@/components/vtuber/dossier-art-sheet'
 import styles from '@/components/vtuber/dossier-folio.module.css'
+import { assignNicheCluster } from '@/lib/niche-assignment'
+import { nichePageKindFor } from '@/lib/dossier-niche-pages'
 
 const supabase = getSupabaseClient()
 
@@ -129,6 +131,25 @@ export default async function VTuberProfilePage({ params }: Props) {
 
   const clusterTag = tags.find(t => t.startsWith('clust_'))
   const cluster = clusterTag ? tagMap[clusterTag] : null
+
+  // Niche-specific page: only for niches listed in NICHE_PAGE_BY_CLUSTER, and
+  // only when there is real content. A failed lookup just means no extra page.
+  let nicheClusterId: string | null = null
+  try {
+    const { data: nicheClusters } = await supabase
+      .from('canonical_tags')
+      .select('id, content_tag_ids, sort_order')
+      .eq('category', 'niche_cluster')
+      .order('sort_order')
+    nicheClusterId = assignNicheCluster(tags, nicheClusters ?? [])
+  } catch (e) {
+    console.error('dossier niche lookup', e)
+  }
+  const nichePageKind = nichePageKindFor(nicheClusterId)
+  // No lore or character records are stored yet; the World page appears once
+  // they are (with the world dossiers work) and the creator actually has some.
+  const worldRecordCount = 0
+  const showWorldPage = nichePageKind === 'world' && worldRecordCount > 0
 
   const platform = (vtuber.platform ?? '').toLowerCase()
   const isTwitch = platform.includes('twitch')
@@ -417,20 +438,6 @@ export default async function VTuberProfilePage({ params }: Props) {
               claimedBy={vtuber.claimed_by ?? null}
               initialSilhouetteUrl={vtuber.silhouette_url ?? null}
             />
-
-          </>
-          }
-          world={
-          <>
-            <div className={styles.sheetHeading}><h2 className="section-label text-[#1f6f6a]">{DOSSIER.world}</h2></div>
-            <section className={styles.worldSection}>
-              <h3 className={styles.notesLabel}>{DOSSIER.lore}</h3>
-              <p className={styles.empty}>{DOSSIER.noLore}</p>
-            </section>
-            <section className={styles.worldSection}>
-              <h3 className={styles.notesLabel}>{DOSSIER.characters}</h3>
-              <p className={styles.empty}>{DOSSIER.noCharacters}</p>
-            </section>
             {/* Collective membership is real, but is not fictional world lore
                 or a character roster. Keep those distinctions explicit. */}
             {corpo && (
@@ -451,8 +458,21 @@ export default async function VTuberProfilePage({ params }: Props) {
                 </>}
               </section>
             )}
+
           </>
           }
+          nichePage={showWorldPage ? { key: 'world', label: DOSSIER.world, content:
+          <>
+            <div className={styles.sheetHeading}><h2 className="section-label text-[#1f6f6a]">{DOSSIER.world}</h2></div>
+            <section className={styles.worldSection}>
+              <h3 className={styles.notesLabel}>{DOSSIER.lore}</h3>
+              <p className={styles.empty}>{DOSSIER.noLore}</p>
+            </section>
+            <section className={styles.worldSection}>
+              <h3 className={styles.notesLabel}>{DOSSIER.characters}</h3>
+              <p className={styles.empty}>{DOSSIER.noCharacters}</p>
+            </section>
+          </> } : null}
           clips={
           <>
             <div className={styles.sheetHeading}>
