@@ -25,6 +25,8 @@ import { CreatorOverview } from '@/components/vtuber/creator-overview'
 import creatorSummaries from '@/lib/creator-summaries.json'
 import { DossierFolio } from '@/components/vtuber/dossier-folio'
 import { DossierArtSheet, type DossierArt } from '@/components/vtuber/dossier-art-sheet'
+import { DossierPicturesSheet, type DossierPicture } from '@/components/vtuber/dossier-pictures-sheet'
+import { normalizeXPostLink } from '@/lib/x-post-link'
 import styles from '@/components/vtuber/dossier-folio.module.css'
 import { assignNicheCluster } from '@/lib/niche-assignment'
 import { nichePageKindFor } from '@/lib/dossier-niche-pages'
@@ -150,6 +152,9 @@ export default async function VTuberProfilePage({ params }: Props) {
   // they are (with the world dossiers work) and the creator actually has some.
   const worldRecordCount = 0
   const showWorldPage = nichePageKind === 'world' && worldRecordCount > 0
+  const dossierPicturesPromise = nichePageKind === 'pictures'
+    ? fetchDossierPictures(id)
+    : Promise.resolve({ posts: [] as DossierPicture[] })
 
   const platform = (vtuber.platform ?? '').toLowerCase()
   const isTwitch = platform.includes('twitch')
@@ -219,6 +224,8 @@ export default async function VTuberProfilePage({ params }: Props) {
   }
 
   const { art: dossierArt, unavailable: artUnavailable } = await dossierArtPromise
+  const { posts: dossierPictures } = await dossierPicturesPromise
+  const showPicturesPage = dossierPictures.length > 0
 
   const accessLine = vtuber.claimed_by ? DOSSIER.claimed : DOSSIER.unclaimed
   // Reuse the existing curated creator overview; otherwise quote the actual bio.
@@ -461,7 +468,9 @@ export default async function VTuberProfilePage({ params }: Props) {
 
           </>
           }
-          nichePage={showWorldPage ? { key: 'world', label: DOSSIER.world, content:
+          nichePage={showPicturesPage ? { key: 'pictures', label: DOSSIER.pictures, content:
+          <DossierPicturesSheet posts={dossierPictures} />
+          } : showWorldPage ? { key: 'world', label: DOSSIER.world, content:
           <>
             <div className={styles.sheetHeading}><h2 className="section-label text-[#1f6f6a]">{DOSSIER.world}</h2></div>
             <section className={styles.worldSection}>
@@ -509,6 +518,28 @@ function publicMediaUrl(value: string | null | undefined): string | null {
     return url.protocol === 'https:' || url.protocol === 'http:' ? url.href : null
   } catch {
     return null
+  }
+}
+
+async function fetchDossierPictures(vtuberId: string): Promise<{ posts: DossierPicture[] }> {
+  // Same graceful fallback as optional fan_art: a missing table or query
+  // error means no pictures page, not a broken dossier.
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('niche_photo_posts')
+      .select('id,post_url')
+      .eq('vtuber_id', vtuberId)
+      .order('created_at', { ascending: false })
+      .limit(24)
+    if (error) return { posts: [] }
+    const posts: DossierPicture[] = []
+    for (const row of data ?? []) {
+      const post_url = normalizeXPostLink(row.post_url)
+      if (post_url) posts.push({ id: String(row.id), post_url })
+    }
+    return { posts }
+  } catch {
+    return { posts: [] }
   }
 }
 

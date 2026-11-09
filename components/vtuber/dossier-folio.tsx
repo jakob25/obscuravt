@@ -224,7 +224,7 @@ export function DossierFolio({ name, caseId, accessLine, avatarUrl, handle, plat
           return (
             <section key={key} ref={node => { panelRefs.current[key] = node }} id={`${id}-${key}-panel`} data-swipe-page={key} data-turn-direction={animated ? (turn.backward ? 'backward' : 'forward') : undefined} role={stationary ? 'region' : 'tabpanel'} aria-label={stationary ? DOSSIER.profile : undefined} aria-labelledby={stationary ? undefined : `${id}-${key}-tab`} tabIndex={stationary ? undefined : 0} hidden={!open || !visible} aria-hidden={!open || !active} inert={!open || !active} aria-busy={Boolean(turn) && !stationary} className={`${styles.sheet} ${key === 'profile' ? styles.profilePanel : ''} ${animated ? `${styles.turning} ${turn.backward ? styles.backward : ''}` : ''}`} onAnimationEnd={event => { if (event.target === event.currentTarget) setTurn(null) }}>
               <DossierFrame caseId={caseId} accessLine={accessLine}>
-                <CaseFolder className={`${key === 'profile' ? styles.profilePaper : styles.paper} ${key === 'art' ? styles.artPaper : ''}`}>
+                <CaseFolder className={`${key === 'profile' ? styles.profilePaper : styles.paper} ${key === 'art' || key === 'pictures' ? styles.artPaper : ''}`}>
                   {content}
                   <footer className={`${styles.pageBottom} ${key === 'profile' ? styles.profileNavigation : ''}`} data-no-swipe>
                     <span>{String(tabs.indexOf(key) + 1).padStart(2, '0')} / {String(tabs.length).padStart(2, '0')} · {label}</span>

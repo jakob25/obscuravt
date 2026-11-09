@@ -60,4 +60,6 @@ export const DOSSIER = {
   clipsAll: 'All clips →',
   claimed: '● CLAIMED FILE',
   unclaimed: '● UNCLAIMED FILE',
+  pictures: 'Pictures',
+  picturesOpen: 'Open post on X',
 } as const

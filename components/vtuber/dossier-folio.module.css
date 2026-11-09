@@ -104,6 +104,9 @@
 .artExpand { display: block; width: 100%; cursor: zoom-in; }
 .artExpand img { width: 100%; height: auto; }
 .artCredit { display: flex; flex-direction: column; gap: 6px; font: 11px/1.55 var(--font-geist-mono),monospace; margin-top: 9px; overflow-wrap: anywhere; }
+.pictureList { display: flex; flex-direction: column; gap: 22px; margin-top: 30px; }
+.picturePost { padding: 8px 8px 16px; background: #f4f1e6; border: 1px solid #5a4f2e44; box-shadow: 0 4px 8px #0002; color: var(--case-ink); overflow: hidden; }
+.picturePost blockquote { margin: 0; }
 @container (max-width: 400px) { .lowerCards { grid-template-columns: 1fr; } }
 @container (max-width: 300px) { .profileTop { grid-template-columns: 1fr; } .profileTop :global(.case-photo-slot-lg) { max-width: 150px; } .profileFields { padding-top: 0; } .identityName { margin-bottom: 12px; } }
 @media (max-width: 800px) {

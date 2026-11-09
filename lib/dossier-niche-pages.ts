@@ -3,8 +3,7 @@
  * (canonical_tags.id where category = 'niche_cluster').
  *
  * - 'world':    world builders' lore and characters.
- * - 'pictures': photo posts (IRL, photography) — not wired yet; needs its
- *               own photo-link storage first.
+ * - 'pictures': photo posts (IRL, photography) from owner-curated X links.
  *
  * A niche that isn't listed gets no extra page (Profile, Clips, Art only).
  * Adding a niche later is one entry here plus its page, if it's a new kind.
