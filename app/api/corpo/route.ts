@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { requireAuth, getSessionUser } from '@/lib/session'
+import { requireAuth } from '@/lib/session'
 
 export async function GET(req: NextRequest) {
   const { supabaseAdmin } = await import('@/lib/supabase')

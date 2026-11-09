@@ -41,8 +41,8 @@ export default function FanCornerPage() {
 
       setSubmitted(true)
       setFormData({ title: '', description: '' })
-    } catch (err: any) {
-      setError(err.message || 'Something went wrong')
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Something went wrong')
     } finally {
       setIsSubmitting(false)
     }

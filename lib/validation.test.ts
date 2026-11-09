@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { sanitizeText, sanitizeUrl, usernameSchema, passwordSchema, titleSchema, urlSchema, amountSchema, registerSchema, betSchema, parseBody } from './validation'
+import { sanitizeText, sanitizeUrl, usernameSchema, passwordSchema, registerSchema, betSchema, parseBody } from './validation'
 
 describe('sanitizeText', () => {
   it('trims whitespace and removes HTML tags + dangerous content', () => {

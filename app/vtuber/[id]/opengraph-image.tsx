@@ -24,7 +24,6 @@ export default async function Image({ params }: { params: Promise<{ id: string }
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', border: `2px solid ${GOLD}99`, borderRadius: 24, background: '#0f0f18' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 40 }}>
             {avatar ? (
-              // eslint-disable-next-line @next/next/no-img-element
               <img src={avatar} width={180} height={180} style={{ borderRadius: 32, border: `3px solid ${GOLD}`, objectFit: 'cover' }} />
             ) : (
               <div style={{ width: 160, height: 160, borderRadius: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', background: `linear-gradient(135deg, #e0b84a, #8a6a1c)`, color: '#111', fontSize: 96, fontWeight: 700 }}>

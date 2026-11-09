@@ -63,8 +63,8 @@ function FanArtPageContent() {
       if (!res.ok) throw new Error(data.error)
       setTwitterUrl(''); setImageUrl(''); setShowForm(false)
       load()
-    } catch (err: any) {
-      setError(err.message)
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Something went wrong')
     } finally {
       setSubmitting(false)
     }

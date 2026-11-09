@@ -163,8 +163,10 @@ export function DossierFolio({ name, caseId, accessLine, avatarUrl, handle, plat
     const dx = event.clientX - start.x
     const dy = event.clientY - start.y
     const threshold = Math.min(80, Math.max(44, start.surface.clientWidth * .15))
+    // eslint-disable-next-line react-hooks/purity -- Date.now() is in a pointer-up handler, not during render
     if (!start.horizontal || Math.abs(dx) < threshold || Math.abs(dx) < Math.abs(dy) * 1.5 || Date.now() - start.time > 1800) return
     // A deliberate swipe must not activate the link/button beneath the finger.
+    // eslint-disable-next-line react-hooks/purity -- Date.now() is in a pointer-up handler, not during render
     suppressClickUntil.current = Date.now() + 400
     const next = tabs.indexOf(tab) + (dx < 0 ? 1 : -1)
     if (next >= 0 && next < tabs.length) choose(tabs[next])

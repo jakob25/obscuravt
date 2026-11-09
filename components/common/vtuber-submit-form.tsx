@@ -148,8 +148,8 @@ export function VTuberSubmitForm({ onSuccess, onCancel }: VTuberSubmitFormProps)
         setAvatarPreview(null)
         setSuccess(false)
       }, 1500)
-    } catch (err: any) {
-      setError(err.message || 'Something went wrong')
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Something went wrong')
     } finally {
       setSubmitting(false)
       setUploading(false)

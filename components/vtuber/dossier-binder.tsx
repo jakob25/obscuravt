@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import Link from 'next/link'
 
 export interface BinderClip {
   id: string
@@ -30,6 +29,7 @@ export function DossierBinder({ name, bio, avatarUrl, clips, art }: Props) {
   useEffect(() => {
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
     if (reduced) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- open after first paint; reduced-motion skips the delayed animation
       setOpen(true)
       return
     }

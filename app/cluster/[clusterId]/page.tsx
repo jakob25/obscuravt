@@ -34,18 +34,6 @@ interface CreatorRow {
   avatar_url: string | null
 }
 
-interface ClipRow {
-  id: string
-  title: string | null
-  clip_url: string | null
-  profile_id: string | null
-  submitter: string | null
-  upvotes: number | null
-  created_at: string | null
-  tags: string[] | null
-  description: string | null
-}
-
 interface FanArtRow {
   id: string
   vtuber_id: string | null

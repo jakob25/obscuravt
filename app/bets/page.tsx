@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import type { Bet, BetOption } from '@/lib/types'
+import type { Bet } from '@/lib/types'
 import { BetSlip } from '@/components/vault/vault-surfaces'
 import { GlitchHeading } from '@/components/vault/glitch-heading'
 import { VaultDivider } from '@/components/vault/vault-surfaces'
@@ -17,7 +17,6 @@ import { VaultDivider } from '@/components/vault/vault-surfaces'
 
 function BetCard({ bet, onUpdate }: { bet: Bet; onUpdate: () => void }) {
   const { user, refreshUser } = useAuth()
-  const [expanded, setExpanded] = useState(false)
   const [mode, setMode] = useState<'place' | 'vote' | null>(null)
   const [selectedOption, setSelectedOption] = useState<string | null>(null)
   const [amount, setAmount] = useState('100')

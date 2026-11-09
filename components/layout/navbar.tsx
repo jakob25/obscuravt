@@ -1,14 +1,14 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname, useRouter } from 'next/navigation'
+import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import {
-  Menu, X, Compass, Film, Trophy, User, Medal,
-  LogIn, TrendingUp, Shield, Search, Heart, Gamepad2, Gift,
+  Menu, X, Compass, Film, Trophy, User,
+  LogIn, TrendingUp, Shield, Search, Gamepad2, Gift,
   Bell, ShoppingBag, Calendar, Zap, Eye, MessageSquare, LayoutDashboard,
-  Users, BookOpen, Star, HelpCircle,
+  Users, Star, HelpCircle,
 } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/lib/auth-context'
@@ -40,7 +40,6 @@ const moreItems = [
 
 export function Navbar() {
   const pathname = usePathname()
-  const router = useRouter()
   const { user, loading } = useAuth()
   const [mobileOpen, setMobileOpen] = useState(false)
   const [unread, setUnread] = useState(0)

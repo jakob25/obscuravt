@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { addSecurityHeaders } from '@/lib/security'
 
-export function middleware(req: NextRequest) {
+export function middleware() {
   const res = NextResponse.next()
   return addSecurityHeaders(res)
 }

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { randomUUID } from 'crypto'
 import { supabaseAdmin } from '@/lib/supabase'
-import { getSessionUser, requireAuth } from '@/lib/session'
+import { getSessionUser } from '@/lib/session'
 import { ownsVtuber } from '@/lib/owns-vtuber'
 import { notifyFavoriteVtubers } from '@/lib/notifications'
 import { STREAM_PREDICTION_CATEGORY } from '@/lib/stream-predictions'

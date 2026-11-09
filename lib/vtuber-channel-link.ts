@@ -1,6 +1,6 @@
 import { supabaseAdmin } from '@/lib/supabase'
 import { extractVideoId } from '@/lib/embed-utils'
-import { helixClipBroadcasters, helixUserLogin, helixUserProfile, parseTwitchLogin } from '@/lib/twitch-helix'
+import { helixClipBroadcasters, helixUserProfile, parseTwitchLogin } from '@/lib/twitch-helix'
 
 function hasHttpLink(link: string | null | undefined): boolean {
   return !!(link && /^https?:\/\//i.test(link.trim()))

@@ -29,6 +29,7 @@ export async function GET(req: NextRequest) {
     )
   }).slice(0, 24)
 
-  const withAvatars = (await withYoutubeAvatars(hits)).map(({ platform: _p, link: _l, ...rest }) => rest)
+  // Omit platform/link from the public search payload.
+  const withAvatars = (await withYoutubeAvatars(hits)).map(({ platform: _p, link: _l, ...rest }) => rest) // eslint-disable-line @typescript-eslint/no-unused-vars -- omitted from the response
   return NextResponse.json(withAvatars)
 }

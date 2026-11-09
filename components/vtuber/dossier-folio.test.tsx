@@ -14,6 +14,7 @@ let resize: (() => void) | undefined
 
 function Profile() {
   useEffect(() => { profileMounts += 1 }, [])
+  // eslint-disable-next-line @next/next/no-html-link-for-pages -- test fixture needs a native anchor for tap/swipe assertions
   return <div>Real profile content <a href="/vtuber/real/fan-corner">Fan corner</a><input aria-label="Existing input" /></div>
 }
 

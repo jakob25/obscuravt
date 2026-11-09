@@ -23,7 +23,7 @@ export default function CollabPage() {
   const { user } = useAuth()
   const [sourceId, setSourceId] = useState('')
   const [compareIds, setCompareIds] = useState<string[]>([])
-  const [blind, setBlind] = useState(false)
+  const [, setBlind] = useState(false)
   const [matches, setMatches] = useState<MatchRow[]>([])
   const [revealed, setRevealed] = useState<Set<string>>(new Set())
   const [overlap, setOverlap] = useState<Array<{ dayLabel: string; slots: Array<{ name: string; start_time: string }> }>>([])

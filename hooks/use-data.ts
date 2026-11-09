@@ -210,7 +210,7 @@ export function useBets(refreshKey?: number) {
       setLoading(false)
     }
     load()
-  }, [refreshKey]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [refreshKey])
 
   return { bets, loading }
 }
