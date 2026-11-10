@@ -498,7 +498,7 @@ export function StarMap() {
   }, [router, dimensions.width, dimensions.height])
 
   return (
-    <div ref={containerRef} className="relative w-full h-full min-h-[300px] md:min-h-[500px] bg-[#020408] overflow-hidden">
+    <div ref={containerRef} className="relative w-full h-full min-h-[300px] md:min-h-[500px] bg-vault-void overflow-hidden">
       <AnalogStaticCanvas
         active
         intensity={0.35}
@@ -517,7 +517,7 @@ export function StarMap() {
 
       {/* Loading overlay — rendered on top of canvas so refs are always attached */}
       {loading && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-[#020408]">
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-vault-void">
           <div className="relative w-16 h-16">
             <div className="absolute inset-0 rounded-full border border-cyan-400/20 animate-ping" />
             <div className="absolute inset-0 rounded-full border border-cyan-400/40 animate-pulse" />
@@ -533,7 +533,7 @@ export function StarMap() {
 
       {/* Load failure / empty overlay */}
       {(!loading || retrying) && (error || !vtubers.length) && (
-        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-[#020408]/80">
+        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-vault-void/80">
           <p className="text-sm text-cyan-400/70">{error || retrying ? 'Couldn\u2019t load the vibe map.' : 'No creators to show yet.'}</p>
           {(error || retrying) && (
             <button type="button" onClick={() => { setRetrying(true); reload() }} disabled={retrying} className="px-3 py-1.5 rounded-lg bg-black/70 border border-white/10 text-xs text-white hover:border-cyan-400/40 transition-colors disabled:opacity-50 disabled:cursor-default">

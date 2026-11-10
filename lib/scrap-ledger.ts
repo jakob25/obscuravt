@@ -11,6 +11,7 @@ export type ScrapTxKind =
   | 'achievement'
   | 'admin_adjust'
   | 'other'
+  | 'clip_post'
 
 export async function recordScrapTransaction(
   username: string,

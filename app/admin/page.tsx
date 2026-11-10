@@ -6,8 +6,7 @@ import { useAuth } from '@/lib/auth-context'
 import { GlitchHeading } from '@/components/vault/glitch-heading'
 import { VaultFrame } from '@/components/vault/vault-frame'
 import { Shield, Check, X, ExternalLink, ScrollText } from 'lucide-react'
-
-const ADMINS = ['jakob25', 'admin']
+import { clustersFromTagRows, describePendingTags, nichesFromTagRows, type ClusterOption, type NicheOption } from '@/lib/nomination-niche'
 
 interface PendingVtuber {
   id: string
@@ -19,6 +18,7 @@ interface PendingVtuber {
   nominated_by: string
   avatar_url: string | null
   possible_duplicates?: { id: string; name: string; approved: boolean }[]
+  tags?: string[]
 }
 
 interface AuditEntry {
@@ -39,6 +39,8 @@ export default function AdminPage() {
   const [auditNote, setAuditNote] = useState('')
   const [busy, setBusy] = useState<string | null>(null)
   const [error, setError] = useState('')
+  const [niches, setNiches] = useState<NicheOption[]>([])
+  const [clusters, setClusters] = useState<ClusterOption[]>([])
 
   const loadPending = useCallback(async () => {
     const res = await fetch('/api/admin/pending', { credentials: 'include' })
@@ -58,9 +60,20 @@ export default function AdminPage() {
   useEffect(() => {
     if (loading) return
     if (!user) { router.push('/login'); return }
-    if (!ADMINS.includes(user.username)) { router.push('/'); return }
+    if (!user.isAdmin) { router.push('/'); return }
     loadPending()
     loadAudit()
+    fetch('/api/tags', { credentials: 'include' })
+      .then(res => (res.ok ? res.json() : []))
+      .then(rows => {
+        const list = Array.isArray(rows) ? rows : []
+        setNiches(nichesFromTagRows(list))
+        setClusters(clustersFromTagRows(list))
+      })
+      .catch(() => {
+        setNiches([])
+        setClusters([])
+      })
   }, [user, loading, router, loadPending, loadAudit])
 
   const moderate = async (vtuberId: string, approved: boolean) => {
@@ -81,7 +94,7 @@ export default function AdminPage() {
     setBusy(null)
   }
 
-  if (loading || !user || !ADMINS.includes(user.username)) return null
+  if (loading || !user || !user.isAdmin) return null
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-3xl">
@@ -134,6 +147,29 @@ export default function AdminPage() {
                       <h3 className="font-semibold text-vault-cream">{v.name}</h3>
                       {v.handle && <p className="text-xs text-muted-foreground">{v.handle}</p>}
                       {v.bio && <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{v.bio}</p>}
+                      {(() => {
+                        const pendingTags = describePendingTags(v.tags, niches, clusters)
+                        return (
+                          <div className="mt-2 space-y-1">
+                            <p className="text-xs text-vault-cream">
+                              Niche:{' '}
+                              {pendingTags.nicheLabel ?? 'None picked'}
+                              {pendingTags.nicheDescription ? ` — ${pendingTags.nicheDescription}` : ''}
+                            </p>
+                            {pendingTags.constellationLabel && (
+                              <p className="text-xs text-vault-cream">
+                                Constellation: {pendingTags.constellationLabel}
+                              </p>
+                            )}
+                            {pendingTags.newCategories.length > 0 && (
+                              <p className="text-xs text-vault-gold">
+                                New categor{pendingTags.newCategories.length === 1 ? 'y' : 'ies'} (review):{' '}
+                                {pendingTags.newCategories.join(', ')}
+                              </p>
+                            )}
+                          </div>
+                        )
+                      })()}
                       <p className="text-[10px] text-muted-foreground mt-1">Nominated by @{v.nominated_by}</p>
                       {!!v.possible_duplicates?.length && (
                         <p className="text-[10px] text-amber-400 mt-1">

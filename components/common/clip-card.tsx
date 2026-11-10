@@ -119,7 +119,7 @@ export function ClipCard({ clip, onPlay, credit }: ClipCardProps) {
                 : undefined
             }
           >
-            <div className="absolute inset-0 bg-gradient-to-br from-vault-charcoal/40 to-vault-deep/50" />
+            <div className="absolute inset-0 bg-gradient-to-br from-vault-charcoal/40 to-vault-scrim/50" />
             <div className="relative z-10 flex h-full items-center justify-center">
               <div className="flex h-14 w-14 items-center justify-center rounded-full bg-vault-gold/90 shadow-lg transition-all group-hover:scale-110 group-hover:bg-vault-gold">
                 <Play className="ml-1 h-7 w-7 text-vault-deep" fill="currentColor" />

@@ -7,18 +7,18 @@ export function DossierClipSubmit({ vtuberId, vtuberName }: { vtuberId: string; 
   const [open, setOpen] = useState(false)
 
   return (
-    <div className="mb-8 border-t border-[#5a4f2e]/30 pt-6">
-      <div className="section-label mb-3 text-[#1f6f6a]">ADD A CLIP TO THIS FILE</div>
+    <div className="mb-8 border-t border-case-ink-dim/30 pt-6">
+      <div className="section-label mb-3 text-case-teal">ADD A CLIP TO THIS FILE</div>
       {!open ? (
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="px-5 py-2.5 text-sm border border-[#1f6f6a] text-[#1f6f6a] hover:bg-[#1f6f6a] hover:text-[#e9dfc4] transition-colors font-medium"
+          className="px-5 py-2.5 text-sm border border-case-teal text-case-teal hover:bg-case-teal hover:text-case-paper-1 transition-colors font-medium"
         >
           + SUBMIT CLIP
         </button>
       ) : (
-        <div className="bg-[#0d0d14] border border-[#143544] rounded p-4">
+        <div className="bg-vault-deep border border-archive-border rounded p-4">
           <ClipSubmitForm
             prefillVtuberId={vtuberId}
             prefillName={vtuberName}

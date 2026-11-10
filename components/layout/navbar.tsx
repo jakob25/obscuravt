@@ -1,21 +1,19 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname, useRouter } from 'next/navigation'
+import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import {
-  Menu, X, Compass, Film, Trophy, User, Medal,
-  LogIn, TrendingUp, Shield, Search, Heart, Gamepad2, Gift,
+  Menu, X, Compass, Film, Trophy, User,
+  LogIn, TrendingUp, Shield, Search, Gamepad2, Gift,
   Bell, ShoppingBag, Calendar, Zap, Eye, MessageSquare, LayoutDashboard,
-  Users, BookOpen, Star, HelpCircle,
+  Users, Star, HelpCircle,
 } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/lib/auth-context'
 import { ProfileSwitcher } from '@/components/profile/profile-switcher'
 import { NavRgbGlitch } from '@/components/vault/nav-rgb-glitch'
-
-const ADMINS = ['jakob25', 'admin']
 
 const navItems = [
   { href: '/discover',       label: 'Discover',      icon: Compass    },
@@ -40,7 +38,6 @@ const moreItems = [
 
 export function Navbar() {
   const pathname = usePathname()
-  const router = useRouter()
   const { user, loading } = useAuth()
   const [mobileOpen, setMobileOpen] = useState(false)
   const [unread, setUnread] = useState(0)
@@ -142,7 +139,7 @@ export function Navbar() {
               </Button>
 
               {/* Admin */}
-              {ADMINS.includes(user.username) && (
+              {user.isAdmin && (
                 <Button asChild variant="ghost" size="icon" className="hidden md:flex text-muted-foreground hover:text-vault-gold">
                   <Link href="/admin" data-nav-glitch><Shield className="h-5 w-5" /></Link>
                 </Button>
@@ -244,6 +241,12 @@ export function Navbar() {
                   className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-muted-foreground hover:text-vault-cream hover:bg-muted/50">
                   <ShoppingBag className="h-5 w-5" /> Shop
                 </Link>
+                {user.isAdmin && (
+                  <Link href="/admin" onClick={() => setMobileOpen(false)}
+                    className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-muted-foreground hover:text-vault-gold hover:bg-muted/50">
+                    <Shield className="h-5 w-5" /> Admin
+                  </Link>
+                )}
               </>
             )}
 

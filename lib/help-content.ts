@@ -1,3 +1,5 @@
+import { SITE_CONTACT } from '@/lib/site-copy'
+
 export interface HelpItem {
   q: string
   a: string
@@ -72,7 +74,7 @@ export const HELP_SECTIONS: HelpSection[] = [
       },
       {
         q: 'I\'m a VTuber — how do I run it?',
-        a: 'Claim your profile, open CMDI from Creator Dashboard, pick an idea, and set a scraps goal.',
+        a: 'Once your profile is linked, open CMDI from Creator Dashboard, pick an idea, and set a scraps goal.',
       },
     ],
   },
@@ -103,8 +105,8 @@ export const HELP_SECTIONS: HelpSection[] = [
     title: 'Creators and Analytics',
     items: [
       {
-        q: 'How do I claim my VTuber profile?',
-        a: 'Use the claim flow on your dossier or Creator Dashboard. Not listed yet? Nominate yourself.',
+        q: 'How do I get my VTuber profile linked?',
+        a: `Message ${SITE_CONTACT.atHandle} on X to get your profile linked to your account. Not listed yet? Nominate yourself.`,
       },
       {
         q: 'What is the Creator Dashboard?',

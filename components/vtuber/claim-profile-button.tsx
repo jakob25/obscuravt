@@ -1,10 +1,9 @@
 'use client'
 
-import { useState } from 'react'
 import Link from 'next/link'
 import { useAuth } from '@/lib/auth-context'
-import { normalizeRole } from '@/lib/roles'
-import { ShieldCheck, Clock, AlertCircle } from 'lucide-react'
+import { DOSSIER, SITE_CONTACT } from '@/lib/site-copy'
+import { ShieldCheck, Clock } from 'lucide-react'
 
 interface Props {
   vtuberId: string
@@ -13,30 +12,24 @@ interface Props {
   approved?: boolean
 }
 
-export function ClaimProfileButton({ vtuberId, vtuberName, claimedBy, approved = true }: Props) {
+export function ClaimProfileButton({ claimedBy, approved = true }: Props) {
   const { user } = useAuth()
-  const [status, setStatus] = useState<'idle' | 'loading' | 'done' | 'error'>('idle')
-  const [message, setMessage] = useState('')
 
-  const role = normalizeRole(user?.role ?? null)
-  const canClaim = user && role === 'VTuber' && !claimedBy && approved
-
-  if (!user) return null
-  if (claimedBy === user.username) {
+  if (user && claimedBy === user.username) {
     return (
       <p className="text-xs text-vault-gold flex items-center gap-1.5">
         <ShieldCheck className="h-3.5 w-3.5" /> You manage this profile
       </p>
     )
   }
-  if (claimedBy) {
+  if (user && claimedBy) {
     return (
       <p className="text-xs text-muted-foreground flex items-center gap-1.5">
         <ShieldCheck className="h-3.5 w-3.5" /> Claimed by @{claimedBy}
       </p>
     )
   }
-  if (!approved) {
+  if (user && !approved) {
     return (
       <div className="inline-flex flex-col items-start gap-1">
         <p className="text-xs text-amber-400 flex items-center gap-1.5">
@@ -48,48 +41,33 @@ export function ClaimProfileButton({ vtuberId, vtuberName, claimedBy, approved =
       </div>
     )
   }
-  if (!canClaim) return null
-
-  const claim = async () => {
-    setStatus('loading')
-    setMessage('')
-    try {
-      const res = await fetch('/api/vtubers/claim', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ vtuberId }),
-      })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error ?? 'Claim failed')
-      setStatus('done')
-      setMessage(`Claimed ${vtuberName}! Open Creator Dashboard to manage it.`)
-    } catch (err: unknown) {
-      setStatus('error')
-      setMessage(err instanceof Error ? err.message : 'Claim failed')
-    }
+  if (!claimedBy && approved) {
+    return (
+      <p className="text-xs text-muted-foreground max-w-[16rem] leading-snug">
+        <RequestLinkNote />
+      </p>
+    )
   }
+  return null
+}
 
+function RequestLinkNote() {
+  const handle = SITE_CONTACT.atHandle
+  const text = DOSSIER.requestLink
+  const index = text.indexOf(handle)
+  if (index < 0) return <>{text}</>
   return (
-    <div className="inline-flex flex-col items-start gap-1">
-      <button
-        type="button"
-        onClick={claim}
-        disabled={status === 'loading' || status === 'done'}
-        className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-semibold bg-vault-gold text-vault-deep hover:bg-vault-amber disabled:opacity-60"
+    <>
+      {text.slice(0, index)}
+      <a
+        href={SITE_CONTACT.url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-vault-gold underline underline-offset-2 hover:text-white"
       >
-        <ShieldCheck className="h-4 w-4" />
-        {status === 'loading' ? 'Claiming…' : status === 'done' ? 'Claimed' : 'Claim Profile'}
-      </button>
-      {message && (
-        <p className={`text-xs max-w-[220px] ${status === 'error' ? 'text-red-400 flex items-center gap-1' : 'text-vault-gold'}`}>
-          {status === 'error' && <AlertCircle className="h-3 w-3 shrink-0" />}
-          {message}
-        </p>
-      )}
-      {status === 'done' && (
-        <Link href="/creator" className="text-[10px] text-vault-gold hover:underline">Creator dashboard →</Link>
-      )}
-    </div>
+        {handle}
+      </a>
+      {text.slice(index + handle.length)}
+    </>
   )
 }

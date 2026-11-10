@@ -79,4 +79,7 @@ export const rateLimits = {
 
   // Scraps transactions — 20 per minute (prevents drain attacks)
   transaction: (req: NextRequest) => rateLimit(req, { limit: 20, window: 60 }),
+
+  // Profile lookup — 10 per minute (YouTube quota is tight)
+  lookup: (req: NextRequest) => rateLimit(req, { limit: 10, window: 60 }),
 }

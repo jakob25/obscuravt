@@ -6,6 +6,16 @@ interface AuthUser {
   username: string
   coins: number
   role: string | null
+  isAdmin: boolean
+}
+
+function userFromApi(data: { username: string; coins: number; role: string | null; isAdmin?: boolean }): AuthUser {
+  return {
+    username: data.username,
+    coins: data.coins,
+    role: data.role,
+    isAdmin: data.isAdmin === true,
+  }
 }
 
 interface AuthContextType {
@@ -28,7 +38,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     fetch('/api/auth/me', { credentials: 'include' })
       .then(r => r.ok ? r.json() : null)
       .then(data => {
-        if (data) setUser({ username: data.username, coins: data.coins, role: data.role })
+        if (data) setUser(userFromApi(data))
       })
       .catch(() => {})
       .finally(() => setLoading(false))
@@ -39,7 +49,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const res = await fetch('/api/auth/me', { credentials: 'include' })
     if (res.ok) {
       const data = await res.json()
-      if (data) setUser({ username: data.username, coins: data.coins, role: data.role })
+      if (data) setUser(userFromApi(data))
     }
   }
 
@@ -52,7 +62,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     })
     const data = await res.json()
     if (!res.ok) return { ok: false, error: data.error }
-    setUser({ username: data.username, coins: data.coins, role: data.role })
+    setUser(userFromApi(data))
     return { ok: true }
   }
 

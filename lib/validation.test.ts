@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { sanitizeText, sanitizeUrl, usernameSchema, passwordSchema, titleSchema, urlSchema, amountSchema, registerSchema, betSchema, parseBody } from './validation'
+import { sanitizeText, sanitizeUrl, usernameSchema, passwordSchema, registerSchema, betSchema, parseBody } from './validation'
 
 describe('sanitizeText', () => {
   it('trims whitespace and removes HTML tags + dangerous content', () => {
@@ -32,6 +32,10 @@ describe('usernameSchema & passwordSchema', () => {
     expect(() => usernameSchema.parse('ab')).toThrow()
     expect(() => usernameSchema.parse('user name with spaces')).toThrow()
     expect(() => passwordSchema.parse('short')).toThrow()
+  })
+  it('rejects reserved usernames such as Admin', () => {
+    expect(() => usernameSchema.parse('Admin')).toThrow('That username is reserved')
+    expect(() => usernameSchema.parse('jakob25')).toThrow('That username is reserved')
   })
 })
 

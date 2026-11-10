@@ -115,7 +115,7 @@ export default function ShopPage() {
       </div>
 
       <p className="text-sm text-muted-foreground mb-4">
-        Burn scraps on titles and flex. Win bets to restock.
+        Burn scraps on titles and flex. Restock from the daily bonus, posting clips, tag validator streaks, winning bets, and achievements.
       </p>
       <VaultDivider className="mb-8" />
 
@@ -228,8 +228,8 @@ export default function ShopPage() {
                             {isBuying
                               ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
                               : canAfford
-                                ? `Buy — ${item.cost.toLocaleString()} coins`
-                                : `Need ${(item.cost - (user?.coins ?? 0)).toLocaleString()} more coins`
+                                ? `Buy — ${item.cost.toLocaleString()} scraps`
+                                : `Need ${(item.cost - (user?.coins ?? 0)).toLocaleString()} more scraps`
                             }
                           </Button>
                         )

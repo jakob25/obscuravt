@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { matchPercent } from '@/lib/vibe-match'
 import { fanOverlapPercent } from '@/lib/community-overlap'
-import { getSessionUser } from '@/lib/session'
 
 export async function GET(req: NextRequest) {
   const vtuberA = req.nextUrl.searchParams.get('a')

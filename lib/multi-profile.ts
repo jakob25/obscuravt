@@ -6,7 +6,7 @@
  * - `users.active_vtuber_id` (future column): which claimed profile is "current"
  *
  * UX: profile switcher in navbar / my-profile when count > 1.
- * Claiming flow: user claims via /api/vtubers/claim → row in user_claimed_profiles + claimed_by set.
+ * Linking flow: an admin links a profile (or writes claimed_by / user_claimed_profiles directly).
  * Session stores username only; active profile resolved server-side from users.active_vtuber_id.
  */
 

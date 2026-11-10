@@ -4,6 +4,8 @@ import { requireAuth } from '@/lib/session'
 import { rateLimits } from '@/lib/rate-limit'
 import { getSupabaseAdminClient } from '@/lib/supabase'
 import { creatorKeys, handleFromUrl, matchCreator } from '@/lib/creator-match'
+import { copyLookupAvatarToBucket, isStoredVtuberAvatarUrl } from '@/lib/vtuber-avatar-copy'
+import { clustersFromTagRows, nichesFromTagRows, validateNominationTags } from '@/lib/nomination-niche'
 
 const supabaseAdmin = getSupabaseAdminClient()
 
@@ -19,8 +21,28 @@ export async function POST(req: NextRequest) {
   if (session instanceof NextResponse) return session
 
   const body = await req.json()
-  const { name, handle, platform, link, bio, tags, avatar_url } = body
+  const { name, handle, platform, link, bio } = body
+
+  const { data: catalogRows } = await supabaseAdmin
+    .from('canonical_tags')
+    .select('id, tag, category, sort_order, description, color')
+    .in('category', ['niche_cluster', 'cluster'])
+    .order('sort_order')
+  const tagCheck = validateNominationTags(body.tags, {
+    niches: nichesFromTagRows(catalogRows ?? []),
+    clusters: clustersFromTagRows(catalogRows ?? []),
+  })
+  if (!tagCheck.ok) return NextResponse.json({ error: tagCheck.error }, { status: 400 })
+  const tags = tagCheck.tags
   const submitted_by = session.username
+
+  // Only a URL from /api/vtubers/avatar (our bucket) is accepted from the client.
+  // Official profile pictures are copied server-side from a fresh lookup of `link`.
+  const skipAvatar = body.skip_avatar === true
+  let avatar_url = isStoredVtuberAvatarUrl(body.avatar_url) ? body.avatar_url : null
+  if (!avatar_url && !skipAvatar && typeof link === 'string' && link.trim()) {
+    avatar_url = await copyLookupAvatarToBucket(link, session.username)
+  }
 
   if (!name?.trim())
     return NextResponse.json({ error: 'Name is required.' }, { status: 400 })

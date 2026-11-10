@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
-import { requireAuth } from '@/lib/session'
+import { requireAuth, isAdminUsername } from '@/lib/session'
 import { ownsVtuber } from '@/lib/owns-vtuber'
 import { resolveAvatarUrl, resolveSilhouetteDisplay } from '@/lib/discovery-games'
-
-const ADMINS = (process.env.ADMIN_USERNAMES ?? 'jakob25,admin').split(',').map(s => s.trim())
 
 function mapRow(row: {
   id: string
@@ -66,7 +64,7 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: 'vtuberId is required.' }, { status: 400 })
   }
 
-  const isAdmin = ADMINS.includes(session.username)
+  const isAdmin = isAdminUsername(session.username)
   if (!isAdmin && !await ownsVtuber(session.username, vtuberId)) {
     return NextResponse.json({ error: 'You do not manage this profile.' }, { status: 403 })
   }

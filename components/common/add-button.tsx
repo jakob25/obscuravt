@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { usePathname } from 'next/navigation'
 import { Plus, Film, Trophy, Star, X } from 'lucide-react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { ClipSubmitForm } from '@/components/common/clip-submit-form'
@@ -15,10 +16,20 @@ const tabs: { id: Tab; label: string; icon: React.ElementType; description: stri
   { id: 'bet',    label: 'Create Bet',  icon: Trophy, description: 'Start a community prediction'        },
 ]
 
+
+/** Hide the + button on small screens while a nomination/compose wizard is open so it cannot cover choices or the action bar. Desktop keeps the button. */
+export function hideAddFabOnMobile(pathname: string | null | undefined, dialogOpen: boolean): boolean {
+  if (dialogOpen) return true
+  if (!pathname) return false
+  return pathname === '/nominator' || pathname.startsWith('/dev/vtuber-wizard-preview')
+}
+
 export function AddButton() {
+  const pathname = usePathname()
   const [open, setOpen] = useState(false)
   const [tab, setTab] = useState<Tab>('vtuber')
   const [menuOpen, setMenuOpen] = useState(false)
+  const hideFabOnMobile = hideAddFabOnMobile(pathname, open)
 
   const openTab = (t: Tab) => {
     setTab(t)
@@ -29,15 +40,20 @@ export function AddButton() {
   useEffect(() => {
     if (typeof window === 'undefined') return
     const params = new URLSearchParams(window.location.search)
-    if (params.get('compose') === 'clip') openTab('clip')
+    const compose = params.get('compose')
+    if (compose === 'clip') openTab('clip')
+    if (compose === 'vtuber') openTab('vtuber')
   }, [])
 
   return (
     <>
       {/* In-flow spacer so the end of every page can scroll clear of the fixed + button
           (bottom-4 + h-14 on mobile, bottom-6 + h-14 on sm+, plus a little breathing room). */}
-      <div aria-hidden="true" className="h-20 sm:h-24 shrink-0" />
-      <div className="fixed bottom-[calc(1rem+env(safe-area-inset-bottom))] sm:bottom-6 right-4 sm:right-6 z-50 flex flex-col items-end gap-2">
+      <div aria-hidden="true" className={`h-20 sm:h-24 shrink-0 ${hideFabOnMobile ? 'max-sm:hidden' : ''}`} />
+      <div
+        data-testid="add-fab"
+        className={`fixed bottom-[calc(1rem+env(safe-area-inset-bottom))] sm:bottom-6 right-4 sm:right-6 z-50 flex-col items-end gap-2 ${hideFabOnMobile ? 'hidden sm:flex' : 'flex'}`}
+      >
         {menuOpen && (
           <div className="flex flex-col gap-2 mb-1">
             {tabs.map(t => {

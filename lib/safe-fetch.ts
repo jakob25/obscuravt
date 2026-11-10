@@ -26,3 +26,29 @@ export async function safeFetch(url: string, hosts: readonly string[], init: Req
   if (!isAllowedHttpsUrl(url, hosts)) return null
   return fetch(url, { ...init, redirect: 'manual' } as RequestInit)
 }
+
+/** Follow redirects only when each hop stays on the same host allowlist. */
+export async function safeFetchFollow(
+  url: string,
+  hosts: readonly string[],
+  init: RequestInit = {},
+  maxRedirects = 4,
+): Promise<Response | null> {
+  let current = url
+  for (let i = 0; i <= maxRedirects; i++) {
+    if (!isAllowedHttpsUrl(current, hosts)) return null
+    const res = await fetch(current, { ...init, redirect: 'manual' } as RequestInit)
+    if (res.status >= 300 && res.status < 400) {
+      const loc = res.headers.get('location')
+      if (!loc) return null
+      try {
+        current = new URL(loc, current).toString()
+      } catch {
+        return null
+      }
+      continue
+    }
+    return res
+  }
+  return null
+}

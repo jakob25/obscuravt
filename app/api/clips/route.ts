@@ -9,6 +9,7 @@ import { backfillMissingVtuberChannelLinks } from '@/lib/vtuber-channel-link'
 import { hydrateVtuberById } from '@/lib/vtuber-twitch-hydrate'
 import { randomUUID } from 'crypto'
 import { handleFromUrl, matchCreator } from '@/lib/creator-match'
+import { maybeAwardClipPostScraps } from '@/lib/clip-rewards'
 
 /**
  * Link a clip to a creator by handle only (never display name).
@@ -249,12 +250,27 @@ export async function POST(req: NextRequest) {
     }
   }
 
+  let scrap_award = null
+  try {
+    scrap_award = await maybeAwardClipPostScraps(
+      session?.username,
+      clipId,
+      async (fn, args) => {
+        const { data, error } = await supabaseAdmin.rpc(fn, args)
+        return { data, error }
+      },
+    )
+  } catch (e) {
+    console.error('clip post scrap award', e)
+  }
+
   return NextResponse.json(
     {
       ok: true,
       profile_id: resolved.profileId,
       match_status: resolved.matchStatus,
       thumbnail_url,
+      scrap_award,
     },
     { status: 201 }
   )

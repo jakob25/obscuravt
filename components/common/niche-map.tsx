@@ -419,7 +419,7 @@ export function NicheMap() {
   }, [router, dimensions.width, dimensions.height])
 
   return (
-    <div ref={containerRef} className="relative w-full h-full min-h-[500px] bg-[#020408] overflow-hidden">
+    <div ref={containerRef} className="relative w-full h-full min-h-[500px] bg-vault-void overflow-hidden">
       <canvas
         ref={canvasRef}
         width={dimensions.width}

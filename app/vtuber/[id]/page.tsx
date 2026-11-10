@@ -2,8 +2,6 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { ExternalLink, Twitch, Youtube, Twitter } from 'lucide-react'
 import {
-  DossierFrame,
-  CaseFolder,
   CasePhoto,
   CaseField,
 } from '@/components/vault/vault-surfaces'
@@ -12,19 +10,27 @@ import { ClaimProfileButton } from '@/components/vtuber/claim-profile-button'
 import { AddToCircleButton } from '@/components/vtuber/add-to-circle-button'
 import { NeedsHelpContribute } from '@/components/vtuber/needs-help-contribute'
 import { DossierClipSubmit } from '@/components/vtuber/dossier-clip-submit'
-import { RecommendedStrip } from '@/components/corpo/recommended-strip'
 import { SilhouetteAssetPanel } from '@/components/discovery/silhouette-asset-panel'
 import { fetchDossierSidebarData } from '@/lib/vtuber-dossier-data'
 import { syncTwitchChannelIdentity } from '@/lib/vtuber-channel-link'
 import { isNeedsHelpFile } from '@/lib/vtuber-stub-reconcile'
 import { hydrateVtuberById } from '@/lib/vtuber-twitch-hydrate'
 import { withYoutubeAvatars } from '@/lib/youtube-avatar'
-import { EMPTY } from '@/lib/site-copy'
+import { DOSSIER, EMPTY } from '@/lib/site-copy'
 import { getSupabaseClient, supabaseAdmin } from '@/lib/supabase'
 import type { Metadata } from 'next'
 import { getShareProfile, shareDescription, siteOrigin } from '@/lib/vtuber-share-meta'
 import { ShareButton } from '@/components/common/share-button'
 import { CreatorOverview } from '@/components/vtuber/creator-overview'
+import creatorSummaries from '@/lib/creator-summaries.json'
+import { DossierFolio } from '@/components/vtuber/dossier-folio'
+import { DossierArtSheet, type DossierArt } from '@/components/vtuber/dossier-art-sheet'
+import { DossierPicturesSheet, type DossierPicture } from '@/components/vtuber/dossier-pictures-sheet'
+import { normalizeXPostLink } from '@/lib/x-post-link'
+import styles from '@/components/vtuber/dossier-folio.module.css'
+import { assignNicheCluster } from '@/lib/niche-assignment'
+import { nichePageKindFor } from '@/lib/dossier-niche-pages'
+import { wrapDisplayName } from '@/lib/wrap-display-name'
 
 const supabase = getSupabaseClient()
 
@@ -76,6 +82,9 @@ export default async function VTuberProfilePage({ params }: Props) {
     notFound()
   }
 
+  // Optional art can load alongside the existing identity/sidebar lookups.
+  const dossierArtPromise = fetchDossierArt(id)
+
   const synced = await syncTwitchChannelIdentity({
     id: vtuber.id,
     name: vtuber.name,
@@ -126,6 +135,28 @@ export default async function VTuberProfilePage({ params }: Props) {
   const clusterTag = tags.find(t => t.startsWith('clust_'))
   const cluster = clusterTag ? tagMap[clusterTag] : null
 
+  // Niche-specific page: only for niches listed in NICHE_PAGE_BY_CLUSTER, and
+  // only when there is real content. A failed lookup just means no extra page.
+  let nicheClusterId: string | null = null
+  try {
+    const { data: nicheClusters } = await supabase
+      .from('canonical_tags')
+      .select('id, content_tag_ids, sort_order')
+      .eq('category', 'niche_cluster')
+      .order('sort_order')
+    nicheClusterId = assignNicheCluster(tags, nicheClusters ?? [])
+  } catch (e) {
+    console.error('dossier niche lookup', e)
+  }
+  const nichePageKind = nichePageKindFor(nicheClusterId)
+  // No lore or character records are stored yet; the World page appears once
+  // they are (with the world dossiers work) and the creator actually has some.
+  const worldRecordCount = 0
+  const showWorldPage = nichePageKind === 'world' && worldRecordCount > 0
+  const dossierPicturesPromise = nichePageKind === 'pictures'
+    ? fetchDossierPictures(id)
+    : Promise.resolve({ posts: [] as DossierPicture[] })
+
   const platform = (vtuber.platform ?? '').toLowerCase()
   const isTwitch = platform.includes('twitch')
   const isYoutube = platform.includes('youtube')
@@ -138,7 +169,7 @@ export default async function VTuberProfilePage({ params }: Props) {
 
   const { data: corpoGroups } = await supabase
     .from('corpo_groups')
-    .select('slug,name,member_vtuber_ids')
+    .select('slug,name,bio,member_vtuber_ids')
     .contains('member_vtuber_ids', [id])
 
   const corpo = (corpoGroups ?? []).find(g => (g.member_vtuber_ids ?? []).includes(id))
@@ -193,92 +224,50 @@ export default async function VTuberProfilePage({ params }: Props) {
     dossierClips = clipsByName ?? []
   }
 
+  const { art: dossierArt, unavailable: artUnavailable } = await dossierArtPromise
+  const { posts: dossierPictures } = await dossierPicturesPromise
+  const showPicturesPage = dossierPictures.length > 0
+
+  const accessLine = vtuber.claimed_by ? DOSSIER.claimed : DOSSIER.unclaimed
+  // Reuse the existing curated creator overview; otherwise quote the actual bio.
+  // Never synthesize a new description or treat collective membership as lore.
+  const coverSnapshot = creatorSummaries.find(entry => entry.id === vtuber.id)?.text || vtuber.bio || null
+
   return (
     <div className="min-h-screen">
-      <div className="container mx-auto px-4 py-8 max-w-6xl">
-
-        <PageBackNav fallbackHref="/discover" label="Back" className="mb-8" />
-
-        <div className="archive-shell rounded-lg overflow-hidden border-2 border-[#1e3a4a]">
-
-          <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-[#1e3a4a]">
-            <div>
-              <div className="text-[#4fc9d6] text-[10px] tracking-[0.18em] font-govt uppercase">OBSCURAVT • SUBJECT ARCHIVE</div>
-              <div className="text-[#4fd6a8] text-[9px] tracking-[0.1em]">{vtuber.claimed_by ? '● VERIFIED SUBJECT' : '● UNCLAIMED FILE'}</div>
-            </div>
-            <div className="text-right">
-              <div className="text-[#5a8a99] text-[10px] mono tracking-[0.08em]">CASE NO. {caseId}</div>
-              <div className="text-[#4fd6a8] text-[8px] tracking-[0.16em] mt-0.5">FILE ON RECORD</div>
-            </div>
-          </div>
-
-          <div className="case-folder p-7">
-            
-            <div className="flex flex-wrap items-center gap-3 mb-6">
-              <Link 
-                href={`/vtuber/${id}/fan-corner`}
-                className="px-4 py-1.5 text-xs border border-[#5a4f2e] hover:bg-[#5a4f2e] hover:text-[#e9dfc4] transition-colors"
-              >
-                FAN CORNER
-              </Link>
-              <AddToCircleButton vtuberId={vtuber.id} vtuberName={vtuber.name} />
-              <ShareButton
-                path={`/vtuber/${id}`}
-                title={`${vtuber.name} · ObscuraVT`}
-                label="Share"
-                ariaLabel={`Share ${vtuber.name}'s profile`}
-                className="px-4 py-1.5 text-xs border border-[#5a4f2e] hover:bg-[#5a4f2e] hover:text-[#e9dfc4] transition-colors"
-              />
-              <ClaimProfileButton 
-                vtuberId={vtuber.id} 
-                vtuberName={vtuber.name} 
-                claimedBy={vtuber.claimed_by ?? null}
-                approved={vtuber.approved !== false}
-              />
-            </div>
-
-            <NeedsHelpContribute
-              vtuberId={vtuber.id}
-              vtuberName={vtuber.name}
-              needsHelp={needsHelp}
-              missing={missing}
-            />
-
-            <SilhouetteAssetPanel
-              vtuberId={vtuber.id}
-              vtuberName={vtuber.name}
-              claimedBy={vtuber.claimed_by ?? null}
-              initialSilhouetteUrl={vtuber.silhouette_url ?? null}
-            />
-
-            {corpo && corpoSiblings.length > 0 && (
-              <div className="mb-6">
-                <RecommendedStrip
-                  corpoName={corpo.name}
-                  corpoSlug={corpo.slug}
-                  siblings={corpoSiblings}
-                />
-              </div>
-            )}
-
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-8">
-              <div className="lg:col-span-5 flex flex-col sm:flex-row gap-5 items-start">
+      <div className="container mx-auto px-3 sm:px-5 py-6 max-w-[1320px]">
+        <PageBackNav fallbackHref="/discover" label="Back" className="mb-6" />
+        <DossierFolio
+          name={vtuber.name}
+          caseId={caseId}
+          accessLine={accessLine}
+          avatarUrl={vtuber.avatar_url ?? null}
+          handle={handleLogin ? `@${handleLogin}` : ''}
+          platform={vtuber.platform || ''}
+          cluster={cluster?.tag ?? null}
+          collective={corpo?.name ?? null}
+          snapshot={coverSnapshot}
+          profile={
+          <>
+            <div className={styles.sectionKicker}>{DOSSIER.subjectRecord}</div>
+              <div className={styles.profileTop}>
                 <CasePhoto
                   src={vtuber.avatar_url}
                   alt={vtuber.name}
                   caption="FIG. 1 — SUBJECT"
                   size="lg"
                 />
-                <div className="flex-1 min-w-0 font-mono pt-1">
-                  <CaseField label="CODENAME" value={vtuber.name} />
+                <div className={styles.profileFields}>
+                  <span className={styles.smallLabel}>{DOSSIER.codename}</span>
+                  <h2 className={styles.identityName}>{wrapDisplayName(vtuber.name)}</h2>
                   {liveNow && (
                     <a
                       href={liveUrl || undefined}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 my-1.5 px-2 py-0.5 rounded-sm bg-[#8a2317] text-[#e9dfc4] text-[11px] font-bold tracking-[0.12em] hover:opacity-90"
+                      className="inline-flex items-center gap-1.5 my-1.5 px-2 py-0.5 rounded-sm bg-case-stamp-red text-case-paper-1 text-[11px] font-bold tracking-[0.12em] hover:opacity-90"
                     >
-                      <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#e9dfc4] animate-pulse" aria-hidden="true" />
+                      <span className="inline-block w-1.5 h-1.5 rounded-full bg-case-paper-1 animate-pulse" aria-hidden="true" />
                       LIVE NOW
                     </a>
                   )}
@@ -293,10 +282,9 @@ export default async function VTuberProfilePage({ params }: Props) {
                   />
                 </div>
               </div>
-
-              <div className="lg:col-span-7">
+              <div className={styles.notes}>
                 <CreatorOverview id={vtuber.id} />
-                <div className="font-mono text-[10px] uppercase tracking-[0.1em] text-[#1f6f6a] mb-1.5">
+                <div className="font-mono text-[10px] uppercase tracking-[0.1em] text-case-teal mb-1.5">
                   FIELD NOTES
                 </div>
                 <p className="text-[13.5px] leading-relaxed text-[var(--case-ink)]">
@@ -308,7 +296,7 @@ export default async function VTuberProfilePage({ params }: Props) {
                       href={channelUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 px-4 py-1.5 text-xs font-mono font-medium border border-[#2a6f74] text-[#1f6f6a] hover:text-[#0d3f42] hover:border-[#1f6f6a] transition-colors bg-white/10"
+                      className="inline-flex items-center gap-2 px-4 py-1.5 text-xs font-mono font-medium border border-[#2a6f74] text-case-teal hover:text-[#0d3f42] hover:border-case-teal transition-colors bg-white/10"
                     >
                         {isTwitch ? <Twitch className="h-3.5 w-3.5 text-purple-700" /> :
                          isYoutube ? <Youtube className="h-3.5 w-3.5 text-red-700" /> :
@@ -319,50 +307,45 @@ export default async function VTuberProfilePage({ params }: Props) {
                   </div>
                 )}
               </div>
+            <div className={styles.actions}>
+              <Link
+                href={`/vtuber/${id}/fan-corner`}
+                className="px-4 py-1.5 text-xs border border-case-ink-dim hover:bg-case-ink-dim hover:text-case-paper-1 transition-colors"
+              >
+                FAN CORNER
+              </Link>
+              <AddToCircleButton vtuberId={vtuber.id} vtuberName={vtuber.name} />
+              <ShareButton
+                path={`/vtuber/${id}`}
+                title={`${vtuber.name} · ObscuraVT`}
+                label="Share"
+                ariaLabel={`Share ${vtuber.name}'s profile`}
+                className="px-4 py-1.5 text-xs border border-case-ink-dim hover:bg-case-ink-dim hover:text-case-paper-1 transition-colors"
+              />
+              <ClaimProfileButton
+                vtuberId={vtuber.id}
+                vtuberName={vtuber.name}
+                claimedBy={vtuber.claimed_by ?? null}
+                approved={vtuber.approved !== false}
+              />
             </div>
 
-            <DossierClipSubmit vtuberId={vtuber.id} vtuberName={vtuber.name} />
+            <div className="mb-8 border-t border-case-ink-dim/30 pt-6">
+              <div className="section-label mb-3 text-case-link">CHAT MADE ME DO IT</div>
 
-            {dossierClips.length > 0 && (
-              <div className="mb-8 border-t border-[#5a4f2e]/30 pt-6">
-                <div className="section-label mb-3 text-[#1f6f6a]">CLIPS ON FILE</div>
-                <div className="grid sm:grid-cols-2 gap-4">
-                  {dossierClips.map((clip) => (
-                    <a
-                      key={clip.id}
-                      href={clip.clip_url || '/clips'}
-                      target={clip.clip_url ? '_blank' : undefined}
-                      rel={clip.clip_url ? 'noopener noreferrer' : undefined}
-                      className="block border border-[#5a4f2e]/30 rounded bg-[#e9dfc4]/40 hover:border-[#1f6f6a] transition-colors overflow-hidden"
-                    >
-                      {clip.thumbnail_url && (
-                        <div className="aspect-video bg-[#0d0d14]">
-                          <img src={clip.thumbnail_url} alt="" className="h-full w-full object-cover" />
-                        </div>
-                      )}
-                      <div className="px-3 py-2.5 text-sm font-medium text-[var(--case-ink)] line-clamp-2">{clip.title}</div>
-                    </a>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            <div className="mb-8 border-t border-[#5a4f2e]/30 pt-6">
-              <div className="section-label mb-3 text-[#1d6a9a]">CHAT MADE ME DO IT</div>
-              
               {activeCmdi ? (
-                <div className="bg-[#0d0d14] border border-[#143544] rounded p-4">
+                <div className="bg-vault-deep border border-archive-border rounded p-4">
                   <div className="flex justify-between text-sm mb-2">
                     <span>{activeCmdi.title}</span>
-                    <span className="text-[#4fc9d6] font-medium">
+                    <span className="text-archive-cyan-dim font-medium">
                       {activeCmdi.goal_amount > 0
                         ? Math.round((activeCmdi.funded_amount / activeCmdi.goal_amount) * 100)
                         : 0}%
                     </span>
                   </div>
-                  <div className="h-2 bg-[#143544] rounded mb-1">
-                    <div 
-                      className="h-2 bg-[#4fd6a8] rounded transition-all" 
+                  <div className="h-2 bg-archive-border rounded mb-1">
+                    <div
+                      className="h-2 bg-archive-teal rounded transition-all"
                       style={{
                         width: `${activeCmdi.goal_amount > 0
                           ? Math.min((activeCmdi.funded_amount / activeCmdi.goal_amount) * 100, 100)
@@ -370,23 +353,23 @@ export default async function VTuberProfilePage({ params }: Props) {
                       }}
                     />
                   </div>
-                  <div className="text-xs text-[#5a8a99]">
+                  <div className="text-xs text-archive-text-dim">
                     {activeCmdi.funded_amount.toLocaleString()} / {activeCmdi.goal_amount.toLocaleString()} scraps
                   </div>
                 </div>
               ) : (
-                <Link 
+                <Link
                   href={`/vtuber/${id}/fan-corner#submit`}
-                  className="px-5 py-2.5 text-sm border border-[#1d6a9a] text-[#1d6a9a] hover:bg-[#1d6a9a] hover:text-[#e9dfc4] transition-colors font-medium"
+                  className="px-5 py-2.5 text-sm border border-case-link text-case-link hover:bg-case-link hover:text-case-paper-1 transition-colors font-medium"
                 >
                   + SUBMIT IDEA
                 </Link>
               )}
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="bg-[#e9dfc4] border border-[#5a4f2e]/30 rounded p-4">
-                <div className="section-label mb-3 text-[#8a2317]">SCHEDULE / LAST STREAM</div>
+            <div className={styles.lowerCards}>
+              <div className="bg-case-paper-1 border border-case-ink-dim/30 rounded p-4">
+                <div className="section-label mb-3 text-case-stamp-red">SCHEDULE / LAST STREAM</div>
                 <div className="text-sm space-y-1">
                   {liveNow && (
                     <div>
@@ -395,12 +378,12 @@ export default async function VTuberProfilePage({ params }: Props) {
                           href={liveUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="font-medium text-[#8a2317] hover:underline"
+                          className="font-medium text-case-stamp-red hover:underline"
                         >
                           LIVE NOW{liveTitle ? ` — ${liveTitle}` : ''}
                         </a>
                       ) : (
-                        <span className="font-medium text-[#8a2317]">
+                        <span className="font-medium text-case-stamp-red">
                           LIVE NOW{liveTitle ? ` — ${liveTitle}` : ''}
                         </span>
                       )}
@@ -421,40 +404,164 @@ export default async function VTuberProfilePage({ params }: Props) {
                 </div>
               </div>
 
-              <div className="bg-[#e9dfc4] border border-[#5a4f2e]/30 rounded p-4">
-                <div className="section-label mb-3 text-[#1f6f6a]">BETS</div>
-                
+              <div className="bg-case-paper-1 border border-case-ink-dim/30 rounded p-4">
+                <div className="section-label mb-3 text-case-teal">BETS</div>
+
                 {openBets.length > 0 ? (
                   <div className="space-y-2">
                     {openBets.map((bet) => (
                       <div key={bet.id} className="text-sm">
                         <div className="font-medium">{bet.title}</div>
                         {bet.options.length > 0 && (
-                          <div className="text-xs text-[#5a4f2e]">
+                          <div className="text-xs text-case-ink-dim">
                             {bet.options.join(' · ')}
                           </div>
                         )}
                       </div>
                     ))}
-                    <Link 
+                    <Link
                       href="/bets"
-                      className="inline-block mt-1 text-xs text-[#1d6a9a] hover:underline"
+                      className="inline-block mt-1 text-xs text-case-link hover:underline"
                     >
                       All open bets →
                     </Link>
                   </div>
                 ) : (
-                  <div className="text-sm text-[#5a4f2e]">
+                  <div className="text-sm text-case-ink-dim">
                     {EMPTY.bets}
                   </div>
                 )}
               </div>
             </div>
+            <NeedsHelpContribute
+              vtuberId={vtuber.id}
+              vtuberName={vtuber.name}
+              needsHelp={needsHelp}
+              missing={missing}
+            />
 
-          </div>
-        </div>
+            <SilhouetteAssetPanel
+              vtuberId={vtuber.id}
+              vtuberName={vtuber.name}
+              claimedBy={vtuber.claimed_by ?? null}
+              initialSilhouetteUrl={vtuber.silhouette_url ?? null}
+            />
+            {/* Collective membership is real, but is not fictional world lore
+                or a character roster. Keep those distinctions explicit. */}
+            {corpo && (
+              <section className={styles.collective}>
+                <div className={styles.notesLabel}>{DOSSIER.collective}</div>
+                <h3><Link href={`/corpo/${encodeURIComponent(corpo.slug)}`} className={styles.textLink}>{corpo.name} →</Link></h3>
+                {corpo.bio && <p>{corpo.bio}</p>}
+                {corpoSiblings.length > 0 && <>
+                  <h4 className={`${styles.notesLabel} mt-6`}>{DOSSIER.members}</h4>
+                  <div className={styles.characters}>
+                    {corpoSiblings.map(member => (
+                      <Link key={member.id} href={`/vtuber/${encodeURIComponent(member.id)}`} className={styles.character}>
+                        {member.avatar_url && <img src={member.avatar_url} alt="" loading="lazy" />}
+                        {member.name}
+                      </Link>
+                    ))}
+                  </div>
+                </>}
+              </section>
+            )}
 
+          </>
+          }
+          nichePage={showPicturesPage ? { key: 'pictures', label: DOSSIER.pictures, content:
+          <DossierPicturesSheet posts={dossierPictures} />
+          } : showWorldPage ? { key: 'world', label: DOSSIER.world, content:
+          <>
+            <div className={styles.sheetHeading}><h2 className="section-label text-case-teal">{DOSSIER.world}</h2></div>
+            <section className={styles.worldSection}>
+              <h3 className={styles.notesLabel}>{DOSSIER.lore}</h3>
+              <p className={styles.empty}>{DOSSIER.noLore}</p>
+            </section>
+            <section className={styles.worldSection}>
+              <h3 className={styles.notesLabel}>{DOSSIER.characters}</h3>
+              <p className={styles.empty}>{DOSSIER.noCharacters}</p>
+            </section>
+          </> } : null}
+          clips={
+          <>
+            <div className={styles.sheetHeading}>
+              <h2 className="section-label text-case-teal">CLIPS ON FILE</h2>
+              <Link href={`/clips?vtuber=${encodeURIComponent(id)}`} className={styles.textLink}>{DOSSIER.clipsAll}</Link>
+            </div>
+            <DossierClipSubmit vtuberId={vtuber.id} vtuberName={vtuber.name} />
+            {dossierClips.length > 0 ? (
+              <div className={styles.clipGrid}>
+                {dossierClips.map(clip => {
+                  const url = publicMediaUrl(clip.clip_url)
+                  return (
+                    <a key={clip.id} href={url || '/clips'} target={url ? '_blank' : undefined} rel={url ? 'noopener noreferrer' : undefined} className={styles.clipCard}>
+                      {clip.thumbnail_url && <div className={styles.clipThumbnail}><img src={clip.thumbnail_url} alt="" loading="lazy" /></div>}
+                      <div className={styles.clipTitle}>{clip.title}</div>
+                    </a>
+                  )
+                })}
+              </div>
+            ) : <p className={styles.empty}>{EMPTY.clips}</p>}
+          </>
+          }
+          art={<DossierArtSheet art={dossierArt} unavailable={artUnavailable} vtuberId={id} />}
+        />
       </div>
     </div>
   )
+}
+
+function publicMediaUrl(value: string | null | undefined): string | null {
+  if (!value) return null
+  try {
+    const url = new URL(value)
+    return url.protocol === 'https:' || url.protocol === 'http:' ? url.href : null
+  } catch {
+    return null
+  }
+}
+
+async function fetchDossierPictures(vtuberId: string): Promise<{ posts: DossierPicture[] }> {
+  // Same graceful fallback as optional fan_art: a missing table or query
+  // error means no pictures page, not a broken dossier.
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('niche_photo_posts')
+      .select('id,post_url')
+      .eq('vtuber_id', vtuberId)
+      .order('created_at', { ascending: false })
+      .limit(24)
+    if (error) return { posts: [] }
+    const posts: DossierPicture[] = []
+    for (const row of data ?? []) {
+      const post_url = normalizeXPostLink(row.post_url)
+      if (post_url) posts.push({ id: String(row.id), post_url })
+    }
+    return { posts }
+  } catch {
+    return { posts: [] }
+  }
+}
+
+async function fetchDossierArt(vtuberId: string): Promise<{ art: DossierArt[]; unavailable: boolean }> {
+  // The same unreported gallery records used by /api/fan-art. A missing
+  // optional table or an unavailable feed must not take down the dossier.
+  try {
+    const { data, error: artError } = await supabaseAdmin
+      .from('fan_art')
+      .select('id,image_url,twitter_url,submitted_by')
+      .eq('vtuber_id', vtuberId)
+      .eq('reported', false)
+      .order('created_at', { ascending: false })
+      .limit(12)
+    const art: DossierArt[] = (data ?? []).map(piece => ({
+      ...piece,
+      image_url: publicMediaUrl(piece.image_url),
+      twitter_url: publicMediaUrl(piece.twitter_url),
+    })).filter(piece => piece.image_url || piece.twitter_url)
+    return { art, unavailable: Boolean(artError) }
+  } catch {
+    return { art: [], unavailable: true }
+  }
 }

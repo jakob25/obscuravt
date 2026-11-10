@@ -7,6 +7,9 @@ import { AddButton } from '@/components/common/add-button'
 import { AuthProvider } from '@/lib/auth-context'
 import { AppShell } from '@/components/layout/app-shell'
 import { SiteBackdrop } from '@/components/layout/site-backdrop'
+import { ThemeProvider } from '@/components/layout/theme-provider'
+import { ThemeQuerySync } from '@/components/layout/theme-query-sync'
+import { THEME_INIT_SCRIPT } from '@/lib/theme'
 import { SITE_DESCRIPTION, SITE_NAME } from '@/lib/site-copy'
 import './globals.css'
 
@@ -43,26 +46,32 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${spaceGrotesk.variable} ${geistMono.variable} dark`}>
+    <html lang="en" className={`${spaceGrotesk.variable} ${geistMono.variable}`} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+      </head>
       <body className="font-sans antialiased min-h-screen bg-vault-deep text-foreground">
-        <SiteBackdrop />
-        <div className="relative z-10 flex min-h-screen flex-col">
-          <AuthProvider>
-            <AppShell>
-              <Navbar />
-              <main className="min-h-[calc(100vh-4rem)] flex-1">
-                {children}
-              </main>
-              <AddButton />
-            </AppShell>
-          </AuthProvider>
-        </div>
-        {process.env.NODE_ENV === 'production' && (
-          <>
-            <Analytics />
-            <SpeedInsights />
-          </>
-        )}
+        <ThemeProvider>
+          <ThemeQuerySync />
+          <SiteBackdrop />
+          <div className="relative z-10 flex min-h-screen flex-col">
+            <AuthProvider>
+              <AppShell>
+                <Navbar />
+                <main className="min-h-[calc(100vh-4rem)] flex-1">
+                  {children}
+                </main>
+                <AddButton />
+              </AppShell>
+            </AuthProvider>
+          </div>
+          {process.env.NODE_ENV === 'production' && (
+            <>
+              <Analytics />
+              <SpeedInsights />
+            </>
+          )}
+        </ThemeProvider>
       </body>
     </html>
   )

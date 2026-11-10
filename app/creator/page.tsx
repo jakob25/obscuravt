@@ -12,6 +12,7 @@ import {
   Calendar, Palette, Lightbulb, Users, BookOpen, BarChart3,
 } from 'lucide-react'
 import { VaultDivider } from '@/components/vault/vault-surfaces'
+import { SITE_CONTACT } from '@/lib/site-copy'
 import { CollabRequestForm } from '@/components/collab/collab-request-form'
 import { CollabNotifications } from '@/components/collab/collab-notifications'
 
@@ -106,9 +107,7 @@ export default function CreatorDashboardPage() {
         ) : (
           <div className="space-y-3">
             <p className="text-sm text-vault-cream">
-              No claimed profiles yet.{' '}
-              <Link href="/discover" className="text-vault-gold hover:underline">Discover VTubers</Link>
-              {' '}and claim yours from their dossier, or{' '}
+              No linked profiles yet. Message {SITE_CONTACT.atHandle} on X to get your profile linked to your account, or{' '}
               <Link href="/nominator" className="text-vault-gold hover:underline">nominate yourself</Link>.
             </p>
             {claimRows.length > 0 && (
@@ -137,7 +136,7 @@ export default function CreatorDashboardPage() {
                   <Icon className="h-5 w-5 text-vault-gold shrink-0 mt-0.5" />
                   <div>
                     <h3 className="font-semibold text-vault-cream">{tool.label}</h3>
-                    <p className="text-xs text-muted-foreground mt-1">Claim a profile first</p>
+                    <p className="text-xs text-muted-foreground mt-1">A linked profile is required</p>
                   </div>
                 </div>
               </VaultFrame>

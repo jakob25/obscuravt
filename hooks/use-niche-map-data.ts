@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import type { VTuber, Constellation } from '@/lib/types'
 import { rowToVTuber } from '@/hooks/use-star-map-data'
+import { assignNicheCluster } from '@/lib/niche-assignment'
 
 // Demo / fallback data for testing environment and when Supabase has NO niche_cluster rows at all.
 // This ensures the Niche Map can still render something useful during early development.
@@ -36,26 +37,6 @@ interface DbNicheCluster {
   description: string | null
   content_tag_ids: string[] | null
   sort_order: number
-}
-
-// Assign a VTuber to a niche cluster based purely on DB-driven content tag mappings
-function assignNicheCluster(
-  vtags: string[],
-  clusters: DbNicheCluster[]
-): string | null {
-  let bestCluster: string | null = null
-  let bestScore = 0
-
-  for (const cluster of clusters) {
-    const contentTags = cluster.content_tag_ids ?? []
-    const score = contentTags.filter(t => vtags.includes(t)).length
-    if (score > bestScore) {
-      bestScore = score
-      bestCluster = cluster.id
-    }
-  }
-
-  return bestCluster
 }
 
 interface NicheMapData {
@@ -103,7 +84,7 @@ export function useNicheMapData(): NicheMapData {
 
         // NEW BEHAVIOR: Show ALL valid niche clusters from the DB (even empty ones).
         // This gives you the full map skeleton/layout as soon as you define clusters with positions + colors.
-        // Stars/creators will only appear inside clusters they actually match via content_tag_ids.
+        // Stars/creators appear in a picked nclust_* room, or else the cluster they match via content_tag_ids.
         const consts: Constellation[] = dbClusters
           .filter(c => c.color && c.position_x != null && c.position_y != null)
           .map(c => ({

@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { requireAuth } from '@/lib/session'
+import { requireAdmin } from '@/lib/session'
 
 export async function POST(req: NextRequest) {
-  const session = await requireAuth(req)
+  const session = await requireAdmin(req)
   if (session instanceof NextResponse) return session
 
   const { vtuberId } = await req.json()

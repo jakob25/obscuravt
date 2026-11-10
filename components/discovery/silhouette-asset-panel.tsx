@@ -6,8 +6,6 @@ import { useOwnsVtuber } from '@/hooks/use-owns-vtuber'
 import { ImageUploadField } from '@/components/common/image-upload-field'
 import { Eye, Loader2 } from 'lucide-react'
 
-const ADMINS = ['jakob25', 'admin']
-
 interface Props {
   vtuberId: string
   vtuberName: string
@@ -18,7 +16,7 @@ interface Props {
 export function SilhouetteAssetPanel({ vtuberId, vtuberName, claimedBy, initialSilhouetteUrl }: Props) {
   const { user } = useAuth()
   const { owns } = useOwnsVtuber(vtuberId, claimedBy)
-  const isAdmin = user ? ADMINS.includes(user.username) : false
+  const isAdmin = user?.isAdmin === true
   const canEdit = user && (owns || isAdmin)
 
   const [silhouetteUrl, setSilhouetteUrl] = useState(initialSilhouetteUrl)

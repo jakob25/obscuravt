@@ -1,16 +1,12 @@
 'use client'
 
 import Link from 'next/link'
-import { useAuth } from '@/lib/auth-context'
 import { VTuberSubmitForm } from '@/components/common/vtuber-submit-form'
 import { GlitchHeading } from '@/components/vault/glitch-heading'
 import { VaultFrame } from '@/components/vault/vault-frame'
-import { Star, Compass, ShieldCheck, LogIn } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { Star, Compass, ShieldCheck } from 'lucide-react'
 
 export default function NominatorPage() {
-  const { user } = useAuth()
-
   return (
     <div className="container mx-auto px-4 py-8 max-w-2xl">
       <GlitchHeading as="h1" className="text-2xl font-bold text-vault-cream mb-2">
@@ -38,18 +34,7 @@ export default function NominatorPage() {
 
       <VaultFrame>
         <div className="p-6">
-          {!user ? (
-            <div className="text-center py-8">
-              <p className="text-sm text-muted-foreground mb-4">
-                Sign in to nominate a VTuber for the Archive.
-              </p>
-              <Button asChild className="bg-vault-gold hover:bg-vault-amber text-vault-deep font-semibold">
-                <Link href="/login"><LogIn className="mr-2 h-4 w-4" />Sign In</Link>
-              </Button>
-            </div>
-          ) : (
-            <VTuberSubmitForm />
-          )}
+          <VTuberSubmitForm />
         </div>
       </VaultFrame>
 

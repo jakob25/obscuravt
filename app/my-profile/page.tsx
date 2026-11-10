@@ -10,6 +10,7 @@ import type { UserProfile } from '@/lib/profile-types'
 import { GlitchHeading } from '@/components/vault/glitch-heading'
 import { ProfileSwitcher } from '@/components/profile/profile-switcher'
 import { StatCard, VaultDivider, VaultPanel } from '@/components/vault/vault-surfaces'
+import { ThemeToggle } from '@/components/layout/theme-toggle'
 import Link from 'next/link'
 import type { NotificationType } from '@/lib/notifications'
 
@@ -237,6 +238,12 @@ export default function MyProfilePage() {
             </div>
           </VaultPanel>
         )}
+
+        <VaultPanel className="md:col-span-2">
+          <h2 className="font-bold text-vault-cream mb-3">Appearance</h2>
+          <ThemeToggle />
+          <p className="text-xs text-muted-foreground mt-2">Saved on this device.</p>
+        </VaultPanel>
 
         <VaultPanel>
           <h2 className="font-bold text-vault-cream mb-3">Role</h2>

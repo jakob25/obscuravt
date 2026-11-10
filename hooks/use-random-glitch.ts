@@ -44,8 +44,9 @@ const PRESETS: Record<GlitchPreset, PresetConfig> = {
   },
   dossier: {
     microChance: 0.55,
-    initialDelay: [4000, 8000],
-    interval: [6000, 14000],
+    // Rare on purpose: the profile glitch should feel like an easter egg.
+    initialDelay: [25000, 45000],
+    interval: [60000, 120000],
     microBurst: [220, 450],
     fullBurst: [500, 900],
     microIntensity: [0.25, 0.45],

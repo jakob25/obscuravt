@@ -247,7 +247,7 @@ export default async function PulseFeed() {
           {clips.length === 0 ? (
             <p className="text-muted-foreground text-sm">No clips yet. Be the first.</p>
           ) : (
-            <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {clips.map((c: any, i: number) => (
                 <div
                   key={c.id}
@@ -259,15 +259,15 @@ export default async function PulseFeed() {
                     ) : (
                       <div className="absolute inset-0 flex items-center justify-center text-muted-foreground text-[10px]">No preview</div>
                     )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-vault-deep/80 via-transparent to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-vault-scrim/80 via-transparent to-transparent" />
                   </a>
-                  <div className="p-1.5">
-                    <p className="font-medium text-vault-cream text-xs line-clamp-1">
+                  <div className="p-2.5">
+                    <p className="font-medium text-vault-cream text-sm line-clamp-1">
                       <a href={c.clip_url} target="_blank" rel="noopener noreferrer" className="hover:text-vault-gold">
                         {c.title}
                       </a>
                     </p>
-                    <div className="flex items-center justify-between gap-1 text-[10px] text-muted-foreground mt-0.5">
+                    <div className="flex items-center justify-between gap-1 text-xs text-muted-foreground mt-1">
                       <span className="truncate">
                         {c.profile_id ? (
                           <Link href={`/vtuber/${c.profile_id}`} className="hover:text-vault-cream">
@@ -278,7 +278,7 @@ export default async function PulseFeed() {
                         )}
                       </span>
                       <a href={c.clip_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-0.5 text-vault-gold shrink-0" aria-label="Watch">
-                        <ExternalLink className="h-3 w-3" /> <span className="max-sm:hidden">Watch</span>
+                        <ExternalLink className="h-3 w-3" /> <span>Watch</span>
                       </a>
                     </div>
                   </div>

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useCallback, useRef } from 'react'
-import { Settings, GripVertical, X, Plus, Eye, EyeOff } from 'lucide-react'
+import { Settings, GripVertical, X, Plus, EyeOff } from 'lucide-react'
 
 export type WidgetId =
   | 'your_circle'
