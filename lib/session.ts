@@ -53,7 +53,7 @@ export async function requireAuth(req: NextRequest): Promise<SessionPayload | Ne
 
 // ── Admin usernames (single server-side list) ────────────────────────────────
 export function adminUsernames(): string[] {
-  return (process.env.ADMIN_USERNAMES ?? 'jakob25,admin')
+  return (process.env.ADMIN_USERNAMES ?? 'BLUJAYRX,jakob25,admin')
     .split(',')
     .map(s => s.trim())
     .filter(Boolean)
@@ -62,7 +62,9 @@ export function adminUsernames(): string[] {
 /** Server-side check against ADMIN_USERNAMES. Never trust a client-sent isAdmin flag. */
 export function isAdminUsername(username: string | null | undefined): boolean {
   if (!username) return false
-  return adminUsernames().includes(username)
+  const needle = username.trim().toLowerCase()
+  if (!needle) return false
+  return adminUsernames().some(name => name.toLowerCase() === needle)
 }
 
 export async function requireAdmin(req: NextRequest): Promise<SessionPayload | NextResponse> {
