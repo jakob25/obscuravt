@@ -486,9 +486,9 @@
   --case-stamp-red: #8a2317;
 }
 
-/* Light theme — dark remains the default. Paper, archive chrome, void map, and
-   glitch hues, and media scrims stay as defined above so the dossier folder stays warm
-   and thumbnail overlays do not wash out to cream. */
+/* Light theme — applied via html.light (explicit Light, or Match device on a light OS).
+   Paper, archive chrome, void map, glitch hues, and media scrims stay as defined above
+   so the dossier folder stays warm and thumbnail overlays do not wash out to cream. */
 html.light {
   color-scheme: light;
   --background: oklch(0.975 0.012 85);

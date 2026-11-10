@@ -9,6 +9,7 @@ import { AppShell } from '@/components/layout/app-shell'
 import { SiteBackdrop } from '@/components/layout/site-backdrop'
 import { ThemeProvider } from '@/components/layout/theme-provider'
 import { ThemeQuerySync } from '@/components/layout/theme-query-sync'
+import { THEME_INIT_SCRIPT } from '@/lib/theme'
 import { SITE_DESCRIPTION, SITE_NAME } from '@/lib/site-copy'
 import './globals.css'
 
@@ -45,7 +46,10 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${spaceGrotesk.variable} ${geistMono.variable} dark`} suppressHydrationWarning>
+    <html lang="en" className={`${spaceGrotesk.variable} ${geistMono.variable}`} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+      </head>
       <body className="font-sans antialiased min-h-screen bg-vault-deep text-foreground">
         <ThemeProvider>
           <ThemeQuerySync />

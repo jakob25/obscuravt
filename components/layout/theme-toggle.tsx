@@ -3,11 +3,12 @@
 import { useEffect, useState } from 'react'
 import { useTheme } from 'next-themes'
 import { cn } from '@/lib/utils'
-import type { ThemeName } from '@/lib/theme'
+import { isThemeName, type ThemeName } from '@/lib/theme'
 
 const OPTIONS: { value: ThemeName; label: string }[] = [
   { value: 'dark', label: 'Dark' },
   { value: 'light', label: 'Light' },
+  { value: 'system', label: 'Match device' },
 ]
 
 export function ThemeToggle() {
@@ -18,10 +19,10 @@ export function ThemeToggle() {
     setMounted(true)
   }, [])
 
-  const current = mounted && theme === 'light' ? 'light' : 'dark'
+  const current = mounted && isThemeName(theme) ? theme : null
 
   return (
-    <div className="flex items-center justify-between gap-3">
+    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
       <span className="text-sm text-muted-foreground">Site appearance</span>
       <div className="inline-flex rounded-lg border border-border p-0.5" role="group" aria-label="Site appearance">
         {OPTIONS.map(option => (
