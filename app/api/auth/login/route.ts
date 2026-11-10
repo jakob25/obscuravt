@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { signSession, setSessionCookie } from '@/lib/session'
+import { signSession, setSessionCookie, isAdminUsername } from '@/lib/session'
 import { supabaseAdmin } from '@/lib/supabase'
 import { rateLimits } from '@/lib/rate-limit'
 import * as bcrypt from 'bcryptjs'
@@ -23,6 +23,6 @@ export async function POST(req: NextRequest) {
   if (!ok) return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 })
 
   const token = await signSession(user.username, user.role)
-  const res = NextResponse.json({ username: user.username, coins: user.coins, role: user.role })
+  const res = NextResponse.json({ username: user.username, coins: user.coins, role: user.role, isAdmin: isAdminUsername(user.username) })
   return setSessionCookie(res, token)
 }

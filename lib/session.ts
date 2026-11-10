@@ -51,13 +51,24 @@ export async function requireAuth(req: NextRequest): Promise<SessionPayload | Ne
   return session
 }
 
-// ── Require admin role ────────────────────────────────────────────────────────
-const ADMIN_USERNAMES = (process.env.ADMIN_USERNAMES ?? 'jakob25,admin').split(',').map(s => s.trim())
+// ── Admin usernames (single server-side list) ────────────────────────────────
+export function adminUsernames(): string[] {
+  return (process.env.ADMIN_USERNAMES ?? 'jakob25,admin')
+    .split(',')
+    .map(s => s.trim())
+    .filter(Boolean)
+}
+
+/** Server-side check against ADMIN_USERNAMES. Never trust a client-sent isAdmin flag. */
+export function isAdminUsername(username: string | null | undefined): boolean {
+  if (!username) return false
+  return adminUsernames().includes(username)
+}
 
 export async function requireAdmin(req: NextRequest): Promise<SessionPayload | NextResponse> {
   const session = await getSession(req)
   if (!session) return NextResponse.json({ error: 'Authentication required.' }, { status: 401 })
-  if (!ADMIN_USERNAMES.includes(session.username)) {
+  if (!isAdminUsername(session.username)) {
     return NextResponse.json({ error: 'Forbidden.' }, { status: 403 })
   }
   return session
@@ -99,5 +110,6 @@ export async function getSessionUser(req: NextRequest) {
     .eq('username', session.username)
     .single()
 
-  return user ?? null
+  if (!user) return null
+  return { ...user, isAdmin: isAdminUsername(user.username) }
 }

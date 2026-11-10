@@ -1,15 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { requireAuth } from '@/lib/session'
+import { requireAdmin } from '@/lib/session'
 import { supabaseAdmin } from '@/lib/supabase'
 
-const ADMINS = (process.env.ADMIN_USERNAMES ?? 'jakob25,admin').split(',').map(s => s.trim())
-
 export async function GET(req: NextRequest) {
-  const session = await requireAuth(req)
+  const session = await requireAdmin(req)
   if (session instanceof NextResponse) return session
-  if (!ADMINS.includes(session.username)) {
-    return NextResponse.json({ error: 'Forbidden.' }, { status: 403 })
-  }
 
   const limit = Math.min(parseInt(req.nextUrl.searchParams.get('limit') ?? '50', 10), 200)
 

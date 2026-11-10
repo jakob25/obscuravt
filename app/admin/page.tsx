@@ -7,8 +7,6 @@ import { GlitchHeading } from '@/components/vault/glitch-heading'
 import { VaultFrame } from '@/components/vault/vault-frame'
 import { Shield, Check, X, ExternalLink, ScrollText } from 'lucide-react'
 
-const ADMINS = ['jakob25', 'admin']
-
 interface PendingVtuber {
   id: string
   name: string
@@ -58,7 +56,7 @@ export default function AdminPage() {
   useEffect(() => {
     if (loading) return
     if (!user) { router.push('/login'); return }
-    if (!ADMINS.includes(user.username)) { router.push('/'); return }
+    if (!user.isAdmin) { router.push('/'); return }
     loadPending()
     loadAudit()
   }, [user, loading, router, loadPending, loadAudit])
@@ -81,7 +79,7 @@ export default function AdminPage() {
     setBusy(null)
   }
 
-  if (loading || !user || !ADMINS.includes(user.username)) return null
+  if (loading || !user || !user.isAdmin) return null
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-3xl">
