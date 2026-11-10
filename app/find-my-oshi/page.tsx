@@ -8,6 +8,7 @@ import { ArrowRight, ArrowLeft, RotateCcw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
 import { GlitchHeading } from '@/components/vault/glitch-heading'
+import { scoreVTubers } from '@/lib/oshi-score'
 
 import { VaultPanel } from '@/components/vault/vault-surfaces'
 
@@ -73,26 +74,6 @@ const QUESTIONS: Question[] = [
     ],
   },
 ]
-
-function scoreVTubers(answers: string[][], vtubers: VTuber[]): VTuber[] {
-  // Build weight map from all selected tags
-  const weights: Record<string, number> = {}
-  answers.flat().forEach(tag => {
-    weights[tag] = (weights[tag] ?? 0) + 1
-  })
-
-  // Score each vtuber
-  const scored = vtubers.map(v => {
-    const allTags = [v.category, ...v.vibeTags]
-    const score = allTags.reduce((s, tag) => s + (weights[tag] ?? 0), 0)
-    return { vtuber: v, score }
-  })
-
-  return scored
-    .sort((a, b) => b.score - a.score)
-    .slice(0, 5)
-    .map(s => s.vtuber)
-}
 
 export default function FindMyOshiPage() {
   const { vtubers } = useVTubers()

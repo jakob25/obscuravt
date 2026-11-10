@@ -15,6 +15,18 @@ describe('assignNicheCluster', () => {
     expect(assignNicheCluster(['cont_y'], clusters)).toBe('nclust_a')
     expect(assignNicheCluster(['vibe_only'], clusters)).toBeNull()
   })
+  it('puts a creator in the niche they picked, ahead of content-tag matches', () => {
+    expect(assignNicheCluster(['cont_y', 'cont_z', 'nclust_c'], clusters)).toBe('nclust_c')
+    expect(assignNicheCluster(['nclust_a'], clusters)).toBe('nclust_a')
+  })
+  it('falls back to content tags when no niche was picked', () => {
+    expect(assignNicheCluster(['clust_chaos', 'wholesome', 'cont_y', 'cont_z'], clusters)).toBe('nclust_b')
+  })
+  it('ignores a picked niche that is not a live cluster', () => {
+    expect(assignNicheCluster(['nclust_retired', 'cont_y', 'cont_z'], clusters)).toBe('nclust_b')
+    expect(assignNicheCluster(['nclust_retired'], clusters)).toBeNull()
+    expect(assignNicheCluster(['nclust_a'], [])).toBeNull()
+  })
 })
 
 describe('nichePageKindFor', () => {

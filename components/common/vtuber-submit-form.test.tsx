@@ -22,7 +22,6 @@ vi.mock('next/navigation', () => ({
   usePathname: () => '/nominator',
 }))
 
-
 const TAG_ROWS = [
   { id: 'nclust_darkroom', tag: 'The Darkroom', category: 'niche_cluster', sort_order: 1, description: 'Photography, film, visual arts, photo editing', color: '#7c5c3a' },
   { id: 'nclust_arcade', tag: 'The Arcade', category: 'niche_cluster', sort_order: 7, description: 'Arcade games, retro cabinets, rhythm games', color: '#3b82f6' },
@@ -40,8 +39,6 @@ function tagsFetchMock() {
     return { ok: true, json: async () => ({}) }
   })
 }
-
-
 
 let host: HTMLDivElement
 let root: Root
@@ -71,14 +68,42 @@ function heading() {
   return host.querySelector('h2')?.textContent || ''
 }
 
+function button(label: string) {
+  return [...host.querySelectorAll('button')].find(b => b.textContent === label)
+}
+
+async function click(label: string) {
+  await act(async () => button(label)?.click())
+}
+
+async function setInput(el: HTMLInputElement, value: string) {
+  await act(async () => {
+    const proto = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')
+    proto?.set?.call(el, value)
+    el.dispatchEvent(new Event('input', { bubbles: true }))
+  })
+}
+
+async function reach(step: 'tags' | 'niche' | 'constellation' | 'review') {
+  await click(VTUBER_SUBMIT.skipLink)
+  await setInput(host.querySelector<HTMLInputElement>('#name')!, 'Pipuru')
+  await click(VTUBER_SUBMIT.next)
+  if (step === 'tags') return
+  await click(VTUBER_SUBMIT.next)
+  if (step === 'niche') return
+  await click(VTUBER_SUBMIT.next)
+  if (step === 'constellation') return
+  await click(VTUBER_SUBMIT.next)
+}
+
 describe('VTuberSubmitForm wizard', () => {
   it('starts signed-out users on Sign in, and signed-in users on the profile link step', async () => {
     auth.user = null
     await mount()
     expect(heading()).toBe(VTUBER_SUBMIT.steps.signin.title)
     expect(host.textContent).toContain(VTUBER_SUBMIT.steps.signin.instruction)
-    expect(host.textContent).toContain(VTUBER_SUBMIT.stepOf(1, 5))
-    expect(host.querySelectorAll('[data-testid="wizard-steps"] li').length).toBe(5)
+    expect(host.textContent).toContain(VTUBER_SUBMIT.stepOf(1, 7))
+    expect(host.querySelectorAll('[data-testid="wizard-steps"] li').length).toBe(7)
     const signIn = host.querySelector('a[href="/login?next=%2Fnominator"]')
     expect(signIn?.textContent).toBe(VTUBER_SUBMIT.signIn)
 
@@ -87,33 +112,22 @@ describe('VTuberSubmitForm wizard', () => {
     root = createRoot(host)
     await mount()
     expect(heading()).toBe(VTUBER_SUBMIT.steps.link.title)
-    expect(host.textContent).toContain(VTUBER_SUBMIT.stepOf(1, 4))
-    expect(host.textContent).not.toContain(VTUBER_SUBMIT.stepOf(1, 5))
-    expect(host.querySelectorAll('[data-testid="wizard-steps"] li').length).toBe(4)
+    expect(host.textContent).toContain(VTUBER_SUBMIT.stepOf(1, 6))
+    expect(host.textContent).not.toContain(VTUBER_SUBMIT.stepOf(1, 7))
+    expect(host.querySelectorAll('[data-testid="wizard-steps"] li').length).toBe(6)
     expect(host.querySelector<HTMLInputElement>('#link')?.placeholder).toBe(VTUBER_SUBMIT.linkPlaceholder)
   })
 
-  async function setInput(el: HTMLInputElement, value: string) {
-    await act(async () => {
-      const proto = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')
-      proto?.set?.call(el, value)
-      el.dispatchEvent(new Event('input', { bubbles: true }))
-    })
-  }
-
   it('keeps pasted details when going back from tags to details', async () => {
     await mount()
-    const skip = [...host.querySelectorAll('button')].find(b => b.textContent === VTUBER_SUBMIT.skipLink)
-    await act(async () => skip?.click())
+    await click(VTUBER_SUBMIT.skipLink)
     expect(heading()).toBe(VTUBER_SUBMIT.steps.details.title)
 
     await setInput(host.querySelector<HTMLInputElement>('#name')!, 'Pipuru')
-    const next = [...host.querySelectorAll('button')].find(b => b.textContent === VTUBER_SUBMIT.next)
-    await act(async () => next?.click())
+    await click(VTUBER_SUBMIT.next)
     expect(heading()).toBe(VTUBER_SUBMIT.steps.tags.title)
 
-    const back = [...host.querySelectorAll('button')].find(b => b.textContent === VTUBER_SUBMIT.back)
-    await act(async () => back?.click())
+    await click(VTUBER_SUBMIT.back)
     expect(heading()).toBe(VTUBER_SUBMIT.steps.details.title)
     expect(host.querySelector<HTMLInputElement>('#name')?.value).toBe('Pipuru')
   })
@@ -146,65 +160,85 @@ describe('VTuberSubmitForm wizard', () => {
       await new Promise(resolve => setTimeout(resolve, 450))
     })
     expect(host.textContent).toContain(VTUBER_SUBMIT.alreadyNominated('Pipuru'))
-    const next = [...host.querySelectorAll('button')].find(b => b.textContent === VTUBER_SUBMIT.next)
-    expect(next?.disabled).toBe(true)
+    expect(button(VTUBER_SUBMIT.next)?.disabled).toBe(true)
   })
 
   it('lets someone skip the link and requires a name before leaving details', async () => {
     await mount()
-    const skip = [...host.querySelectorAll('button')].find(b => b.textContent === VTUBER_SUBMIT.skipLink)
-    await act(async () => skip?.click())
+    await click(VTUBER_SUBMIT.skipLink)
     expect(heading()).toBe(VTUBER_SUBMIT.steps.details.title)
 
-    const next = [...host.querySelectorAll('button')].find(b => b.textContent === VTUBER_SUBMIT.next)
-    await act(async () => next?.click())
+    await click(VTUBER_SUBMIT.next)
     expect(heading()).toBe(VTUBER_SUBMIT.steps.details.title)
     expect(host.textContent).toContain('Name must be at least 2 characters')
   })
 
-  it('lists live niches by their real names, not the old hardcoded constellations', async () => {
+  it('gives vibe tags, niche, and constellation each their own step', async () => {
     await mount()
-    const skip = [...host.querySelectorAll('button')].find(b => b.textContent === VTUBER_SUBMIT.skipLink)
-    await act(async () => skip?.click())
-    await setInput(host.querySelector<HTMLInputElement>('#name')!, 'Pipuru')
-    const next = [...host.querySelectorAll('button')].find(b => b.textContent === VTUBER_SUBMIT.next)
-    await act(async () => next?.click())
+    await reach('tags')
     expect(heading()).toBe(VTUBER_SUBMIT.steps.tags.title)
+    expect(heading()).toBe('Vibe tags')
+    expect(host.textContent).toContain(VTUBER_SUBMIT.steps.tags.instruction)
+    expect(host.textContent).toContain('Wholesome')
+    expect(host.textContent).not.toContain('Photography, film, visual arts, photo editing')
+    expect(host.textContent).not.toContain('Chaos')
+
+    await click(VTUBER_SUBMIT.next)
+    expect(heading()).toBe(VTUBER_SUBMIT.steps.niche.title)
     expect(heading()).toBe("What's your niche?")
+    expect(host.textContent).toContain(VTUBER_SUBMIT.steps.niche.instruction)
     expect(host.textContent).toContain('Photography, film, visual arts, photo editing')
     expect(host.textContent).toContain('The Darkroom')
     expect(host.textContent).toContain('Cursed ASMR')
-    expect(host.textContent).toContain('Chaos')
-    expect(host.textContent).toContain('Comfy / Lore')
     expect(host.textContent).not.toContain('Slice of life')
     expect(host.textContent).not.toContain('clust_')
-    expect(host.textContent).toContain('Wholesome')
+    expect(host.textContent).not.toContain('Chaos')
+    expect(host.textContent).not.toContain('Wholesome')
+
+    await click(VTUBER_SUBMIT.next)
+    expect(heading()).toBe(VTUBER_SUBMIT.steps.constellation.title)
+    expect(host.textContent).toContain(VTUBER_SUBMIT.steps.constellation.instruction)
+    expect(host.textContent).toContain('Chaos')
+    expect(host.textContent).toContain('Comfy / Lore')
+    expect(host.textContent).not.toContain('Photography, film, visual arts, photo editing')
+    expect(host.textContent).not.toContain('clust_')
   })
 
-  it('skips the niche step and reviews that no niche was picked', async () => {
+  it('skips each optional step and reviews that no niche or constellation was picked', async () => {
     await mount()
-    const skipLink = [...host.querySelectorAll('button')].find(b => b.textContent === VTUBER_SUBMIT.skipLink)
-    await act(async () => skipLink?.click())
-    await setInput(host.querySelector<HTMLInputElement>('#name')!, 'Pipuru')
-    const next = [...host.querySelectorAll('button')].find(b => b.textContent === VTUBER_SUBMIT.next)
-    await act(async () => next?.click())
-    const skip = [...host.querySelectorAll('button')].find(b => b.textContent === VTUBER_SUBMIT.skipTags)
-    await act(async () => skip?.click())
+    await reach('tags')
+    await click(VTUBER_SUBMIT.skipTags)
+    expect(heading()).toBe(VTUBER_SUBMIT.steps.niche.title)
+    await click(VTUBER_SUBMIT.skipTags)
+    expect(heading()).toBe(VTUBER_SUBMIT.steps.constellation.title)
+    await click(VTUBER_SUBMIT.skipTags)
     expect(heading()).toBe(VTUBER_SUBMIT.steps.review.title)
     expect(host.textContent).toContain(VTUBER_SUBMIT.noNiche)
+    expect(host.textContent).toContain(VTUBER_SUBMIT.noConstellation)
+  })
+
+  it('keeps a picked niche and constellation on review', async () => {
+    await mount()
+    await reach('niche')
+    const cursed = [...host.querySelectorAll('button')].find(b => b.textContent?.includes('Cursed ASMR'))
+    await act(async () => cursed?.click())
+    await click(VTUBER_SUBMIT.next)
+    const chaos = [...host.querySelectorAll('button')].find(b => b.textContent === 'Chaos')
+    await act(async () => chaos?.click())
+    await click(VTUBER_SUBMIT.next)
+    expect(heading()).toBe(VTUBER_SUBMIT.steps.review.title)
+    expect(host.textContent).toContain('Cursed ASMR')
+    expect(host.textContent).toContain('Chaos')
+    expect(host.textContent).not.toContain(VTUBER_SUBMIT.noNiche)
+    expect(host.textContent).not.toContain(VTUBER_SUBMIT.noConstellation)
   })
 
   it('selects an existing niche instead of adding a duplicate custom category, and hints at close matches', async () => {
     await mount()
-    const skipLink = [...host.querySelectorAll('button')].find(b => b.textContent === VTUBER_SUBMIT.skipLink)
-    await act(async () => skipLink?.click())
-    await setInput(host.querySelector<HTMLInputElement>('#name')!, 'Pipuru')
-    const next = [...host.querySelectorAll('button')].find(b => b.textContent === VTUBER_SUBMIT.next)
-    await act(async () => next?.click())
+    await reach('niche')
 
     await setInput(host.querySelector<HTMLInputElement>('#custom-niche')!, 'the darkroom')
-    const add = [...host.querySelectorAll('button')].find(b => b.textContent === VTUBER_SUBMIT.addCategoryButton)
-    await act(async () => add?.click())
+    await click(VTUBER_SUBMIT.addCategoryButton)
     const darkroom = [...host.querySelectorAll('button')].find(b => b.textContent?.includes('The Darkroom'))
     expect(darkroom).toBeTruthy()
     expect(darkroom?.textContent).toContain('Photography, film, visual arts, photo editing')
@@ -214,11 +248,11 @@ describe('VTuberSubmitForm wizard', () => {
     }
 
     await setInput(host.querySelector<HTMLInputElement>('#custom-niche')!, 'ASMR')
-    await act(async () => add?.click())
+    await click(VTUBER_SUBMIT.addCategoryButton)
     expect(host.textContent).toContain(VTUBER_SUBMIT.closeMatch('Cursed ASMR'))
 
     await setInput(host.querySelector<HTMLInputElement>('#custom-niche')!, 'Liminal radio')
-    await act(async () => add?.click())
+    await click(VTUBER_SUBMIT.addCategoryButton)
     expect(host.textContent).toContain('Liminal radio')
     expect(host.textContent).toContain(VTUBER_SUBMIT.categoryNew)
 

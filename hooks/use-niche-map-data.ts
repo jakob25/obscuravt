@@ -84,7 +84,7 @@ export function useNicheMapData(): NicheMapData {
 
         // NEW BEHAVIOR: Show ALL valid niche clusters from the DB (even empty ones).
         // This gives you the full map skeleton/layout as soon as you define clusters with positions + colors.
-        // Stars/creators will only appear inside clusters they actually match via content_tag_ids.
+        // Stars/creators appear in a picked nclust_* room, or else the cluster they match via content_tag_ids.
         const consts: Constellation[] = dbClusters
           .filter(c => c.color && c.position_x != null && c.position_y != null)
           .map(c => ({

@@ -26,7 +26,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Upload, X, Loader2, CheckCircle2 } from 'lucide-react'
 
-export const VTUBER_WIZARD_STEPS = ['signin', 'link', 'details', 'tags', 'review'] as const
+export const VTUBER_WIZARD_STEPS = ['signin', 'link', 'details', 'tags', 'niche', 'constellation', 'review'] as const
 export type VtuberWizardStep = (typeof VTUBER_WIZARD_STEPS)[number]
 
 type LookupDuplicate = {
@@ -205,12 +205,22 @@ export function VTuberSubmitForm({ onSuccess, onCancel, preview }: VTuberSubmitF
   }
 
   function skipTags() {
-    setSelectedConstellation('')
+    setSelectedVibeTags([])
+    setError('')
+    setStep('niche')
+  }
+
+  function skipNiche() {
     setSelectedNiche('')
     setCustomNiches([])
-    setSelectedVibeTags([])
     setNicheDraft('')
     setCloseHint(null)
+    setError('')
+    setStep('constellation')
+  }
+
+  function skipConstellation() {
+    setSelectedConstellation('')
     setError('')
     setStep('review')
   }
@@ -330,7 +340,9 @@ export function VTuberSubmitForm({ onSuccess, onCancel, preview }: VTuberSubmitF
     if (step === 'link' && !user) return goTo('signin')
     if (step === 'details') return goTo('link')
     if (step === 'tags') return goTo('details')
-    if (step === 'review') return goTo('tags')
+    if (step === 'niche') return goTo('tags')
+    if (step === 'constellation') return goTo('niche')
+    if (step === 'review') return goTo('constellation')
   }
 
   function canAdvanceFromLink() {
@@ -358,7 +370,9 @@ export function VTuberSubmitForm({ onSuccess, onCancel, preview }: VTuberSubmitF
       }
       return goTo('tags')
     }
-    if (step === 'tags') return goTo('review')
+    if (step === 'tags') return goTo('niche')
+    if (step === 'niche') return goTo('constellation')
+    if (step === 'constellation') return goTo('review')
   }
 
   function skipLink() {
@@ -681,6 +695,29 @@ export function VTuberSubmitForm({ onSuccess, onCancel, preview }: VTuberSubmitF
       )}
 
       {activeStep === 'tags' && (
+        <div>
+          <Label>Vibe Tags (max 8)</Label>
+          <div className="flex flex-wrap gap-2 mt-2">
+            {vibeTagOptions.map((tag) => (
+              <button
+                key={tag}
+                type="button"
+                onClick={() => toggleVibeTag(tag)}
+                className={`px-3 py-1 text-xs rounded-full border transition-all ${
+                  selectedVibeTags.includes(tag)
+                    ? 'bg-vault-gold text-vault-deep border-vault-gold'
+                    : 'border-foreground/20 hover:bg-black/5 dark:hover:bg-white/5'
+                }`}
+              >
+                {formatTagLabel(tag)}
+              </button>
+            ))}
+          </div>
+          <p className="text-xs text-muted-foreground mt-1">{selectedVibeTags.length}/8 selected</p>
+        </div>
+      )}
+
+      {activeStep === 'niche' && (
         <div className="space-y-6">
           <div className="space-y-2">
             {niches.map((niche) => {
@@ -770,46 +807,26 @@ export function VTuberSubmitForm({ onSuccess, onCancel, preview }: VTuberSubmitF
               </div>
             )}
           </div>
+        </div>
+      )}
 
-          <div>
-            <Label>{VTUBER_SUBMIT.constellationLabel}</Label>
-            <div className="flex flex-wrap gap-2 mt-2">
-              {clusters.map((cluster) => (
-                <button
-                  key={cluster.id}
-                  type="button"
-                  onClick={() => setSelectedConstellation(selectedConstellation === cluster.id ? '' : cluster.id)}
-                  className={`px-3 py-1.5 text-xs rounded-lg border transition-all ${
-                    selectedConstellation === cluster.id
-                      ? 'bg-vault-gold/20 border-vault-gold text-vault-gold'
-                      : 'border-foreground/20 hover:bg-black/5 dark:hover:bg-white/5'
-                  }`}
-                >
-                  {cluster.name}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <Label>Vibe Tags (max 8)</Label>
-            <div className="flex flex-wrap gap-2 mt-2">
-              {vibeTagOptions.map((tag) => (
-                <button
-                  key={tag}
-                  type="button"
-                  onClick={() => toggleVibeTag(tag)}
-                  className={`px-3 py-1 text-xs rounded-full border transition-all ${
-                    selectedVibeTags.includes(tag)
-                      ? 'bg-vault-gold text-vault-deep border-vault-gold'
-                      : 'border-foreground/20 hover:bg-black/5 dark:hover:bg-white/5'
-                  }`}
-                >
-                  {formatTagLabel(tag)}
-                </button>
-              ))}
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">{selectedVibeTags.length}/8 selected</p>
+      {activeStep === 'constellation' && (
+        <div>
+          <div className="flex flex-wrap gap-2">
+            {clusters.map((cluster) => (
+              <button
+                key={cluster.id}
+                type="button"
+                onClick={() => setSelectedConstellation(selectedConstellation === cluster.id ? '' : cluster.id)}
+                className={`px-3 py-1.5 text-xs rounded-lg border transition-all ${
+                  selectedConstellation === cluster.id
+                    ? 'bg-vault-gold/20 border-vault-gold text-vault-gold'
+                    : 'border-foreground/20 hover:bg-black/5 dark:hover:bg-white/5'
+                }`}
+              >
+                {cluster.name}
+              </button>
+            ))}
           </div>
         </div>
       )}
@@ -868,7 +885,7 @@ export function VTuberSubmitForm({ onSuccess, onCancel, preview }: VTuberSubmitF
           </div>
           <div>
             <dt className="text-muted-foreground">{VTUBER_SUBMIT.reviewConstellation}</dt>
-            <dd className="text-vault-cream">{selectedConstellation ? nicheDisplayName(selectedConstellation, clusters) || formatTagLabel(selectedConstellation) : '—'}</dd>
+            <dd className="text-vault-cream">{selectedConstellation ? nicheDisplayName(selectedConstellation, clusters) || formatTagLabel(selectedConstellation) : VTUBER_SUBMIT.noConstellation}</dd>
           </div>
           {customNiches.length > 0 && (
             <div>
@@ -912,7 +929,17 @@ export function VTuberSubmitForm({ onSuccess, onCancel, preview }: VTuberSubmitF
             {VTUBER_SUBMIT.skipTags}
           </Button>
         )}
-        {activeStep === 'link' || activeStep === 'details' || activeStep === 'tags' ? (
+        {activeStep === 'niche' && (
+          <Button type="button" variant="outline" onClick={skipNiche} className="border-border text-vault-cream sm:w-auto w-full">
+            {VTUBER_SUBMIT.skipTags}
+          </Button>
+        )}
+        {activeStep === 'constellation' && (
+          <Button type="button" variant="outline" onClick={skipConstellation} className="border-border text-vault-cream sm:w-auto w-full">
+            {VTUBER_SUBMIT.skipTags}
+          </Button>
+        )}
+        {activeStep === 'link' || activeStep === 'details' || activeStep === 'tags' || activeStep === 'niche' || activeStep === 'constellation' ? (
           <Button
             type="submit"
             className="flex-1"

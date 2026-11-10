@@ -108,8 +108,16 @@ export const VTUBER_SUBMIT = {
       instruction: "Check the name, handle, platform, bio, and picture. Edit anything that's wrong or missing.",
     },
     tags: {
+      title: 'Vibe tags',
+      instruction: "Add a few that fit, or skip if you're not sure.",
+    },
+    niche: {
       title: "What's your niche?",
-      instruction: "Pick the niche that fits, or skip if you're not sure.",
+      instruction: 'Pick the room that matches what makes you different, so fans looking for exactly that can find you.',
+    },
+    constellation: {
+      title: 'Which constellation fits your vibe?',
+      instruction: 'This is what puts you on the constellation pages and in Find My Oshi results.',
     },
     review: {
       title: 'Review',
@@ -120,6 +128,7 @@ export const VTUBER_SUBMIT = {
   skipTags: 'Skip',
   constellationLabel: 'Constellation',
   noNiche: 'No niche was picked.',
+  noConstellation: 'No constellation was picked.',
   addCategory: 'Add a new category',
   addCategoryButton: 'Add',
   addCategoryHint: 'New categories are reviewed before they appear on the site.',
