@@ -3,6 +3,7 @@
 import { useEffect, useId, useRef, useState, type KeyboardEvent, type PointerEvent, type ReactNode } from 'react'
 import { CaseFolder, CasePhoto, DossierFrame } from '@/components/vault/vault-surfaces'
 import { DOSSIER } from '@/lib/site-copy'
+import { wrapDisplayName } from '@/lib/wrap-display-name'
 import styles from './dossier-folio.module.css'
 
 type Tab = string
@@ -190,7 +191,7 @@ export function DossierFolio({ name, caseId, accessLine, avatarUrl, handle, plat
           <div className={styles.coverTop}>
             <div className={styles.coverLabel}>{DOSSIER.subjectArchive}</div>
             <div className={styles.coverHero}>
-              <div><span className={styles.smallLabel}>{DOSSIER.codename}</span><h2>{name}</h2></div>
+              <div><span className={styles.smallLabel}>{DOSSIER.codename}</span><h2>{wrapDisplayName(name)}</h2></div>
               <div className={styles.coverPhoto}><CasePhoto src={avatarUrl} alt={name} caption="FIG. 01 — SUBJECT" /></div>
             </div>
             <div className={styles.coverFile}>{caseId}{collective ? ` / ${collective}` : ''}</div>

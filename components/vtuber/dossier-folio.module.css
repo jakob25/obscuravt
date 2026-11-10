@@ -11,7 +11,7 @@
 .coverLabel { font-size: 11px; letter-spacing: .2em; }
 .coverHero { display: grid; grid-template-columns: minmax(0,1fr) minmax(90px,.65fr); align-items: center; gap: 22px; margin-top: 28px; }
 .smallLabel { font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--case-ink-dim); display: block; }
-.coverHero h2 { font-size: clamp(38px,6vw,64px); font-weight: 500; line-height: 1.05; margin: 7px 0 0; overflow-wrap: anywhere; }
+.coverHero h2 { font-size: clamp(38px,6vw,42px); font-weight: 500; line-height: 1.05; margin: 7px 0 0; overflow-wrap: break-word; }
 .coverHero .smallLabel { letter-spacing: .15em; }
 .coverPhoto { width: 100%; max-width: 148px; justify-self: end; }
 .coverPhoto :global(.case-photo-slot) { width: 100%; }
@@ -53,7 +53,7 @@
 .profileTop :global(.case-polaroid) { padding: 7px 7px 15px; transform: rotate(-3deg); }
 .profileTop :global(.case-polaroid-photo) { height: auto; aspect-ratio: 4/5; }
 .profileFields { min-width: 0; padding-top: 10px; }
-.identityName { font-size: clamp(24px,3vw,34px); font-weight: 500; line-height: 1.15; overflow-wrap: anywhere; margin: 6px 0 22px; }
+.identityName { font-size: clamp(24px,3vw,34px); font-weight: 500; line-height: 1.15; overflow-wrap: break-word; margin: 6px 0 22px; }
 .profileFields :global(.case-field-row) { display: block; border-top: 1px solid #5a4f2e35; border-bottom: 0; padding: 8px 0; }
 .profileFields :global(.case-field-key) { display: block; font-size: 10px; text-transform: uppercase; letter-spacing: .08em; }
 .profileFields :global(.case-field-val) { display: block; margin-top: 2px; font-size: 12px; font-weight: 400; overflow-wrap: anywhere; }

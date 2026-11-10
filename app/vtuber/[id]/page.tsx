@@ -30,6 +30,7 @@ import { normalizeXPostLink } from '@/lib/x-post-link'
 import styles from '@/components/vtuber/dossier-folio.module.css'
 import { assignNicheCluster } from '@/lib/niche-assignment'
 import { nichePageKindFor } from '@/lib/dossier-niche-pages'
+import { wrapDisplayName } from '@/lib/wrap-display-name'
 
 const supabase = getSupabaseClient()
 
@@ -258,7 +259,7 @@ export default async function VTuberProfilePage({ params }: Props) {
                 />
                 <div className={styles.profileFields}>
                   <span className={styles.smallLabel}>{DOSSIER.codename}</span>
-                  <h2 className={styles.identityName}>{vtuber.name}</h2>
+                  <h2 className={styles.identityName}>{wrapDisplayName(vtuber.name)}</h2>
                   {liveNow && (
                     <a
                       href={liveUrl || undefined}
