@@ -510,7 +510,7 @@ export function VTuberSubmitForm({ onSuccess, onCancel, preview }: VTuberSubmitF
   const showActions = showBack || !!onCancel || activeStep !== 'signin'
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="flex flex-col gap-6">
       <nav aria-label="Nomination steps">
         <p className="text-xs text-muted-foreground mb-2">{VTUBER_SUBMIT.stepOf(stepIndex + 1, visibleSteps.length)}</p>
         <ol className="flex items-center gap-1" data-testid="wizard-steps">
@@ -543,6 +543,10 @@ export function VTuberSubmitForm({ onSuccess, onCancel, preview }: VTuberSubmitF
         </ol>
       </nav>
 
+      <div
+        data-testid="wizard-step-body"
+        className="space-y-6 pb-[calc(11rem+env(safe-area-inset-bottom))] sm:pb-0"
+      >
       <div>
         <h2
           ref={headingRef}
@@ -902,8 +906,18 @@ export function VTuberSubmitForm({ onSuccess, onCancel, preview }: VTuberSubmitF
 
       {error && <p className="text-sm text-red-400" role="alert">{error}</p>}
 
+      {activeStep === 'review' && (
+        <p className="text-xs text-center text-muted-foreground">
+          {VTUBER_SUBMIT.reviewedBeforeMaps}
+        </p>
+      )}
+      </div>
+
       {showActions && (
-      <div className="sticky bottom-20 sm:bottom-0 -mx-1 flex flex-col-reverse sm:flex-row gap-3 pt-3 pb-[max(0.25rem,env(safe-area-inset-bottom))] border-t border-border bg-background/95 backdrop-blur-sm">
+      <div
+        data-testid="wizard-actions"
+        className="sticky bottom-0 z-20 -mx-1 flex flex-col-reverse sm:flex-row gap-3 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] border-t border-border bg-background/95 backdrop-blur-sm"
+      >
         {showBack && (
           <Button type="button" variant="outline" onClick={goBack} className="border-border text-vault-cream sm:w-auto w-full">
             {VTUBER_SUBMIT.back}
@@ -957,11 +971,6 @@ export function VTuberSubmitForm({ onSuccess, onCancel, preview }: VTuberSubmitF
       </div>
       )}
 
-      {activeStep === 'review' && (
-        <p className="text-xs text-center text-muted-foreground">
-          {VTUBER_SUBMIT.reviewedBeforeMaps}
-        </p>
-      )}
     </form>
   )
 }

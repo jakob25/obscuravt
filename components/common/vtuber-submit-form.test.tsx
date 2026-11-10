@@ -263,4 +263,18 @@ describe('VTuberSubmitForm wizard', () => {
       expect(span.style.color).toBe('')
     }
   })
+
+  it('keeps the action bar as a sticky footer and pads the step so lists can scroll clear of it', async () => {
+    await mount()
+    await reach('constellation')
+    const body = host.querySelector('[data-testid="wizard-step-body"]')
+    const actions = host.querySelector('[data-testid="wizard-actions"]')
+    expect(body?.className).toContain('pb-[calc(11rem+env(safe-area-inset-bottom))]')
+    expect(body?.className).toContain('sm:pb-0')
+    expect(actions?.className).toContain('sticky')
+    expect(actions?.className).toContain('bottom-0')
+    expect(actions?.className).not.toContain('bottom-20')
+    expect(host.textContent).toContain('Chaos')
+    expect(host.textContent).toContain('Comfy / Lore')
+  })
 })
