@@ -8,6 +8,8 @@ describe('formatTagLabel', () => {
     expect(formatTagLabel('clust_cyber')).toBe('Cyber')
     expect(formatTagLabel('clust_fantasy')).toBe('Fantasy')
     expect(formatTagLabel('clust_music')).toBe('Music')
+    expect(formatTagLabel('nclust_cursed_asmr')).toBe('Cursed asmr')
+    expect(formatTagLabel('nsuggest:Liminal radio')).toBe('Liminal radio')
   })
 
   it('title-cases a plain vibe tag without changing its meaning', () => {

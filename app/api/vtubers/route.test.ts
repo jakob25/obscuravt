@@ -24,6 +24,22 @@ const from = vi.fn((table: string) => {
   if (table === 'clips') {
     return { select: (...args: unknown[]) => clipsSelect(...args) }
   }
+  if (table === 'canonical_tags') {
+    return {
+      select: () => ({
+        in: () => ({
+          order: async () => ({
+            data: [
+              { id: 'nclust_darkroom', tag: 'The Darkroom', category: 'niche_cluster', sort_order: 1 },
+              { id: 'nclust_cursed_asmr', tag: 'Cursed ASMR', category: 'niche_cluster', sort_order: 11 },
+              { id: 'clust_chaos', tag: 'Chaos', category: 'cluster', sort_order: 1 },
+            ],
+            error: null,
+          }),
+        }),
+      }),
+    }
+  }
   throw new Error(`unexpected table ${table}`)
 })
 
@@ -132,5 +148,42 @@ describe('POST /api/vtubers', () => {
     expect(res.status).toBe(201)
     expect(copyLookupAvatarToBucket).not.toHaveBeenCalled()
     expect(vtuberInsert.mock.calls[0][0].avatar_url).toBeNull()
+  })
+
+  it('stores a live niche id and a suggested category, and allows submitting with no tags', async () => {
+    const { POST } = await import('./route')
+    const withNiche = await POST(postBody({
+      name: 'Pipuru',
+      tags: ['clust_chaos', 'nclust_darkroom', 'wholesome', 'nsuggest:Liminal radio'],
+      skip_avatar: true,
+    }))
+    expect(withNiche.status).toBe(201)
+    expect(vtuberInsert.mock.calls[0][0].tags).toEqual(['clust_chaos', 'nclust_darkroom', 'wholesome', 'nsuggest:Liminal radio'])
+
+    vtuberInsert.mockClear()
+    const skipped = await POST(postBody({
+      name: 'Another',
+      skip_avatar: true,
+    }))
+    expect(skipped.status).toBe(201)
+    expect(vtuberInsert.mock.calls[0][0].tags).toEqual([])
+  })
+
+  it('rejects ids that are not live niches or constellations', async () => {
+    const { POST } = await import('./route')
+    const unknownNiche = await POST(postBody({
+      name: 'Pipuru',
+      tags: ['nclust_cyber'],
+      skip_avatar: true,
+    }))
+    expect(unknownNiche.status).toBe(400)
+
+    const unknownCluster = await POST(postBody({
+      name: 'Pipuru',
+      tags: ['clust_fantasy'],
+      skip_avatar: true,
+    }))
+    expect(unknownCluster.status).toBe(400)
+    expect(vtuberInsert).not.toHaveBeenCalled()
   })
 })

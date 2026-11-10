@@ -23,6 +23,26 @@ vi.mock('next/navigation', () => ({
 }))
 
 
+const TAG_ROWS = [
+  { id: 'nclust_darkroom', tag: 'The Darkroom', category: 'niche_cluster', sort_order: 1, description: 'Photography, film, visual arts, photo editing', color: '#7c5c3a' },
+  { id: 'nclust_arcade', tag: 'The Arcade', category: 'niche_cluster', sort_order: 7, description: 'Arcade games, retro cabinets, rhythm games', color: '#3b82f6' },
+  { id: 'nclust_cursed_asmr', tag: 'Cursed ASMR', category: 'niche_cluster', sort_order: 11, description: 'Glitchy, unsettling, liminal-space ASMR — whispers from somewhere wrong', color: '#39ff14' },
+  { id: 'clust_chaos', tag: 'Chaos', category: 'cluster', sort_order: 2, description: 'Unhinged gremlin energy', color: '#f97316' },
+  { id: 'clust_comfy', tag: 'Comfy / Lore', category: 'cluster', sort_order: 3 },
+]
+
+function tagsFetchMock() {
+  return vi.fn(async (input: RequestInfo) => {
+    const url = String(input)
+    if (url.includes('/api/tags')) {
+      return { ok: true, json: async () => TAG_ROWS }
+    }
+    return { ok: true, json: async () => ({}) }
+  })
+}
+
+
+
 let host: HTMLDivElement
 let root: Root
 
@@ -30,7 +50,7 @@ beforeEach(() => {
   Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true })
   auth.user = { username: 'Nim', coins: 0, role: 'fan', isAdmin: false }
   auth.loading = false
-  vi.stubGlobal('fetch', vi.fn())
+  vi.stubGlobal('fetch', tagsFetchMock())
   host = document.createElement('div')
   document.body.append(host)
   root = createRoot(host)
@@ -142,7 +162,7 @@ describe('VTuberSubmitForm wizard', () => {
     expect(host.textContent).toContain('Name must be at least 2 characters')
   })
 
-  it('shows constellation labels in readable words, not stored ids', async () => {
+  it('lists live niches by their real names, not the old hardcoded constellations', async () => {
     await mount()
     const skip = [...host.querySelectorAll('button')].find(b => b.textContent === VTUBER_SUBMIT.skipLink)
     await act(async () => skip?.click())
@@ -150,8 +170,63 @@ describe('VTuberSubmitForm wizard', () => {
     const next = [...host.querySelectorAll('button')].find(b => b.textContent === VTUBER_SUBMIT.next)
     await act(async () => next?.click())
     expect(heading()).toBe(VTUBER_SUBMIT.steps.tags.title)
-    expect(host.textContent).toContain('Slice of life')
-    expect(host.textContent).not.toContain('slice_of_life')
+    expect(heading()).toBe("What's your niche?")
+    expect(host.textContent).toContain('Photography, film, visual arts, photo editing')
+    expect(host.textContent).toContain('The Darkroom')
+    expect(host.textContent).toContain('Cursed ASMR')
+    expect(host.textContent).toContain('Chaos')
+    expect(host.textContent).toContain('Comfy / Lore')
+    expect(host.textContent).not.toContain('Slice of life')
+    expect(host.textContent).not.toContain('clust_')
     expect(host.textContent).toContain('Wholesome')
+  })
+
+  it('skips the niche step and reviews that no niche was picked', async () => {
+    await mount()
+    const skipLink = [...host.querySelectorAll('button')].find(b => b.textContent === VTUBER_SUBMIT.skipLink)
+    await act(async () => skipLink?.click())
+    await setInput(host.querySelector<HTMLInputElement>('#name')!, 'Pipuru')
+    const next = [...host.querySelectorAll('button')].find(b => b.textContent === VTUBER_SUBMIT.next)
+    await act(async () => next?.click())
+    const skip = [...host.querySelectorAll('button')].find(b => b.textContent === VTUBER_SUBMIT.skipTags)
+    await act(async () => skip?.click())
+    expect(heading()).toBe(VTUBER_SUBMIT.steps.review.title)
+    expect(host.textContent).toContain(VTUBER_SUBMIT.noNiche)
+  })
+
+  it('selects an existing niche instead of adding a duplicate custom category, and hints at close matches', async () => {
+    await mount()
+    const skipLink = [...host.querySelectorAll('button')].find(b => b.textContent === VTUBER_SUBMIT.skipLink)
+    await act(async () => skipLink?.click())
+    await setInput(host.querySelector<HTMLInputElement>('#name')!, 'Pipuru')
+    const next = [...host.querySelectorAll('button')].find(b => b.textContent === VTUBER_SUBMIT.next)
+    await act(async () => next?.click())
+
+    await setInput(host.querySelector<HTMLInputElement>('#custom-niche')!, 'the darkroom')
+    const add = [...host.querySelectorAll('button')].find(b => b.textContent === VTUBER_SUBMIT.addCategoryButton)
+    await act(async () => add?.click())
+    const darkroom = [...host.querySelectorAll('button')].find(b => b.textContent?.includes('The Darkroom'))
+    expect(darkroom).toBeTruthy()
+    expect(darkroom?.textContent).toContain('Photography, film, visual arts, photo editing')
+    expect(darkroom?.style.borderColor.toLowerCase()).toMatch(/#7c5c3a|rgb\(124,\s*92,\s*58\)/)
+    for (const span of darkroom!.querySelectorAll('span')) {
+      expect(span.style.color).toBe('')
+    }
+
+    await setInput(host.querySelector<HTMLInputElement>('#custom-niche')!, 'ASMR')
+    await act(async () => add?.click())
+    expect(host.textContent).toContain(VTUBER_SUBMIT.closeMatch('Cursed ASMR'))
+
+    await setInput(host.querySelector<HTMLInputElement>('#custom-niche')!, 'Liminal radio')
+    await act(async () => add?.click())
+    expect(host.textContent).toContain('Liminal radio')
+    expect(host.textContent).toContain(VTUBER_SUBMIT.categoryNew)
+
+    const cursed = [...host.querySelectorAll('button')].find(b => b.textContent?.includes('Cursed ASMR'))
+    await act(async () => cursed?.click())
+    expect(cursed?.style.borderColor.toLowerCase()).toMatch(/#39ff14|rgb\(57,\s*255,\s*20\)/)
+    for (const span of cursed!.querySelectorAll('span')) {
+      expect(span.style.color).toBe('')
+    }
   })
 })

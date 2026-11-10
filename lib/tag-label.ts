@@ -2,7 +2,7 @@
  * Display-only label for a stored constellation, vibe, or content tag id.
  * Stored values stay unchanged. Uses sentence case, e.g. "Slice of life".
  */
-const PREFIX = /^(clust_|vibe_|cont_)/
+const PREFIX = /^(nsuggest:|nclust_|clust_|vibe_|cont_)/
 
 export function formatTagLabel(id: string): string {
   if (typeof id !== 'string') return ''
