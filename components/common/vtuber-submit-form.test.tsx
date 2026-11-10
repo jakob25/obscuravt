@@ -70,6 +70,7 @@ describe('VTuberSubmitForm wizard', () => {
     expect(host.textContent).toContain(VTUBER_SUBMIT.stepOf(1, 4))
     expect(host.textContent).not.toContain(VTUBER_SUBMIT.stepOf(1, 5))
     expect(host.querySelectorAll('[data-testid="wizard-steps"] li').length).toBe(4)
+    expect(host.querySelector<HTMLInputElement>('#link')?.placeholder).toBe(VTUBER_SUBMIT.linkPlaceholder)
   })
 
   async function setInput(el: HTMLInputElement, value: string) {

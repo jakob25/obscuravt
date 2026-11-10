@@ -452,7 +452,7 @@ export function VTuberSubmitForm({ onSuccess, onCancel, preview }: VTuberSubmitF
             type="url"
             value={formData.link}
             onChange={(e) => handleInputChange('link', e.target.value)}
-            placeholder="https://twitch.tv/…  https://youtube.com/@…  https://x.com/…"
+            placeholder={VTUBER_SUBMIT.linkPlaceholder}
             className="mt-2"
             autoComplete="off"
           />
