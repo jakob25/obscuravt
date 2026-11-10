@@ -259,7 +259,7 @@ export default async function PulseFeed() {
                     ) : (
                       <div className="absolute inset-0 flex items-center justify-center text-muted-foreground text-[10px]">No preview</div>
                     )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-vault-deep/80 via-transparent to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-vault-scrim/80 via-transparent to-transparent" />
                   </a>
                   <div className="p-2.5">
                     <p className="font-medium text-vault-cream text-sm line-clamp-1">

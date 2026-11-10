@@ -40,6 +40,7 @@
 
   /* VTVault brand tokens */
   --vault-deep: #0d0d14;
+  --vault-scrim: #0d0d14; /* locked dark value for media overlays */
   --vault-dark: #12121e;
   --vault-gold: #d4a843;
   --vault-amber: #c9872a;
@@ -140,6 +141,7 @@
 
   /* VTVault Tailwind color utilities */
   --color-vault-deep: var(--vault-deep);
+  --color-vault-scrim: var(--vault-scrim);
   --color-vault-dark: var(--vault-dark);
   --color-vault-gold: var(--vault-gold);
   --color-vault-amber: var(--vault-amber);
@@ -485,7 +487,8 @@
 }
 
 /* Light theme — dark remains the default. Paper, archive chrome, void map, and
-   glitch hues stay as defined above so the dossier folder stays warm. */
+   glitch hues, and media scrims stay as defined above so the dossier folder stays warm
+   and thumbnail overlays do not wash out to cream. */
 html.light {
   color-scheme: light;
   --background: oklch(0.975 0.012 85);
