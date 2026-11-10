@@ -67,7 +67,7 @@ export const DOSSIER = {
 /** Add-a-VTuber form — paste a profile link, then edit anything that was pulled. */
 export const VTUBER_SUBMIT = {
   pasteLink: 'Paste an X, YouTube, or Twitch profile link',
-  linkPlaceholder: 'twitch.tv/name or @handle',
+  linkPlaceholder: 'twitch.tv/name',
   lookingUp: 'Pulling the profile…',
   lookupFailed: "Couldn't pull the profile. The link is saved — fill in the rest on the next step.",
   lookupX: 'Saved the X link and handle. Add the name, bio, and a picture on the next step.',

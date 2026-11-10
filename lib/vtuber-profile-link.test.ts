@@ -48,6 +48,21 @@ describe('normalizeVtuberProfileLink', () => {
     })
   })
 
+  it('accepts the scheme-less Twitch and YouTube examples used in the form placeholder', () => {
+    expect(normalizeVtuberProfileLink('twitch.tv/name')).toMatchObject({
+      platform: 'twitch',
+      kind: 'channel',
+      profileUrl: 'https://www.twitch.tv/name',
+      login: 'name',
+    })
+    expect(normalizeVtuberProfileLink('youtube.com/@name')).toMatchObject({
+      platform: 'youtube',
+      kind: 'handle',
+      profileUrl: 'https://www.youtube.com/@name',
+      handle: 'name',
+    })
+  })
+
   it('normalizes YouTube handles, channel ids, /user/, and /c/ links', () => {
     expect(normalizeVtuberProfileLink('https://www.youtube.com/@Pipururu/about')).toMatchObject({
       platform: 'youtube',
