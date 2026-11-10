@@ -7,7 +7,7 @@ export function CreatorOverview({ id }: { id: string }) {
   if (!entry || !entry.text) return null
   return (
     <div className="mb-5">
-      <div className="font-mono text-[10px] uppercase tracking-[0.1em] text-[#1f6f6a] mb-1.5">
+      <div className="font-mono text-[10px] uppercase tracking-[0.1em] text-case-teal mb-1.5">
         WHAT TO EXPECT
       </div>
       <p className="text-[13.5px] leading-relaxed text-[var(--case-ink)]">{entry.text}</p>

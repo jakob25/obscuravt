@@ -265,9 +265,9 @@ export default async function VTuberProfilePage({ params }: Props) {
                       href={liveUrl || undefined}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 my-1.5 px-2 py-0.5 rounded-sm bg-[#8a2317] text-[#e9dfc4] text-[11px] font-bold tracking-[0.12em] hover:opacity-90"
+                      className="inline-flex items-center gap-1.5 my-1.5 px-2 py-0.5 rounded-sm bg-case-stamp-red text-case-paper-1 text-[11px] font-bold tracking-[0.12em] hover:opacity-90"
                     >
-                      <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#e9dfc4] animate-pulse" aria-hidden="true" />
+                      <span className="inline-block w-1.5 h-1.5 rounded-full bg-case-paper-1 animate-pulse" aria-hidden="true" />
                       LIVE NOW
                     </a>
                   )}
@@ -284,7 +284,7 @@ export default async function VTuberProfilePage({ params }: Props) {
               </div>
               <div className={styles.notes}>
                 <CreatorOverview id={vtuber.id} />
-                <div className="font-mono text-[10px] uppercase tracking-[0.1em] text-[#1f6f6a] mb-1.5">
+                <div className="font-mono text-[10px] uppercase tracking-[0.1em] text-case-teal mb-1.5">
                   FIELD NOTES
                 </div>
                 <p className="text-[13.5px] leading-relaxed text-[var(--case-ink)]">
@@ -296,7 +296,7 @@ export default async function VTuberProfilePage({ params }: Props) {
                       href={channelUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 px-4 py-1.5 text-xs font-mono font-medium border border-[#2a6f74] text-[#1f6f6a] hover:text-[#0d3f42] hover:border-[#1f6f6a] transition-colors bg-white/10"
+                      className="inline-flex items-center gap-2 px-4 py-1.5 text-xs font-mono font-medium border border-[#2a6f74] text-case-teal hover:text-[#0d3f42] hover:border-case-teal transition-colors bg-white/10"
                     >
                         {isTwitch ? <Twitch className="h-3.5 w-3.5 text-purple-700" /> :
                          isYoutube ? <Youtube className="h-3.5 w-3.5 text-red-700" /> :
@@ -310,7 +310,7 @@ export default async function VTuberProfilePage({ params }: Props) {
             <div className={styles.actions}>
               <Link
                 href={`/vtuber/${id}/fan-corner`}
-                className="px-4 py-1.5 text-xs border border-[#5a4f2e] hover:bg-[#5a4f2e] hover:text-[#e9dfc4] transition-colors"
+                className="px-4 py-1.5 text-xs border border-case-ink-dim hover:bg-case-ink-dim hover:text-case-paper-1 transition-colors"
               >
                 FAN CORNER
               </Link>
@@ -320,7 +320,7 @@ export default async function VTuberProfilePage({ params }: Props) {
                 title={`${vtuber.name} · ObscuraVT`}
                 label="Share"
                 ariaLabel={`Share ${vtuber.name}'s profile`}
-                className="px-4 py-1.5 text-xs border border-[#5a4f2e] hover:bg-[#5a4f2e] hover:text-[#e9dfc4] transition-colors"
+                className="px-4 py-1.5 text-xs border border-case-ink-dim hover:bg-case-ink-dim hover:text-case-paper-1 transition-colors"
               />
               <ClaimProfileButton
                 vtuberId={vtuber.id}
@@ -330,22 +330,22 @@ export default async function VTuberProfilePage({ params }: Props) {
               />
             </div>
 
-            <div className="mb-8 border-t border-[#5a4f2e]/30 pt-6">
-              <div className="section-label mb-3 text-[#1d6a9a]">CHAT MADE ME DO IT</div>
+            <div className="mb-8 border-t border-case-ink-dim/30 pt-6">
+              <div className="section-label mb-3 text-case-link">CHAT MADE ME DO IT</div>
 
               {activeCmdi ? (
-                <div className="bg-[#0d0d14] border border-[#143544] rounded p-4">
+                <div className="bg-vault-deep border border-archive-border rounded p-4">
                   <div className="flex justify-between text-sm mb-2">
                     <span>{activeCmdi.title}</span>
-                    <span className="text-[#4fc9d6] font-medium">
+                    <span className="text-archive-cyan-dim font-medium">
                       {activeCmdi.goal_amount > 0
                         ? Math.round((activeCmdi.funded_amount / activeCmdi.goal_amount) * 100)
                         : 0}%
                     </span>
                   </div>
-                  <div className="h-2 bg-[#143544] rounded mb-1">
+                  <div className="h-2 bg-archive-border rounded mb-1">
                     <div
-                      className="h-2 bg-[#4fd6a8] rounded transition-all"
+                      className="h-2 bg-archive-teal rounded transition-all"
                       style={{
                         width: `${activeCmdi.goal_amount > 0
                           ? Math.min((activeCmdi.funded_amount / activeCmdi.goal_amount) * 100, 100)
@@ -353,14 +353,14 @@ export default async function VTuberProfilePage({ params }: Props) {
                       }}
                     />
                   </div>
-                  <div className="text-xs text-[#5a8a99]">
+                  <div className="text-xs text-archive-text-dim">
                     {activeCmdi.funded_amount.toLocaleString()} / {activeCmdi.goal_amount.toLocaleString()} scraps
                   </div>
                 </div>
               ) : (
                 <Link
                   href={`/vtuber/${id}/fan-corner#submit`}
-                  className="px-5 py-2.5 text-sm border border-[#1d6a9a] text-[#1d6a9a] hover:bg-[#1d6a9a] hover:text-[#e9dfc4] transition-colors font-medium"
+                  className="px-5 py-2.5 text-sm border border-case-link text-case-link hover:bg-case-link hover:text-case-paper-1 transition-colors font-medium"
                 >
                   + SUBMIT IDEA
                 </Link>
@@ -368,8 +368,8 @@ export default async function VTuberProfilePage({ params }: Props) {
             </div>
 
             <div className={styles.lowerCards}>
-              <div className="bg-[#e9dfc4] border border-[#5a4f2e]/30 rounded p-4">
-                <div className="section-label mb-3 text-[#8a2317]">SCHEDULE / LAST STREAM</div>
+              <div className="bg-case-paper-1 border border-case-ink-dim/30 rounded p-4">
+                <div className="section-label mb-3 text-case-stamp-red">SCHEDULE / LAST STREAM</div>
                 <div className="text-sm space-y-1">
                   {liveNow && (
                     <div>
@@ -378,12 +378,12 @@ export default async function VTuberProfilePage({ params }: Props) {
                           href={liveUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="font-medium text-[#8a2317] hover:underline"
+                          className="font-medium text-case-stamp-red hover:underline"
                         >
                           LIVE NOW{liveTitle ? ` — ${liveTitle}` : ''}
                         </a>
                       ) : (
-                        <span className="font-medium text-[#8a2317]">
+                        <span className="font-medium text-case-stamp-red">
                           LIVE NOW{liveTitle ? ` — ${liveTitle}` : ''}
                         </span>
                       )}
@@ -404,8 +404,8 @@ export default async function VTuberProfilePage({ params }: Props) {
                 </div>
               </div>
 
-              <div className="bg-[#e9dfc4] border border-[#5a4f2e]/30 rounded p-4">
-                <div className="section-label mb-3 text-[#1f6f6a]">BETS</div>
+              <div className="bg-case-paper-1 border border-case-ink-dim/30 rounded p-4">
+                <div className="section-label mb-3 text-case-teal">BETS</div>
 
                 {openBets.length > 0 ? (
                   <div className="space-y-2">
@@ -413,7 +413,7 @@ export default async function VTuberProfilePage({ params }: Props) {
                       <div key={bet.id} className="text-sm">
                         <div className="font-medium">{bet.title}</div>
                         {bet.options.length > 0 && (
-                          <div className="text-xs text-[#5a4f2e]">
+                          <div className="text-xs text-case-ink-dim">
                             {bet.options.join(' · ')}
                           </div>
                         )}
@@ -421,13 +421,13 @@ export default async function VTuberProfilePage({ params }: Props) {
                     ))}
                     <Link
                       href="/bets"
-                      className="inline-block mt-1 text-xs text-[#1d6a9a] hover:underline"
+                      className="inline-block mt-1 text-xs text-case-link hover:underline"
                     >
                       All open bets →
                     </Link>
                   </div>
                 ) : (
-                  <div className="text-sm text-[#5a4f2e]">
+                  <div className="text-sm text-case-ink-dim">
                     {EMPTY.bets}
                   </div>
                 )}
@@ -473,7 +473,7 @@ export default async function VTuberProfilePage({ params }: Props) {
           <DossierPicturesSheet posts={dossierPictures} />
           } : showWorldPage ? { key: 'world', label: DOSSIER.world, content:
           <>
-            <div className={styles.sheetHeading}><h2 className="section-label text-[#1f6f6a]">{DOSSIER.world}</h2></div>
+            <div className={styles.sheetHeading}><h2 className="section-label text-case-teal">{DOSSIER.world}</h2></div>
             <section className={styles.worldSection}>
               <h3 className={styles.notesLabel}>{DOSSIER.lore}</h3>
               <p className={styles.empty}>{DOSSIER.noLore}</p>
@@ -486,7 +486,7 @@ export default async function VTuberProfilePage({ params }: Props) {
           clips={
           <>
             <div className={styles.sheetHeading}>
-              <h2 className="section-label text-[#1f6f6a]">CLIPS ON FILE</h2>
+              <h2 className="section-label text-case-teal">CLIPS ON FILE</h2>
               <Link href={`/clips?vtuber=${encodeURIComponent(id)}`} className={styles.textLink}>{DOSSIER.clipsAll}</Link>
             </div>
             <DossierClipSubmit vtuberId={vtuber.id} vtuberName={vtuber.name} />

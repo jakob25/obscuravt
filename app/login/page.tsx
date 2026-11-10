@@ -215,56 +215,56 @@ export default function LoginPage() {
               </defs>
 
               <g className="bolt" id="bT">
-                <rect x="204" y="6" width="52" height="76" rx="7" fill="#12101f" stroke="#d4a843" strokeWidth="1.5"/>
-                <rect x="214" y="14" width="32" height="5" rx="2" fill="#d4a843" opacity="0.4"/>
-                <rect x="214" y="23" width="32" height="5" rx="2" fill="#d4a843" opacity="0.4"/>
-                <rect x="214" y="32" width="32" height="5" rx="2" fill="#d4a843" opacity="0.4"/>
+                <rect x="204" y="6" width="52" height="76" rx="7" fill="#12101f" stroke="var(--vault-gold)" strokeWidth="1.5"/>
+                <rect x="214" y="14" width="32" height="5" rx="2" fill="var(--vault-gold)" opacity="0.4"/>
+                <rect x="214" y="23" width="32" height="5" rx="2" fill="var(--vault-gold)" opacity="0.4"/>
+                <rect x="214" y="32" width="32" height="5" rx="2" fill="var(--vault-gold)" opacity="0.4"/>
               </g>
               <g className="bolt" id="bB">
-                <rect x="204" y="378" width="52" height="76" rx="7" fill="#12101f" stroke="#d4a843" strokeWidth="1.5"/>
-                <rect x="214" y="422" width="32" height="5" rx="2" fill="#d4a843" opacity="0.4"/>
-                <rect x="214" y="431" width="32" height="5" rx="2" fill="#d4a843" opacity="0.4"/>
-                <rect x="214" y="440" width="32" height="5" rx="2" fill="#d4a843" opacity="0.4"/>
+                <rect x="204" y="378" width="52" height="76" rx="7" fill="#12101f" stroke="var(--vault-gold)" strokeWidth="1.5"/>
+                <rect x="214" y="422" width="32" height="5" rx="2" fill="var(--vault-gold)" opacity="0.4"/>
+                <rect x="214" y="431" width="32" height="5" rx="2" fill="var(--vault-gold)" opacity="0.4"/>
+                <rect x="214" y="440" width="32" height="5" rx="2" fill="var(--vault-gold)" opacity="0.4"/>
               </g>
               <g className="bolt" id="bL">
-                <rect x="6" y="204" width="76" height="52" rx="7" fill="#12101f" stroke="#d4a843" strokeWidth="1.5"/>
-                <rect x="14" y="214" width="5" height="32" rx="2" fill="#d4a843" opacity="0.4"/>
-                <rect x="23" y="214" width="5" height="32" rx="2" fill="#d4a843" opacity="0.4"/>
-                <rect x="32" y="214" width="5" height="32" rx="2" fill="#d4a843" opacity="0.4"/>
+                <rect x="6" y="204" width="76" height="52" rx="7" fill="#12101f" stroke="var(--vault-gold)" strokeWidth="1.5"/>
+                <rect x="14" y="214" width="5" height="32" rx="2" fill="var(--vault-gold)" opacity="0.4"/>
+                <rect x="23" y="214" width="5" height="32" rx="2" fill="var(--vault-gold)" opacity="0.4"/>
+                <rect x="32" y="214" width="5" height="32" rx="2" fill="var(--vault-gold)" opacity="0.4"/>
               </g>
               <g className="bolt" id="bR">
-                <rect x="378" y="204" width="76" height="52" rx="7" fill="#12101f" stroke="#d4a843" strokeWidth="1.5"/>
-                <rect x="422" y="214" width="5" height="32" rx="2" fill="#d4a843" opacity="0.4"/>
-                <rect x="431" y="214" width="5" height="32" rx="2" fill="#d4a843" opacity="0.4"/>
-                <rect x="440" y="214" width="5" height="32" rx="2" fill="#d4a843" opacity="0.4"/>
+                <rect x="378" y="204" width="76" height="52" rx="7" fill="#12101f" stroke="var(--vault-gold)" strokeWidth="1.5"/>
+                <rect x="422" y="214" width="5" height="32" rx="2" fill="var(--vault-gold)" opacity="0.4"/>
+                <rect x="431" y="214" width="5" height="32" rx="2" fill="var(--vault-gold)" opacity="0.4"/>
+                <rect x="440" y="214" width="5" height="32" rx="2" fill="var(--vault-gold)" opacity="0.4"/>
               </g>
               <g className="bolt" id="bTR">
-                <rect x="330" y="46" width="72" height="36" rx="7" fill="#12101f" stroke="#d4a843" strokeWidth="1.5" transform="rotate(45 366 64)"/>
-                <rect x="345" y="56" width="5" height="22" rx="2" fill="#d4a843" opacity="0.4" transform="rotate(45 347 67)"/>
-                <rect x="358" y="56" width="5" height="22" rx="2" fill="#d4a843" opacity="0.4" transform="rotate(45 360 67)"/>
+                <rect x="330" y="46" width="72" height="36" rx="7" fill="#12101f" stroke="var(--vault-gold)" strokeWidth="1.5" transform="rotate(45 366 64)"/>
+                <rect x="345" y="56" width="5" height="22" rx="2" fill="var(--vault-gold)" opacity="0.4" transform="rotate(45 347 67)"/>
+                <rect x="358" y="56" width="5" height="22" rx="2" fill="var(--vault-gold)" opacity="0.4" transform="rotate(45 360 67)"/>
               </g>
               <g className="bolt" id="bTL">
-                <rect x="58" y="46" width="72" height="36" rx="7" fill="#12101f" stroke="#d4a843" strokeWidth="1.5" transform="rotate(-45 94 64)"/>
-                <rect x="73" y="56" width="5" height="22" rx="2" fill="#d4a843" opacity="0.4" transform="rotate(-45 75 67)"/>
-                <rect x="86" y="56" width="5" height="22" rx="2" fill="#d4a843" opacity="0.4" transform="rotate(-45 88 67)"/>
+                <rect x="58" y="46" width="72" height="36" rx="7" fill="#12101f" stroke="var(--vault-gold)" strokeWidth="1.5" transform="rotate(-45 94 64)"/>
+                <rect x="73" y="56" width="5" height="22" rx="2" fill="var(--vault-gold)" opacity="0.4" transform="rotate(-45 75 67)"/>
+                <rect x="86" y="56" width="5" height="22" rx="2" fill="var(--vault-gold)" opacity="0.4" transform="rotate(-45 88 67)"/>
               </g>
               <g className="bolt" id="bBR">
-                <rect x="330" y="378" width="72" height="36" rx="7" fill="#12101f" stroke="#d4a843" strokeWidth="1.5" transform="rotate(-45 366 396)"/>
-                <rect x="345" y="384" width="5" height="22" rx="2" fill="#d4a843" opacity="0.4" transform="rotate(-45 347 395)"/>
-                <rect x="358" y="384" width="5" height="22" rx="2" fill="#d4a843" opacity="0.4" transform="rotate(-45 360 395)"/>
+                <rect x="330" y="378" width="72" height="36" rx="7" fill="#12101f" stroke="var(--vault-gold)" strokeWidth="1.5" transform="rotate(-45 366 396)"/>
+                <rect x="345" y="384" width="5" height="22" rx="2" fill="var(--vault-gold)" opacity="0.4" transform="rotate(-45 347 395)"/>
+                <rect x="358" y="384" width="5" height="22" rx="2" fill="var(--vault-gold)" opacity="0.4" transform="rotate(-45 360 395)"/>
               </g>
               <g className="bolt" id="bBL">
-                <rect x="58" y="378" width="72" height="36" rx="7" fill="#12101f" stroke="#d4a843" strokeWidth="1.5" transform="rotate(45 94 396)"/>
-                <rect x="73" y="384" width="5" height="22" rx="2" fill="#d4a843" opacity="0.4" transform="rotate(45 75 395)"/>
-                <rect x="86" y="384" width="5" height="22" rx="2" fill="#d4a843" opacity="0.4" transform="rotate(45 88 395)"/>
+                <rect x="58" y="378" width="72" height="36" rx="7" fill="#12101f" stroke="var(--vault-gold)" strokeWidth="1.5" transform="rotate(45 94 396)"/>
+                <rect x="73" y="384" width="5" height="22" rx="2" fill="var(--vault-gold)" opacity="0.4" transform="rotate(45 75 395)"/>
+                <rect x="86" y="384" width="5" height="22" rx="2" fill="var(--vault-gold)" opacity="0.4" transform="rotate(45 88 395)"/>
               </g>
 
               <circle cx="230" cy="230" r="178" fill="none" stroke="#1e1a35" strokeWidth="3"/>
-              <circle cx="230" cy="230" r="174" fill="none" stroke="#d4a843" strokeWidth="1" strokeDasharray="5 6" opacity="0.3"/>
-              <circle cx="230" cy="230" r="162" fill="url(#faceG)" stroke="#d4a843" strokeWidth="2"/>
+              <circle cx="230" cy="230" r="174" fill="none" stroke="var(--vault-gold)" strokeWidth="1" strokeDasharray="5 6" opacity="0.3"/>
+              <circle cx="230" cy="230" r="162" fill="url(#faceG)" stroke="var(--vault-gold)" strokeWidth="2"/>
               <circle cx="230" cy="230" r="158" fill="none" stroke="#2a2440" strokeWidth="1"/>
 
-              <g stroke="#d4a843" strokeWidth="1.5" opacity="0.3">
+              <g stroke="var(--vault-gold)" strokeWidth="1.5" opacity="0.3">
                 <line x1="230" y1="72" x2="230" y2="84"/>
                 <line x1="230" y1="376" x2="230" y2="388"/>
                 <line x1="72" y1="230" x2="84" y2="230"/>
@@ -277,19 +277,19 @@ export default function LoginPage() {
 
               <g id="dialRing" style={{ transformOrigin: '230px 230px', animation: 'dialSpin 10s linear infinite' }}>
                 <circle cx="230" cy="230" r="118" fill="none" stroke="#1a1730" strokeWidth="20"/>
-                <circle cx="230" cy="230" r="118" fill="none" stroke="#d4a843" strokeWidth="1" strokeDasharray="4 11" opacity="0.5"/>
-                <text x="230" y="116" textAnchor="middle" fontFamily="'DM Sans',sans-serif" fontSize="9" fill="#d4a843" opacity="0.6">00</text>
-                <text x="342" y="234" textAnchor="middle" fontFamily="'DM Sans',sans-serif" fontSize="9" fill="#d4a843" opacity="0.6">25</text>
-                <text x="230" y="350" textAnchor="middle" fontFamily="'DM Sans',sans-serif" fontSize="9" fill="#d4a843" opacity="0.6">50</text>
-                <text x="118" y="234" textAnchor="middle" fontFamily="'DM Sans',sans-serif" fontSize="9" fill="#d4a843" opacity="0.6">75</text>
+                <circle cx="230" cy="230" r="118" fill="none" stroke="var(--vault-gold)" strokeWidth="1" strokeDasharray="4 11" opacity="0.5"/>
+                <text x="230" y="116" textAnchor="middle" fontFamily="'DM Sans',sans-serif" fontSize="9" fill="var(--vault-gold)" opacity="0.6">00</text>
+                <text x="342" y="234" textAnchor="middle" fontFamily="'DM Sans',sans-serif" fontSize="9" fill="var(--vault-gold)" opacity="0.6">25</text>
+                <text x="230" y="350" textAnchor="middle" fontFamily="'DM Sans',sans-serif" fontSize="9" fill="var(--vault-gold)" opacity="0.6">50</text>
+                <text x="118" y="234" textAnchor="middle" fontFamily="'DM Sans',sans-serif" fontSize="9" fill="var(--vault-gold)" opacity="0.6">75</text>
               </g>
 
-              <line x1="230" y1="230" x2="230" y2="116" stroke="#d4a843" strokeWidth="2.5" strokeLinecap="round"
+              <line x1="230" y1="230" x2="230" y2="116" stroke="var(--vault-gold)" strokeWidth="2.5" strokeLinecap="round"
                 style={{ transformOrigin: '230px 230px', animation: 'handSpin 2.5s ease-in-out infinite alternate' }}/>
 
-              <circle cx="230" cy="230" r="96" fill="url(#hubG)" stroke="#d4a843" strokeWidth="1.5"/>
+              <circle cx="230" cy="230" r="96" fill="url(#hubG)" stroke="var(--vault-gold)" strokeWidth="1.5"/>
               <circle cx="230" cy="230" r="90" fill="none" stroke="#2a2440" strokeWidth="1"/>
-              <circle cx="230" cy="230" r="7" fill="#d4a843" opacity="0.9"/>
+              <circle cx="230" cy="230" r="7" fill="var(--vault-gold)" opacity="0.9"/>
               <circle cx="230" cy="230" r="3" fill="#0b0918"/>
             </svg>
 

@@ -50,7 +50,7 @@ export function DossierPicturesSheet({ posts }: { posts: DossierPicture[] }) {
     <div ref={rootRef}>
       <div className={styles.binderClip} aria-hidden="true"><span /><span /></div>
       <div className={styles.sheetHeading}>
-        <h2 className="section-label text-[#1f6f6a]">{DOSSIER.pictures}</h2>
+        <h2 className="section-label text-case-teal">{DOSSIER.pictures}</h2>
       </div>
       <div className={styles.pictureList}>
         {posts.map(post => (

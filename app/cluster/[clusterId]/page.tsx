@@ -147,7 +147,7 @@ export default async function ClusterContentWallPage({ params }: ClusterPageProp
           <div
             className="relative overflow-hidden p-6 md:p-8"
             style={{
-              background: `linear-gradient(135deg, ${cluster.color ?? '#4fc9d6'}30 0%, rgba(6, 12, 21, 0.96) 60%, rgba(4, 7, 14, 0.98) 100%)`,
+              background: `linear-gradient(135deg, ${cluster.color ?? 'var(--archive-cyan-dim)'}30 0%, rgba(6, 12, 21, 0.96) 60%, rgba(4, 7, 14, 0.98) 100%)`,
             }}
           >
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.14),transparent_45%)]" />

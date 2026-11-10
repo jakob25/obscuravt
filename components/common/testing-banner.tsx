@@ -28,11 +28,11 @@ export function TestingBanner() {
   if (!show) return null
 
   return (
-    <div className="relative w-full z-[100] bg-[#0a0a14] border-b border-[#d4a843]/30 text-sm">
+    <div className="relative w-full z-[100] bg-vault-deeper border-b border-vault-gold/30 text-sm">
       <div className="max-w-7xl mx-auto px-4 py-2.5 flex items-center justify-between gap-4">
-        <div className="flex items-center gap-3 text-[#d4a843]">
+        <div className="flex items-center gap-3 text-vault-gold">
           <span className="font-medium font-mono tracking-wider">◈ EARLY TESTING</span>
-          <span className="text-[#d4a843]/80">
+          <span className="text-vault-gold/80">
             ObscuraVT is currently in early testing. Things may break.
           </span>
           <a
@@ -47,7 +47,7 @@ export function TestingBanner() {
 
         <button
           onClick={dismiss}
-          className="text-[#d4a843]/60 hover:text-[#d4a843] transition-colors text-xs px-2 py-1"
+          className="text-vault-gold/60 hover:text-vault-gold transition-colors text-xs px-2 py-1"
         >
           Dismiss
         </button>
