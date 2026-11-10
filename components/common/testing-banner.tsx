@@ -17,7 +17,8 @@ export function TestingBanner() {
     setShow(false)
   }
 
-  // Lets pages add room for this fixed banner only while it is on screen.
+  // In-flow so the banner pushes the sticky nav down (including when it wraps)
+  // and leaves no gap once dismissed. Pages can still key off the attribute.
   useEffect(() => {
     if (!show) return
     document.documentElement.setAttribute('data-testing-banner', '')
@@ -27,7 +28,7 @@ export function TestingBanner() {
   if (!show) return null
 
   return (
-    <div className="fixed top-0 left-0 right-0 z-[100] bg-[#0a0a14] border-b border-[#d4a843]/30 text-sm">
+    <div className="relative w-full z-[100] bg-[#0a0a14] border-b border-[#d4a843]/30 text-sm">
       <div className="max-w-7xl mx-auto px-4 py-2.5 flex items-center justify-between gap-4">
         <div className="flex items-center gap-3 text-[#d4a843]">
           <span className="font-medium font-mono tracking-wider">◈ EARLY TESTING</span>
