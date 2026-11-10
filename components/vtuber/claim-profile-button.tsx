@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useAuth } from '@/lib/auth-context'
-import { DOSSIER } from '@/lib/site-copy'
+import { DOSSIER, SITE_CONTACT } from '@/lib/site-copy'
 import { ShieldCheck, Clock } from 'lucide-react'
 
 interface Props {
@@ -44,9 +44,30 @@ export function ClaimProfileButton({ claimedBy, approved = true }: Props) {
   if (!claimedBy && approved) {
     return (
       <p className="text-xs text-muted-foreground max-w-[16rem] leading-snug">
-        {DOSSIER.requestLink}
+        <RequestLinkNote />
       </p>
     )
   }
   return null
+}
+
+function RequestLinkNote() {
+  const handle = SITE_CONTACT.atHandle
+  const text = DOSSIER.requestLink
+  const index = text.indexOf(handle)
+  if (index < 0) return <>{text}</>
+  return (
+    <>
+      {text.slice(0, index)}
+      <a
+        href={SITE_CONTACT.url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-vault-gold underline underline-offset-2 hover:text-white"
+      >
+        {handle}
+      </a>
+      {text.slice(index + handle.length)}
+    </>
+  )
 }

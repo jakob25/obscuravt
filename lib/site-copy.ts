@@ -9,6 +9,23 @@ export const SITE_HERO = 'Find VTubers by vibe and tag, not sub count.'
 export const SITE_DESCRIPTION =
   'Browse dossiers, clips, and community bets. Every clip links back to the creator.'
 
+
+/** Public X account for feedback and profile-link requests. Handle is the single source. */
+const X_HANDLE = 'blujayrx'
+const X_AT_HANDLE = `@${X_HANDLE}`
+
+export const SITE_CONTACT = {
+  handle: X_HANDLE,
+  atHandle: X_AT_HANDLE,
+  url: `https://x.com/${X_HANDLE}`,
+} as const
+
+export const TESTING_BANNER = {
+  label: '◈ EARLY TESTING',
+  body: 'ObscuraVT is currently in early testing. Things may break.',
+  feedback: `Report feedback to ${X_AT_HANDLE} on X`,
+} as const
+
 export const EMPTY = {
   clips: 'No clips yet.',
   circle: 'Add creators from Discover to see their activity here.',
@@ -60,7 +77,7 @@ export const DOSSIER = {
   clipsAll: 'All clips →',
   claimed: '● CLAIMED FILE',
   unclaimed: '● UNCLAIMED FILE',
-  requestLink: 'Is this you? Message us to get this profile linked to your account.',
+  requestLink: `Is this you? Message ${X_AT_HANDLE} on X to get this profile linked to your account.`,
   pictures: 'Pictures',
   picturesOpen: 'Open post on X',
 } as const

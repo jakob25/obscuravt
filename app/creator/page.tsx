@@ -12,6 +12,7 @@ import {
   Calendar, Palette, Lightbulb, Users, BookOpen, BarChart3,
 } from 'lucide-react'
 import { VaultDivider } from '@/components/vault/vault-surfaces'
+import { SITE_CONTACT } from '@/lib/site-copy'
 import { CollabRequestForm } from '@/components/collab/collab-request-form'
 import { CollabNotifications } from '@/components/collab/collab-notifications'
 
@@ -106,7 +107,7 @@ export default function CreatorDashboardPage() {
         ) : (
           <div className="space-y-3">
             <p className="text-sm text-vault-cream">
-              No linked profiles yet. Message us to get your profile linked to your account, or{' '}
+              No linked profiles yet. Message {SITE_CONTACT.atHandle} on X to get your profile linked to your account, or{' '}
               <Link href="/nominator" className="text-vault-gold hover:underline">nominate yourself</Link>.
             </p>
             {claimRows.length > 0 && (

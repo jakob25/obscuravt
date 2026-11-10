@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { createRoot, type Root } from 'react-dom/client'
 import { act } from 'react'
 import { ClaimProfileButton } from './claim-profile-button'
-import { DOSSIER } from '@/lib/site-copy'
+import { DOSSIER, SITE_CONTACT } from '@/lib/site-copy'
 
 const auth = { user: null as { username: string; role: string } | null }
 
@@ -46,6 +46,11 @@ describe('ClaimProfileButton', () => {
     await mount({ claimedBy: null, approved: true })
     expect(host.textContent).toBe(DOSSIER.requestLink)
     expect(host.querySelector('button')).toBeNull()
+    const link = host.querySelector('a')
+    expect(link?.textContent).toBe(SITE_CONTACT.atHandle)
+    expect(link?.getAttribute('href')).toBe(SITE_CONTACT.url)
+    expect(link?.getAttribute('target')).toBe('_blank')
+    expect(link?.getAttribute('rel')).toBe('noopener noreferrer')
   })
 
   it('keeps the owner, claimed-by, and pending states', async () => {

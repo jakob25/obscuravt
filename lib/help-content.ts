@@ -1,3 +1,5 @@
+import { SITE_CONTACT } from '@/lib/site-copy'
+
 export interface HelpItem {
   q: string
   a: string
@@ -104,7 +106,7 @@ export const HELP_SECTIONS: HelpSection[] = [
     items: [
       {
         q: 'How do I get my VTuber profile linked?',
-        a: 'Message us to get your profile linked to your account. Not listed yet? Nominate yourself.',
+        a: `Message ${SITE_CONTACT.atHandle} on X to get your profile linked to your account. Not listed yet? Nominate yourself.`,
       },
       {
         q: 'What is the Creator Dashboard?',
