@@ -115,7 +115,7 @@ export default function ShopPage() {
       </div>
 
       <p className="text-sm text-muted-foreground mb-4">
-        Burn scraps on titles and flex. Win bets to restock.
+        Burn scraps on titles and flex. Restock from the daily bonus, posting clips, tag validator streaks, winning bets, and achievements.
       </p>
       <VaultDivider className="mb-8" />
 
