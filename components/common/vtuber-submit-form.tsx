@@ -1,7 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import Link from 'next/link'
 import { useAuth } from '@/lib/auth-context'
+import { VTUBER_SUBMIT } from '@/lib/site-copy'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -11,6 +13,12 @@ import { Upload, X, Loader2, CheckCircle2 } from 'lucide-react'
 interface VTuberSubmitFormProps {
   onSuccess?: () => void
   onCancel?: () => void
+}
+
+type LookupDuplicate = {
+  status: 'match' | 'pending' | 'unsure'
+  id: string | null
+  name: string | null
 }
 
 export function VTuberSubmitForm({ onSuccess, onCancel }: VTuberSubmitFormProps) {
@@ -26,23 +34,27 @@ export function VTuberSubmitForm({ onSuccess, onCancel }: VTuberSubmitFormProps)
   const [selectedVibeTags, setSelectedVibeTags] = useState<string[]>([])
   const [avatarFile, setAvatarFile] = useState<File | null>(null)
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
+  const [lookupAvatar, setLookupAvatar] = useState<string | null>(null)
+  const [avatarCleared, setAvatarCleared] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+  const [lookupLoading, setLookupLoading] = useState(false)
+  const [lookupMessage, setLookupMessage] = useState('')
+  const [duplicate, setDuplicate] = useState<LookupDuplicate | null>(null)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
+  const touchedRef = useRef({ name: false, handle: false, platform: false, bio: false })
+  const lastLookupUrlRef = useRef('')
 
   const constellations = ['clust_chaos', 'clust_cyber', 'clust_fantasy', 'clust_slice_of_life', 'clust_music']
   const vibeTagOptions = ['wholesome', 'chaotic', 'unhinged', 'cozy', 'competitive', 'artistic', 'meme', 'chill']
 
-  const linkPlaceholder = formData.platform.toLowerCase().includes('twitch')
-    ? 'https://twitch.tv/...'
-    : formData.platform.toLowerCase().includes('youtube')
-    ? 'https://youtube.com/channel/...'
-    : formData.platform.toLowerCase().includes('twitter')
-    ? 'https://twitter.com/...'
-    : 'https://...'
+  const shownAvatar = avatarPreview || (!avatarFile && !avatarCleared ? lookupAvatar : null)
 
-  const handleInputChange = (field: string, value: string) => {
+  const handleInputChange = (field: keyof typeof formData, value: string) => {
+    if (field === 'name' || field === 'handle' || field === 'platform' || field === 'bio') {
+      touchedRef.current[field] = true
+    }
     setFormData(prev => ({ ...prev, [field]: value }))
   }
 
@@ -60,6 +72,7 @@ export function VTuberSubmitForm({ onSuccess, onCancel }: VTuberSubmitFormProps)
     }
 
     setAvatarFile(file)
+    setAvatarCleared(false)
     const reader = new FileReader()
     reader.onload = (ev) => setAvatarPreview(ev.target?.result as string)
     reader.readAsDataURL(file)
@@ -69,6 +82,7 @@ export function VTuberSubmitForm({ onSuccess, onCancel }: VTuberSubmitFormProps)
   const removeAvatar = () => {
     setAvatarFile(null)
     setAvatarPreview(null)
+    setAvatarCleared(true)
   }
 
   const toggleVibeTag = (tag: string) => {
@@ -78,6 +92,75 @@ export function VTuberSubmitForm({ onSuccess, onCancel }: VTuberSubmitFormProps)
         : [...prev, tag].slice(0, 8)
     )
   }
+
+  useEffect(() => {
+    const url = formData.link.trim()
+    if (!user || !url) {
+      setLookupLoading(false)
+      return
+    }
+    if (url === lastLookupUrlRef.current) return
+
+    let cancelled = false
+    const handle = window.setTimeout(() => {
+      lastLookupUrlRef.current = url
+      setLookupLoading(true)
+      setLookupMessage('')
+      setDuplicate(null)
+
+      fetch('/api/vtubers/lookup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ url }),
+      })
+        .then(async res => {
+          const data = await res.json().catch(() => ({}))
+          if (cancelled) return
+          if (!res.ok) {
+            if (res.status === 400) {
+              setLookupMessage(typeof data.error === 'string' ? data.error : VTUBER_SUBMIT.pasteLink)
+            } else if (res.status === 401) {
+              setLookupMessage('You must be signed in to pull a profile.')
+            } else {
+              setLookupMessage(VTUBER_SUBMIT.lookupFailed)
+            }
+            return
+          }
+          setFormData(prev => {
+            if (prev.link.trim() !== url) return prev
+            return {
+              ...prev,
+              link: typeof data.link === 'string' && data.link ? data.link : prev.link,
+              name: !touchedRef.current.name && data.name ? data.name : prev.name,
+              handle: !touchedRef.current.handle && data.handle ? data.handle : prev.handle,
+              platform: !touchedRef.current.platform && data.platform ? data.platform : prev.platform,
+              bio: !touchedRef.current.bio ? (data.bio || '') : prev.bio,
+            }
+          })
+          if (data.link && !cancelled) {
+            lastLookupUrlRef.current = data.link
+          }
+          if (!avatarFile) {
+            setLookupAvatar(typeof data.avatarUrl === 'string' && data.avatarUrl ? data.avatarUrl : null)
+            setAvatarCleared(false)
+          }
+          setLookupMessage(typeof data.message === 'string' && data.message ? data.message : '')
+          setDuplicate(data.duplicate && data.duplicate.status ? data.duplicate : null)
+        })
+        .catch(() => {
+          if (!cancelled) setLookupMessage(VTUBER_SUBMIT.lookupFailed)
+        })
+        .finally(() => {
+          if (!cancelled) setLookupLoading(false)
+        })
+    }, 400)
+
+    return () => {
+      cancelled = true
+      window.clearTimeout(handle)
+    }
+  }, [formData.link, user, avatarFile])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -89,6 +172,16 @@ export function VTuberSubmitForm({ onSuccess, onCancel }: VTuberSubmitFormProps)
       setError('Name must be at least 2 characters')
       return
     }
+    if (duplicate?.status === 'match' || duplicate?.status === 'pending') {
+      setError(
+        duplicate.status === 'match' && duplicate.name
+          ? VTUBER_SUBMIT.alreadyInVault(duplicate.name)
+          : duplicate.name
+            ? VTUBER_SUBMIT.alreadyNominated(duplicate.name)
+            : VTUBER_SUBMIT.alreadyNominated('That creator'),
+      )
+      return
+    }
 
     setSubmitting(true)
     setError('')
@@ -96,7 +189,6 @@ export function VTuberSubmitForm({ onSuccess, onCancel }: VTuberSubmitFormProps)
     try {
       let avatarUrl: string | null = null
 
-      // Upload avatar if selected
       if (avatarFile) {
         setUploading(true)
         const uploadBody = new FormData()
@@ -114,7 +206,6 @@ export function VTuberSubmitForm({ onSuccess, onCancel }: VTuberSubmitFormProps)
         setUploading(false)
       }
 
-      // Combine tags
       const allTags = [...(selectedConstellation ? [selectedConstellation] : []), ...selectedVibeTags]
 
       const res = await fetch('/api/vtubers', {
@@ -125,6 +216,7 @@ export function VTuberSubmitForm({ onSuccess, onCancel }: VTuberSubmitFormProps)
           ...formData,
           tags: allTags,
           avatar_url: avatarUrl,
+          skip_avatar: !avatarFile && avatarCleared,
         }),
       })
 
@@ -136,12 +228,17 @@ export function VTuberSubmitForm({ onSuccess, onCancel }: VTuberSubmitFormProps)
       setSuccess(true)
       setTimeout(() => {
         onSuccess?.()
-        // Reset form
         setFormData({ name: '', handle: '', platform: 'Twitch', link: '', bio: '' })
         setSelectedConstellation('')
         setSelectedVibeTags([])
         setAvatarFile(null)
         setAvatarPreview(null)
+        setLookupAvatar(null)
+        setAvatarCleared(false)
+        setLookupMessage('')
+        setDuplicate(null)
+        touchedRef.current = { name: false, handle: false, platform: false, bio: false }
+        lastLookupUrlRef.current = ''
         setSuccess(false)
       }, 1500)
     } catch (err: unknown) {
@@ -162,15 +259,56 @@ export function VTuberSubmitForm({ onSuccess, onCancel }: VTuberSubmitFormProps)
     )
   }
 
+  const duplicateMessage = duplicate?.status === 'match' && duplicate.name
+    ? VTUBER_SUBMIT.alreadyInVault(duplicate.name)
+    : duplicate?.status === 'pending' && duplicate.name
+      ? VTUBER_SUBMIT.alreadyNominated(duplicate.name)
+      : duplicate?.status === 'unsure'
+        ? 'That handle already matches more than one creator. An admin will sort it out.'
+        : ''
+
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      {/* Avatar Upload */}
+      <div>
+        <Label htmlFor="link">{VTUBER_SUBMIT.pasteLink}</Label>
+        <Input
+          id="link"
+          type="url"
+          value={formData.link}
+          onChange={(e) => handleInputChange('link', e.target.value)}
+          placeholder="https://twitch.tv/…  https://youtube.com/@…  https://x.com/…"
+          className="mt-2"
+        />
+        {lookupLoading && (
+          <p className="text-xs text-muted-foreground mt-2 flex items-center gap-2">
+            <Loader2 className="h-3 w-3 animate-spin" />
+            {VTUBER_SUBMIT.lookingUp}
+          </p>
+        )}
+        {!lookupLoading && lookupMessage && (
+          <p className="text-xs text-muted-foreground mt-2">{lookupMessage}</p>
+        )}
+        {!lookupLoading && duplicateMessage && (
+          <p className="text-sm text-vault-gold mt-2">
+            {duplicateMessage}
+            {duplicate?.status === 'match' && duplicate.id && (
+              <>
+                {' '}
+                <Link href={`/vtuber/${duplicate.id}`} className="underline underline-offset-2">
+                  Open dossier
+                </Link>
+              </>
+            )}
+          </p>
+        )}
+      </div>
+
       <div>
         <Label className="text-sm font-medium">Profile Picture (optional)</Label>
         <div className="mt-2 flex items-center gap-4">
-          {avatarPreview ? (
+          {shownAvatar ? (
             <div className="relative">
-              <img src={avatarPreview} alt="Preview" className="h-20 w-20 rounded-xl object-cover border" />
+              <img src={shownAvatar} alt="Preview" className="h-20 w-20 rounded-xl object-cover border" />
               <button
                 type="button"
                 onClick={removeAvatar}
@@ -244,17 +382,6 @@ export function VTuberSubmitForm({ onSuccess, onCancel }: VTuberSubmitFormProps)
       </div>
 
       <div>
-        <Label htmlFor="link">Channel Link</Label>
-        <Input
-          id="link"
-          type="url"
-          value={formData.link}
-          onChange={(e) => handleInputChange('link', e.target.value)}
-          placeholder={linkPlaceholder}
-        />
-      </div>
-
-      <div>
         <Label htmlFor="bio">Bio / Description</Label>
         <Textarea
           id="bio"
@@ -266,7 +393,6 @@ export function VTuberSubmitForm({ onSuccess, onCancel }: VTuberSubmitFormProps)
         />
       </div>
 
-      {/* Constellation Selection */}
       <div>
         <Label>Constellation (Vibe Group)</Label>
         <div className="flex flex-wrap gap-2 mt-2">
@@ -287,7 +413,6 @@ export function VTuberSubmitForm({ onSuccess, onCancel }: VTuberSubmitFormProps)
         </div>
       </div>
 
-      {/* Vibe Tags */}
       <div>
         <Label>Vibe Tags (max 8)</Label>
         <div className="flex flex-wrap gap-2 mt-2">
@@ -317,7 +442,7 @@ export function VTuberSubmitForm({ onSuccess, onCancel }: VTuberSubmitFormProps)
             Cancel
           </Button>
         )}
-        <Button type="submit" className="flex-1" disabled={submitting || uploading}>
+        <Button type="submit" className="flex-1" disabled={submitting || uploading || lookupLoading || duplicate?.status === 'match' || duplicate?.status === 'pending' || duplicate?.status === 'unsure'}>
           {uploading ? 'Uploading image...' : submitting ? 'Submitting...' : 'Submit for Review'}
           {(submitting || uploading) && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
         </Button>

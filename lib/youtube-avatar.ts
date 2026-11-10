@@ -50,23 +50,83 @@ export function youtubeTarget(row: Row): Target | null {
 }
 
 type ChannelsResponse = {
-  items?: { id: string; snippet?: { thumbnails?: Record<string, { url?: string }> } }[]
+  items?: {
+    id: string
+    snippet?: {
+      title?: string
+      description?: string
+      customUrl?: string
+      thumbnails?: Record<string, { url?: string }>
+    }
+  }[]
 }
 
 function bestThumb(t: Record<string, { url?: string }> | undefined): string | null {
   return t?.high?.url || t?.medium?.url || t?.default?.url || null
 }
 
-async function channels(params: string, key: string): Promise<ChannelsResponse['items']> {
+async function channels(
+  params: string,
+  key: string,
+  opts?: { timeoutMs?: number; noStore?: boolean },
+): Promise<ChannelsResponse['items']> {
   try {
-    const res = await safeFetch(`${API}?part=snippet&${params}&key=${encodeURIComponent(key)}`, ALLOWED_HOSTS.youtubeApi, {
-      next: { revalidate: DAY },
-    } as RequestInit)
+    const init: RequestInit = opts?.noStore
+      ? { cache: 'no-store' }
+      : { next: { revalidate: DAY } as RequestInit['next'] }
+    if (opts?.timeoutMs) init.signal = AbortSignal.timeout(opts.timeoutMs)
+    const res = await safeFetch(`${API}?part=snippet&${params}&key=${encodeURIComponent(key)}`, ALLOWED_HOSTS.youtubeApi, init)
     if (!res || !res.ok) return []
     const json = (await res.json()) as ChannelsResponse
     return json.items ?? []
   } catch {
     return []
+  }
+}
+
+export type YoutubeChannelQuery =
+  | { kind: 'id'; value: string }
+  | { kind: 'handle'; value: string }
+  | { kind: 'username'; value: string }
+
+export type YoutubeChannelProfile = {
+  id: string
+  title: string
+  description: string
+  handle: string | null
+  avatarUrl: string | null
+}
+
+/** One official channels.list lookup. Missing key or a failed call returns null. */
+export async function youtubeChannelProfile(
+  query: YoutubeChannelQuery,
+  opts?: { timeoutMs?: number },
+): Promise<YoutubeChannelProfile | null> {
+  const key = process.env.YOUTUBE_API_KEY
+  if (!key) return null
+  const params =
+    query.kind === 'id'
+      ? `id=${encodeURIComponent(query.value)}`
+      : query.kind === 'handle'
+        ? `forHandle=${encodeURIComponent(query.value.startsWith('@') ? query.value : `@${query.value}`)}`
+        : `forUsername=${encodeURIComponent(query.value)}`
+  const items = await channels(params, key, { timeoutMs: opts?.timeoutMs, noStore: true })
+  const it = items?.[0]
+  if (!it?.id) return null
+  const title = it.snippet?.title ? String(it.snippet.title).trim() : ''
+  if (!title) return null
+  const customUrl = it.snippet?.customUrl ? String(it.snippet.customUrl).trim() : ''
+  const handle = customUrl
+    ? customUrl.replace(/^@+/, '')
+    : query.kind === 'handle'
+      ? query.value.replace(/^@+/, '')
+      : null
+  return {
+    id: it.id,
+    title,
+    description: it.snippet?.description ? String(it.snippet.description) : '',
+    handle: handle || null,
+    avatarUrl: bestThumb(it.snippet?.thumbnails),
   }
 }
 

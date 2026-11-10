@@ -333,3 +333,13 @@ export async function helixVodTitle(videoId: string): Promise<string | null> {
   const title = result.json?.data?.[0]?.title
   return title ? String(title) : null
 }
+
+/** Helix Get Videos — broadcaster login for a numeric VOD id (with or without leading v). */
+export async function helixVodBroadcaster(videoId: string): Promise<string | null> {
+  const numeric = String(videoId || '').replace(/^v/i, '')
+  if (!clientId() || !/^\d+$/.test(numeric)) return null
+  const result = await helixGetWithRefresh(`${VIDEOS_URL}?id=${encodeURIComponent(numeric)}`)
+  if (!result || result.status !== 200) return null
+  const login = result.json?.data?.[0]?.user_login
+  return login ? String(login).toLowerCase() : null
+}

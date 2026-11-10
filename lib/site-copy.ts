@@ -63,3 +63,14 @@ export const DOSSIER = {
   pictures: 'Pictures',
   picturesOpen: 'Open post on X',
 } as const
+
+/** Add-a-VTuber form — paste a profile link, then edit anything that was pulled. */
+export const VTUBER_SUBMIT = {
+  pasteLink: 'Paste an X, YouTube, or Twitch profile link',
+  lookingUp: 'Pulling the profile…',
+  lookupFailed: "Couldn't pull the profile. The link is saved — fill in the rest and submit.",
+  lookupX: 'Saved the X link and handle. Add the name, bio, and a picture, then submit.',
+  alreadyInVault: (name: string) => `${name} is already in the Vault.`,
+  alreadyNominated: (name: string) =>
+    `${name} has already been nominated and is waiting for approval.`,
+} as const
