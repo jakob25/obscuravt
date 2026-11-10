@@ -53,7 +53,7 @@ export async function requireAuth(req: NextRequest): Promise<SessionPayload | Ne
 
 // ── Admin usernames (single server-side list) ────────────────────────────────
 export function adminUsernames(): string[] {
-  return (process.env.ADMIN_USERNAMES ?? 'BLUJAYRX,jakob25,admin')
+  return (process.env.ADMIN_USERNAMES ?? 'BLUJAYRX')
     .split(',')
     .map(s => s.trim())
     .filter(Boolean)

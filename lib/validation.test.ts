@@ -33,6 +33,10 @@ describe('usernameSchema & passwordSchema', () => {
     expect(() => usernameSchema.parse('user name with spaces')).toThrow()
     expect(() => passwordSchema.parse('short')).toThrow()
   })
+  it('rejects reserved usernames such as Admin', () => {
+    expect(() => usernameSchema.parse('Admin')).toThrow('That username is reserved')
+    expect(() => usernameSchema.parse('jakob25')).toThrow('That username is reserved')
+  })
 })
 
 describe('betSchema and other domain schemas', () => {

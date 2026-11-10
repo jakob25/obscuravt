@@ -10,11 +10,12 @@ afterEach(() => {
 })
 
 describe('isAdminUsername', () => {
-  it('treats the default list as BLUJAYRX, jakob25, and admin', () => {
+  it('treats only BLUJAYRX as an admin by default', () => {
     delete process.env.ADMIN_USERNAMES
     expect(isAdminUsername('BLUJAYRX')).toBe(true)
-    expect(isAdminUsername('jakob25')).toBe(true)
-    expect(isAdminUsername('admin')).toBe(true)
+    expect(isAdminUsername('jakob25')).toBe(false)
+    expect(isAdminUsername('admin')).toBe(false)
+    expect(isAdminUsername('Admin')).toBe(false)
     expect(isAdminUsername('Nim')).toBe(false)
     expect(isAdminUsername(null)).toBe(false)
   })
@@ -54,15 +55,15 @@ describe('requireAdmin', () => {
     expect((result as Response).status).toBe(403)
   })
 
-  it('allows a signed-in admin from the server list', async () => {
+  it('does not treat jakob25 as an admin by default', async () => {
     delete process.env.ADMIN_USERNAMES
     const token = await signSession('jakob25', 'user')
     const req = new NextRequest('http://localhost/api/admin/pending', {
       headers: { cookie: `vtvault_session=${token}` },
     })
     const result = await requireAdmin(req)
-    expect(result).not.toBeInstanceOf(Response)
-    expect((result as { username: string }).username).toBe('jakob25')
+    expect(result).toBeInstanceOf(Response)
+    expect((result as Response).status).toBe(403)
   })
 
   it('allows BLUJAYRX from the default list used by /api/auth/me', async () => {

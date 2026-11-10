@@ -3,6 +3,7 @@ import { supabaseAdmin } from '@/lib/supabase'
 import { rateLimits } from '@/lib/rate-limit'
 import * as bcrypt from 'bcryptjs'
 import { usernameSchema } from '@/lib/validation'
+import { isReservedUsername, RESERVED_USERNAME_ERROR } from '@/lib/reserved-usernames'
 
 export async function POST(req: NextRequest) {
   const rl = await rateLimits.auth(req)
@@ -12,6 +13,10 @@ export async function POST(req: NextRequest) {
 
   if (!username || !password) {
     return NextResponse.json({ error: 'Username and password are required.' }, { status: 400 })
+  }
+
+  if (typeof username === 'string' && isReservedUsername(username)) {
+    return NextResponse.json({ error: RESERVED_USERNAME_ERROR }, { status: 400 })
   }
 
   const usernameCheck = usernameSchema.safeParse(username)

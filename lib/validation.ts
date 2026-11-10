@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { isReservedUsername, RESERVED_USERNAME_ERROR } from './reserved-usernames'
 
 const SCRIPT_STYLE_BLOCK_PATTERN = /<(script|style)\b[^>]*>[\s\S]*?<\/\1\s*>/gi
 const HTML_TAG_PATTERN = /<[^>]*>/g
@@ -45,6 +46,7 @@ export const usernameSchema = z
   .min(3, 'Username must be at least 3 characters')
   .max(20, 'Username must be at most 20 characters')
   .regex(/^[a-zA-Z0-9_-]+$/, 'Username can only contain letters, numbers, underscores, and hyphens')
+  .refine(value => !isReservedUsername(value), { message: RESERVED_USERNAME_ERROR })
 
 export const passwordSchema = z
   .string()

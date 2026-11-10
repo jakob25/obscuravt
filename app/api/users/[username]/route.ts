@@ -3,6 +3,7 @@ import { requireAuth } from '@/lib/session'
 import { DAILY_BONUS } from '@/lib/db-constants'
 import { isValidRole } from '@/lib/roles'
 import { recordScrapTransaction } from '@/lib/scrap-ledger'
+import { isReservedUsername, RESERVED_USERNAME_ERROR } from '@/lib/reserved-usernames'
 
 export async function GET(
   _req: NextRequest,
@@ -36,6 +37,11 @@ export async function PATCH(
   }
 
   const body = await req.json()
+  if ('username' in body && String(body.username) !== username) {
+    if (isReservedUsername(String(body.username ?? ''))) {
+      return NextResponse.json({ error: RESERVED_USERNAME_ERROR }, { status: 400 })
+    }
+  }
   const update: Record<string, unknown> = {}
   if ('bio' in body) update.bio = body.bio
   if ('favorite_vtubers' in body) update.favorite_vtubers = body.favorite_vtubers
