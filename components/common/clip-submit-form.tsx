@@ -10,6 +10,7 @@ import { supabase } from '@/lib/supabase'
 import { validateClipUrl, extractVideoId, extractTwitchChannel } from '@/lib/embed-utils'
 import { Plus, AlertCircle, CheckCircle, Link as LinkIcon, Loader2 } from 'lucide-react'
 import type { VTuber } from '@/lib/types'
+import { clipPostAwardMessage } from '@/lib/clip-rewards'
 
 interface ClipSubmitFormProps {
   prefillVtuberId?: string
@@ -72,6 +73,7 @@ export function ClipSubmitForm({ prefillVtuberId, prefillName, onSuccess, onCanc
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [done, setDone] = useState(false)
+  const [awardMessage, setAwardMessage] = useState<string | null>(null)
 
   // Auto-pull meta from link
   const [metaLoading, setMetaLoading] = useState(false)
@@ -267,6 +269,7 @@ export function ClipSubmitForm({ prefillVtuberId, prefillName, onSuccess, onCanc
       return
     }
 
+    setAwardMessage(clipPostAwardMessage(data.scrap_award))
     setDone(true)
     setSubmitting(false)
     setTimeout(() => onSuccess?.(), 1200)
@@ -280,6 +283,9 @@ export function ClipSubmitForm({ prefillVtuberId, prefillName, onSuccess, onCanc
         <CheckCircle className="h-10 w-10 text-vault-gold" />
         <p className="font-semibold text-vault-cream">Clip submitted!</p>
         <p className="text-sm text-muted-foreground">Thanks for contributing to the Vault.</p>
+        {awardMessage && (
+          <p className="text-sm text-vault-gold">{awardMessage}</p>
+        )}
         {!selectedVTuber && freeTextName.trim() && (
           <p className="text-xs text-muted-foreground max-w-sm">
             This creator isn&apos;t in the Vault yet.{' '}
