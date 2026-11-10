@@ -7,9 +7,6 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Upload, X, Loader2, CheckCircle2 } from 'lucide-react'
-import { getSupabaseClient } from '@/lib/supabase'
-
-const supabase = getSupabaseClient()
 
 interface VTuberSubmitFormProps {
   onSuccess?: () => void
@@ -102,20 +99,18 @@ export function VTuberSubmitForm({ onSuccess, onCancel }: VTuberSubmitFormProps)
       // Upload avatar if selected
       if (avatarFile) {
         setUploading(true)
-        const fileExt = avatarFile.name.split('.').pop()
-        const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`
-
-        const { error: uploadError } = await supabase.storage
-          .from('vtuber-avatars')
-          .upload(fileName, avatarFile, { upsert: false })
-
-        if (uploadError) throw uploadError
-
-        const { data: urlData } = supabase.storage
-          .from('vtuber-avatars')
-          .getPublicUrl(fileName)
-
-        avatarUrl = urlData.publicUrl
+        const uploadBody = new FormData()
+        uploadBody.append('file', avatarFile)
+        const uploadRes = await fetch('/api/vtubers/avatar', {
+          method: 'POST',
+          credentials: 'include',
+          body: uploadBody,
+        })
+        const uploadData = await uploadRes.json().catch(() => ({})) as { error?: string; url?: string }
+        if (!uploadRes.ok || !uploadData.url) {
+          throw new Error(uploadData.error || "Couldn't upload the profile picture. You can submit without one, or try a different image.")
+        }
+        avatarUrl = uploadData.url
         setUploading(false)
       }
 
@@ -125,6 +120,7 @@ export function VTuberSubmitForm({ onSuccess, onCancel }: VTuberSubmitFormProps)
       const res = await fetch('/api/vtubers', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({
           ...formData,
           tags: allTags,
