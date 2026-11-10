@@ -60,6 +60,7 @@ export const DOSSIER = {
   clipsAll: 'All clips →',
   claimed: '● CLAIMED FILE',
   unclaimed: '● UNCLAIMED FILE',
+  requestLink: 'Is this you? Message us to get this profile linked to your account.',
   pictures: 'Pictures',
   picturesOpen: 'Open post on X',
 } as const

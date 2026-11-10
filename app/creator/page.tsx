@@ -106,9 +106,7 @@ export default function CreatorDashboardPage() {
         ) : (
           <div className="space-y-3">
             <p className="text-sm text-vault-cream">
-              No claimed profiles yet.{' '}
-              <Link href="/discover" className="text-vault-gold hover:underline">Discover VTubers</Link>
-              {' '}and claim yours from their dossier, or{' '}
+              No linked profiles yet. Message us to get your profile linked to your account, or{' '}
               <Link href="/nominator" className="text-vault-gold hover:underline">nominate yourself</Link>.
             </p>
             {claimRows.length > 0 && (
@@ -137,7 +135,7 @@ export default function CreatorDashboardPage() {
                   <Icon className="h-5 w-5 text-vault-gold shrink-0 mt-0.5" />
                   <div>
                     <h3 className="font-semibold text-vault-cream">{tool.label}</h3>
-                    <p className="text-xs text-muted-foreground mt-1">Claim a profile first</p>
+                    <p className="text-xs text-muted-foreground mt-1">A linked profile is required</p>
                   </div>
                 </div>
               </VaultFrame>

@@ -132,7 +132,7 @@ function AnalyticsContent() {
         </VaultFrame>
       ) : (
         <VaultPanel className="p-6 text-sm text-muted-foreground text-center mb-6">
-          Claim a profile first to see analytics.
+          A linked profile is required to see analytics.
         </VaultPanel>
       )}
 
