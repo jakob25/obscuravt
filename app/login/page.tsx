@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/auth-context'
+import { safeNextPath } from '@/lib/safe-next-path'
 
 
 export default function LoginPage() {
@@ -43,7 +44,8 @@ export default function LoginPage() {
     }
     setGranted(true)
     boltsOut()
-    setTimeout(() => router.push('/'), 1200)
+    const next = safeNextPath(new URLSearchParams(window.location.search).get('next'))
+    setTimeout(() => router.push(next), 1200)
   }
 
   return (

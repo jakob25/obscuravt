@@ -68,9 +68,41 @@ export const DOSSIER = {
 export const VTUBER_SUBMIT = {
   pasteLink: 'Paste an X, YouTube, or Twitch profile link',
   lookingUp: 'Pulling the profile…',
-  lookupFailed: "Couldn't pull the profile. The link is saved — fill in the rest and submit.",
-  lookupX: 'Saved the X link and handle. Add the name, bio, and a picture, then submit.',
+  lookupFailed: "Couldn't pull the profile. The link is saved — fill in the rest on the next step.",
+  lookupX: 'Saved the X link and handle. Add the name, bio, and a picture on the next step.',
   alreadyInVault: (name: string) => `${name} is already in the Vault.`,
   alreadyNominated: (name: string) =>
     `${name} has already been nominated and is waiting for approval.`,
+  alreadyUnsure: 'That handle already matches more than one creator. An admin will sort it out.',
+  steps: {
+    signin: {
+      title: 'Sign in to nominate',
+      instruction: "We'll bring you back here to finish the form.",
+    },
+    link: {
+      title: 'Profile link',
+      instruction:
+        "Paste the creator's X, YouTube, or Twitch profile link and we'll pull in what we can. You can also skip this and enter the details yourself.",
+    },
+    details: {
+      title: 'Details',
+      instruction: "Check the name, handle, platform, bio, and picture. Edit anything that's wrong or missing.",
+    },
+    tags: {
+      title: 'Tags',
+      instruction: "Pick a constellation and any vibe tags that fit. You can skip this if you're not sure.",
+    },
+    review: {
+      title: 'Review',
+      instruction: "Look over the nomination, then submit it. It stays off the maps until it's approved.",
+    },
+  },
+  skipLink: 'Enter details by hand',
+  next: 'Next',
+  back: 'Back',
+  signIn: 'Sign in',
+  stepOf: (current: number, total: number) => `Step ${current} of ${total}`,
+  submittedTitle: 'Submitted for review!',
+  submittedBody: 'Your VTuber will appear on the maps once approved.',
+  reviewedBeforeMaps: 'Submissions are reviewed before appearing on the maps.',
 } as const

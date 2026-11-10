@@ -29,7 +29,9 @@ export function AddButton() {
   useEffect(() => {
     if (typeof window === 'undefined') return
     const params = new URLSearchParams(window.location.search)
-    if (params.get('compose') === 'clip') openTab('clip')
+    const compose = params.get('compose')
+    if (compose === 'clip') openTab('clip')
+    if (compose === 'vtuber') openTab('vtuber')
   }, [])
 
   return (
