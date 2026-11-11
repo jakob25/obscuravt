@@ -6,8 +6,7 @@ import { normalizeRole } from '@/lib/roles'
 import { ThumbsUp, Target, Coins } from 'lucide-react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
-import { PageBackNav } from '@/components/vault/page-back-nav'
-import { GlitchHeading } from '@/components/vault/glitch-heading'
+import { PageHeader } from '@/components/vault/page-header'
 import { VaultDivider, VaultPanel } from '@/components/vault/vault-surfaces'
 
 interface Goal {
@@ -123,15 +122,12 @@ function CmdmiPageContent() {
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-2xl">
-      <PageBackNav fallbackHref={profileId ? `/vtuber/${profileId}` : '/discover'} />
-      <div className="mb-6">
-        <GlitchHeading as="h1" variant="case" className="text-2xl font-bold text-vault-cream mb-1">
-          Chat Made Me Do It
-        </GlitchHeading>
-        <p className="text-muted-foreground text-sm">
-          Fans submit ideas. Creators pick one and set a scraps goal.
-        </p>
-      </div>
+      <PageHeader
+        fallbackHref={profileId ? `/vtuber/${profileId}` : '/discover'}
+        variant="case"
+        title="Chat Made Me Do It"
+        description="Fans submit ideas. Creators pick one and set a scraps goal."
+      />
       <VaultDivider className="mb-6" />
 
       {!profileId && (

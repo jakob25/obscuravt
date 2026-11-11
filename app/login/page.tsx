@@ -1,14 +1,12 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/auth-context'
-import { safeNextPath } from '@/lib/safe-next-path'
+import { navigateAfterLogin } from '@/lib/safe-next-path'
 
 
 export default function LoginPage() {
   const { login, register } = useAuth()
-  const router = useRouter()
   const [mode, setMode] = useState<'login' | 'register'>('login')
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
@@ -36,16 +34,22 @@ export default function LoginPage() {
     setError('')
     setLoading(true)
     const fn = mode === 'login' ? login : register
-    const result = await fn(username, password)
-    if (!result.ok) {
-      setError(result.error ?? 'Something went wrong.')
+    try {
+      const result = await fn(username, password)
+      if (!result.ok) {
+        setError(result.error ?? 'Something went wrong.')
+        setLoading(false)
+        return
+      }
+      setGranted(true)
+      boltsOut()
+      // Document navigation honors ?next= and attaches the session cookie.
+      // A delayed router.push() without refresh could leave this page mounted.
+      setTimeout(() => navigateAfterLogin(window.location.search), 1200)
+    } catch {
+      setError('Something went wrong.')
       setLoading(false)
-      return
     }
-    setGranted(true)
-    boltsOut()
-    const next = safeNextPath(new URLSearchParams(window.location.search).get('next'))
-    setTimeout(() => router.push(next), 1200)
   }
 
   return (

@@ -2,8 +2,7 @@
 
 import { useStarMapData } from '@/hooks/use-star-map-data'
 import Link from 'next/link'
-import { PageBackNav } from '@/components/vault/page-back-nav'
-import { GlitchHeading } from '@/components/vault/glitch-heading'
+import { PageHeader } from '@/components/vault/page-header'
 import { VaultDivider, VaultPanel } from '@/components/vault/vault-surfaces'
 
 export default function ForumsIndexPage() {
@@ -11,15 +10,11 @@ export default function ForumsIndexPage() {
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-2xl">
-      <PageBackNav fallbackHref="/discover" />
-      <div className="mb-6">
-        <GlitchHeading as="h1" className="text-2xl font-bold text-vault-cream mb-1">
-          Forums
-        </GlitchHeading>
-        <p className="text-muted-foreground text-sm">
-          Constellation gossip. No algorithm, just vibes.
-        </p>
-      </div>
+      <PageHeader
+        fallbackHref="/discover"
+        title="Forums"
+        description="Constellation gossip. No algorithm, just vibes."
+      />
       <VaultDivider className="mb-6" />
 
       {loading && <p className="text-muted-foreground text-sm animate-pulse text-center py-8">Scanning constellations…</p>}

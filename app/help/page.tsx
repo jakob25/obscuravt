@@ -4,8 +4,7 @@ import { useState } from 'react'
 import { ChevronDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { HELP_SECTIONS } from '@/lib/help-content'
-import { GlitchHeading } from '@/components/vault/glitch-heading'
-import { PageBackNav } from '@/components/vault/page-back-nav'
+import { PageHeader } from '@/components/vault/page-header'
 import { VaultDivider, VaultPanel } from '@/components/vault/vault-surfaces'
 
 function FaqItem({ q, a }: { q: string; a: string }) {
@@ -45,16 +44,14 @@ export default function HelpPage() {
   return (
     <div className="min-h-screen">
       <div className="container mx-auto max-w-3xl px-4 py-8">
-        <PageBackNav fallbackHref="/" />
-
-        <div className="mb-6 mt-4">
-          <GlitchHeading as="h1" variant="case" className="text-2xl md:text-3xl font-bold text-vault-cream">
-            How ObscuraVT Works
-          </GlitchHeading>
-          <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground">
-            Practical answers about discovery, your circle, community features, and creator tools.
-          </p>
-        </div>
+        <PageHeader
+          fallbackHref="/"
+          variant="case"
+          title="How ObscuraVT Works"
+          headingClassName="text-2xl md:text-3xl"
+          description="Practical answers about discovery, your circle, community features, and creator tools."
+          descriptionClassName="mt-3 max-w-2xl leading-relaxed"
+        />
 
         <VaultDivider className="mb-8" />
 

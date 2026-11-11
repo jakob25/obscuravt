@@ -2,8 +2,7 @@
 
 import { Gamepad2, ExternalLink, Monitor, CheckSquare } from 'lucide-react'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
-import { GlitchHeading } from '@/components/vault/glitch-heading'
-import { PageBackNav } from '@/components/vault/page-back-nav'
+import { PageHeader } from '@/components/vault/page-header'
 import { VaultDivider, VaultPanel } from '@/components/vault/vault-surfaces'
 import { CHAT_INTEGRATED_GAMES, type GameResource } from '@/lib/chat-integrated-games'
 
@@ -92,13 +91,11 @@ function DebutChecklistTab() {
 export default function ResourcesPage() {
   return (
     <div className="container mx-auto px-4 py-8 max-w-3xl">
-      <PageBackNav fallbackHref="/" />
-      <div className="mb-6">
-        <GlitchHeading as="h1" className="text-2xl font-bold text-vault-cream mb-1">
-          Stream Resources
-        </GlitchHeading>
-        <p className="text-muted-foreground text-sm">Tools, games, and debut prep — no corporate fluff.</p>
-      </div>
+      <PageHeader
+        fallbackHref="/"
+        title="Stream Resources"
+        description="Tools, games, and debut prep — no corporate fluff."
+      />
       <VaultDivider className="mb-6" />
 
       <Tabs defaultValue="chat-games">

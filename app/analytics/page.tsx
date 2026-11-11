@@ -5,8 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { useAuth } from '@/lib/auth-context'
 import { normalizeRole } from '@/lib/roles'
-import { GlitchHeading } from '@/components/vault/glitch-heading'
-import { PageBackNav } from '@/components/vault/page-back-nav'
+import { PageHeader } from '@/components/vault/page-header'
 import { VaultDivider, VaultPanel } from '@/components/vault/vault-surfaces'
 import { VaultFrame } from '@/components/vault/vault-frame'
 import { BarChart3, Users, Lightbulb, Image, Music, MessageSquare, Calendar, Film, Target } from 'lucide-react'
@@ -102,16 +101,14 @@ function AnalyticsContent() {
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
-      <PageBackNav fallbackHref="/creator" />
-      <div className="flex items-center gap-2 mb-1">
-        <BarChart3 className="h-6 w-6 text-vault-gold" />
-        <GlitchHeading as="h1" className="text-2xl font-bold text-vault-cream">
-          VTuber Analytics
-        </GlitchHeading>
-      </div>
-      <p className="text-sm text-muted-foreground mb-4">
-        Fans shaping your stream — engagement at a glance.
-      </p>
+      <PageHeader
+        fallbackHref="/creator"
+        title="VTuber Analytics"
+        headingClassName="mb-0"
+        icon={<BarChart3 className="h-6 w-6 text-vault-gold shrink-0" />}
+        description="Fans shaping your stream — engagement at a glance."
+        className="mb-4"
+      />
       <VaultDivider className="mb-6" />
 
       {profiles.length > 0 ? (

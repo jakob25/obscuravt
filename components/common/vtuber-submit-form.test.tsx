@@ -2,6 +2,7 @@
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { colorForTheme } from '@/lib/color-contrast'
 import { VTUBER_SUBMIT } from '@/lib/site-copy'
 import { VTuberSubmitForm } from './vtuber-submit-form'
 
@@ -18,8 +19,16 @@ vi.mock('@/lib/auth-context', () => ({
   useAuth: () => auth,
 }))
 
+const navState = { pathname: '/nominator' }
+
 vi.mock('next/navigation', () => ({
-  usePathname: () => '/nominator',
+  usePathname: () => navState.pathname,
+}))
+
+const themeState = { resolvedTheme: 'dark' as string | undefined }
+
+vi.mock('next-themes', () => ({
+  useTheme: () => themeState,
 }))
 
 const TAG_ROWS = [
@@ -44,6 +53,8 @@ let host: HTMLDivElement
 let root: Root
 
 beforeEach(() => {
+  themeState.resolvedTheme = 'dark'
+  navState.pathname = '/nominator'
   Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true })
   auth.user = { username: 'Nim', coins: 0, role: 'fan', isAdmin: false }
   auth.loading = false
@@ -215,6 +226,7 @@ describe('VTuberSubmitForm wizard', () => {
     expect(heading()).toBe(VTUBER_SUBMIT.steps.review.title)
     expect(host.textContent).toContain(VTUBER_SUBMIT.noNiche)
     expect(host.textContent).toContain(VTUBER_SUBMIT.noConstellation)
+    expect(host.textContent).toContain(VTUBER_SUBMIT.reviewedBeforeMaps)
   })
 
   it('keeps a picked niche and constellation on review', async () => {
@@ -262,6 +274,52 @@ describe('VTuberSubmitForm wizard', () => {
     for (const span of cursed!.querySelectorAll('span')) {
       expect(span.style.color).toBe('')
     }
+  })
+
+  it('closes a compose dialog and returns to the same page with the form reopened after Sign in', async () => {
+    navState.pathname = '/discover'
+    const onCancel = vi.fn()
+    auth.user = null
+    await act(async () => root.render(<VTuberSubmitForm onCancel={onCancel} />))
+    const signIn = host.querySelector('a[href^="/login"]') as HTMLAnchorElement | null
+    expect(signIn?.getAttribute('href')).toBe('/login?next=%2Fdiscover%3Fcompose%3Dvtuber')
+    await act(async () => signIn?.click())
+    expect(onCancel).toHaveBeenCalledTimes(1)
+  })
+
+  it('does not show Sign in until the session check has finished', async () => {
+
+    auth.user = null
+    auth.loading = true
+    await mount()
+    expect(host.querySelector(`a[href^="/login"]`)).toBeNull()
+    expect(host.textContent).toContain('Checking your session')
+    auth.loading = false
+    await act(async () => root.render(<VTuberSubmitForm />))
+    expect(host.querySelector(`a[href^="/login"]`)).toBeTruthy()
+  })
+
+  it('in light mode, darkens only a too-bright lime room chip and leaves darker rooms as stored', async () => {
+
+    themeState.resolvedTheme = 'light'
+    await mount()
+    await reach('niche')
+
+    const darkroom = [...host.querySelectorAll('button')].find(b => b.textContent?.includes('The Darkroom'))
+    const arcade = [...host.querySelectorAll('button')].find(b => b.textContent?.includes('The Arcade'))
+    const cursed = [...host.querySelectorAll('button')].find(b => b.textContent?.includes('Cursed ASMR'))
+    expect(darkroom?.style.borderColor.toLowerCase()).toMatch(/#7c5c3a|rgb\(124,\s*92,\s*58\)/)
+    expect(arcade?.style.borderColor.toLowerCase()).toMatch(/#3b82f6|rgb\(59,\s*130,\s*246\)/)
+
+    const expected = colorForTheme('#39ff14', 'light', 'accent')!
+    expect(expected.toLowerCase()).not.toBe('#39ff14')
+    const border = cursed?.style.borderColor.toLowerCase() ?? ''
+    expect(border).not.toMatch(/#39ff14|rgb\(57,\s*255,\s*20\)/)
+    const hex = expected.toLowerCase()
+    const r = parseInt(hex.slice(1, 3), 16)
+    const g = parseInt(hex.slice(3, 5), 16)
+    const b = parseInt(hex.slice(5, 7), 16)
+    expect(border).toMatch(new RegExp(`${hex}|rgb\\(${r},\\s*${g},\\s*${b}\\)`))
   })
 
   it('keeps the action bar as a sticky footer and pads the step so lists can scroll clear of it', async () => {

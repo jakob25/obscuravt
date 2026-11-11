@@ -144,5 +144,5 @@ export const VTUBER_SUBMIT = {
   stepOf: (current: number, total: number) => `Step ${current} of ${total}`,
   submittedTitle: 'Submitted for review!',
   submittedBody: 'Your VTuber will appear on the maps once approved.',
-  reviewedBeforeMaps: 'Submissions are reviewed before appearing on the maps.',
+  reviewedBeforeMaps: "We check each nomination to make sure it's a real VTuber channel that isn't already on the map.",
 } as const
