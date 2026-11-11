@@ -24,6 +24,23 @@ export function hideAddFabOnMobile(pathname: string | null | undefined, dialogOp
   return pathname === '/nominator' || pathname.startsWith('/dev/vtuber-wizard-preview')
 }
 
+
+/** Open the compose dialog from a one-shot query flag, then return the URL with that flag removed. */
+export function consumeComposeSearch(search: string): { tab: Tab | null; nextSearch: string } {
+  const params = new URLSearchParams(search.startsWith('?') ? search.slice(1) : search)
+  const compose = params.get('compose')
+  const nominate = params.get('nominate')
+  let tab: Tab | null = null
+  if (compose === 'clip') tab = 'clip'
+  else if (compose === 'vtuber' || nominate === '1') tab = 'vtuber'
+  if (tab) {
+    params.delete('compose')
+    params.delete('nominate')
+  }
+  const qs = params.toString()
+  return { tab, nextSearch: qs ? `?${qs}` : '' }
+}
+
 export function AddButton() {
   const pathname = usePathname()
   const [open, setOpen] = useState(false)
@@ -39,11 +56,12 @@ export function AddButton() {
 
   useEffect(() => {
     if (typeof window === 'undefined') return
-    const params = new URLSearchParams(window.location.search)
-    const compose = params.get('compose')
-    if (compose === 'clip') openTab('clip')
-    if (compose === 'vtuber') openTab('vtuber')
-  }, [])
+    const { tab, nextSearch } = consumeComposeSearch(window.location.search)
+    if (!tab) return
+    openTab(tab)
+    const href = `${window.location.pathname}${nextSearch}${window.location.hash}`
+    window.history.replaceState(window.history.state, '', href)
+  }, [pathname])
 
   return (
     <>

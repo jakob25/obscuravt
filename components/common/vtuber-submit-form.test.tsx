@@ -19,8 +19,10 @@ vi.mock('@/lib/auth-context', () => ({
   useAuth: () => auth,
 }))
 
+const navState = { pathname: '/nominator' }
+
 vi.mock('next/navigation', () => ({
-  usePathname: () => '/nominator',
+  usePathname: () => navState.pathname,
 }))
 
 const themeState = { resolvedTheme: 'dark' as string | undefined }
@@ -52,6 +54,7 @@ let root: Root
 
 beforeEach(() => {
   themeState.resolvedTheme = 'dark'
+  navState.pathname = '/nominator'
   Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true })
   auth.user = { username: 'Nim', coins: 0, role: 'fan', isAdmin: false }
   auth.loading = false
@@ -273,7 +276,19 @@ describe('VTuberSubmitForm wizard', () => {
     }
   })
 
+  it('closes a compose dialog and returns to the same page with the form reopened after Sign in', async () => {
+    navState.pathname = '/discover'
+    const onCancel = vi.fn()
+    auth.user = null
+    await act(async () => root.render(<VTuberSubmitForm onCancel={onCancel} />))
+    const signIn = host.querySelector('a[href^="/login"]') as HTMLAnchorElement | null
+    expect(signIn?.getAttribute('href')).toBe('/login?next=%2Fdiscover%3Fcompose%3Dvtuber')
+    await act(async () => signIn?.click())
+    expect(onCancel).toHaveBeenCalledTimes(1)
+  })
+
   it('does not show Sign in until the session check has finished', async () => {
+
     auth.user = null
     auth.loading = true
     await mount()

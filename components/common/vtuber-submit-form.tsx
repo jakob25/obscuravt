@@ -60,7 +60,7 @@ interface VTuberSubmitFormProps {
   }
 }
 
-function loginHref(pathname: string): string {
+export function loginHref(pathname: string): string {
   const next = pathname === '/nominator'
     ? '/nominator'
     : `${pathname}${pathname.includes('?') ? '&' : '?'}compose=vtuber`
@@ -585,7 +585,9 @@ export function VTuberSubmitForm({ onSuccess, onCancel, preview }: VTuberSubmitF
             </p>
           ) : (
             <Button asChild className="w-full">
-              <Link href={loginHref(pathname)}>{VTUBER_SUBMIT.signIn}</Link>
+              <Link href={loginHref(pathname)} onClick={() => onCancel?.()}>
+                {VTUBER_SUBMIT.signIn}
+              </Link>
             </Button>
           )}
         </div>
