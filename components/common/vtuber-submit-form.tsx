@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useTheme } from 'next-themes'
+import { colorForTheme } from '@/lib/color-contrast'
 import { useAuth } from '@/lib/auth-context'
 import { VTUBER_SUBMIT } from '@/lib/site-copy'
 import { formatTagLabel } from '@/lib/tag-label'
@@ -17,7 +19,6 @@ import {
   nicheDisplayName,
   nicheLeadText,
   nichesFromTagRows,
-  safeTagColor,
   sanitizeCustomNiche,
 } from '@/lib/nomination-niche'
 import { Button } from '@/components/ui/button'
@@ -74,6 +75,8 @@ export function VTuberSubmitForm({ onSuccess, onCancel, preview }: VTuberSubmitF
   const user = preview ? previewUser : auth.user
   const authLoading = preview ? false : auth.loading
   const pathname = usePathname() || '/nominator'
+  const { resolvedTheme } = useTheme()
+  const [keyboardInset, setKeyboardInset] = useState(0)
   const [step, setStep] = useState<VtuberWizardStep | 'pending'>(preview?.step ?? 'pending')
   const [formData, setFormData] = useState({
     name: preview?.name ?? '',
@@ -125,6 +128,21 @@ export function VTuberSubmitForm({ onSuccess, onCancel, preview }: VTuberSubmitF
       return current
     })
   }, [user, authLoading, preview])
+
+  useEffect(() => {
+    const viewport = window.visualViewport
+    if (!viewport) return
+    const update = () => {
+      setKeyboardInset(Math.max(0, window.innerHeight - viewport.height - viewport.offsetTop))
+    }
+    update()
+    viewport.addEventListener('resize', update)
+    viewport.addEventListener('scroll', update)
+    return () => {
+      viewport.removeEventListener('resize', update)
+      viewport.removeEventListener('scroll', update)
+    }
+  }, [])
 
   const skipInitialFocus = useRef(true)
   useEffect(() => {
@@ -560,9 +578,16 @@ export function VTuberSubmitForm({ onSuccess, onCancel, preview }: VTuberSubmitF
 
       {activeStep === 'signin' && (
         <div className="space-y-4">
-          <Button asChild className="w-full">
-            <Link href={loginHref(pathname)}>{VTUBER_SUBMIT.signIn}</Link>
-          </Button>
+          {authLoading && !user ? (
+            <p className="text-sm text-muted-foreground flex items-center gap-2" aria-live="polite">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Checking your session…
+            </p>
+          ) : (
+            <Button asChild className="w-full">
+              <Link href={loginHref(pathname)}>{VTUBER_SUBMIT.signIn}</Link>
+            </Button>
+          )}
         </div>
       )}
 
@@ -577,6 +602,7 @@ export function VTuberSubmitForm({ onSuccess, onCancel, preview }: VTuberSubmitF
             placeholder={VTUBER_SUBMIT.linkPlaceholder}
             className="mt-2"
             autoComplete="off"
+            enterKeyHint="next"
           />
           {lookupLoading && (
             <p className="text-xs text-muted-foreground mt-2 flex items-center gap-2" aria-live="polite">
@@ -655,6 +681,7 @@ export function VTuberSubmitForm({ onSuccess, onCancel, preview }: VTuberSubmitF
                 value={formData.name}
                 onChange={(e) => handleInputChange('name', e.target.value)}
                 placeholder="VTuber name"
+                enterKeyHint="next"
               />
             </div>
             <div>
@@ -664,6 +691,7 @@ export function VTuberSubmitForm({ onSuccess, onCancel, preview }: VTuberSubmitF
                 value={formData.handle}
                 onChange={(e) => handleInputChange('handle', e.target.value)}
                 placeholder="@username"
+                enterKeyHint="next"
               />
             </div>
           </div>
@@ -726,7 +754,7 @@ export function VTuberSubmitForm({ onSuccess, onCancel, preview }: VTuberSubmitF
           <div className="space-y-2">
             {niches.map((niche) => {
               const selected = selectedNiche === niche.id
-              const color = safeTagColor(niche.color)
+              const color = colorForTheme(niche.color, resolvedTheme, 'accent')
               return (
                 <button
                   key={niche.id}
@@ -773,6 +801,7 @@ export function VTuberSubmitForm({ onSuccess, onCancel, preview }: VTuberSubmitF
                 maxLength={40}
                 className="flex-1"
                 autoComplete="off"
+                enterKeyHint="done"
               />
               <Button type="button" variant="outline" onClick={addCustomNiche} className="border-border text-vault-cream shrink-0">
                 {VTUBER_SUBMIT.addCategoryButton}
@@ -917,6 +946,7 @@ export function VTuberSubmitForm({ onSuccess, onCancel, preview }: VTuberSubmitF
       <div
         data-testid="wizard-actions"
         className="sticky bottom-0 z-20 -mx-1 flex flex-col-reverse sm:flex-row gap-3 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] border-t border-border bg-background/95 backdrop-blur-sm"
+        style={{ bottom: keyboardInset }}
       >
         {showBack && (
           <Button type="button" variant="outline" onClick={goBack} className="border-border text-vault-cream sm:w-auto w-full">

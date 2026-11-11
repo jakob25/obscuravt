@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { VTuberSubmitForm } from '@/components/common/vtuber-submit-form'
+import { VTUBER_SUBMIT } from '@/lib/site-copy'
 import { GlitchHeading } from '@/components/vault/glitch-heading'
 import { VaultFrame } from '@/components/vault/vault-frame'
 import { Star, Compass, ShieldCheck } from 'lucide-react'
@@ -19,7 +20,7 @@ export default function NominatorPage() {
       <div className="grid sm:grid-cols-3 gap-3 mb-8">
         {[
           { Icon: Star, title: 'Nominate', desc: 'Drop a name. We listen.' },
-          { Icon: ShieldCheck, title: 'Review', desc: 'Vault staff sanity-checks it' },
+          { Icon: ShieldCheck, title: 'Review', desc: VTUBER_SUBMIT.reviewedBeforeMaps },
           { Icon: Compass, title: 'Star Map', desc: 'Approved = discoverable' },
         ].map(({ Icon, title, desc }) => (
           <VaultFrame key={title}>
@@ -39,7 +40,7 @@ export default function NominatorPage() {
       </VaultFrame>
 
       <p className="text-xs text-muted-foreground text-center mt-6">
-        Submissions are reviewed before appearing on the Star Map.{' '}
+        {VTUBER_SUBMIT.reviewedBeforeMaps}{' '}
         <Link href="/discover" className="text-vault-gold hover:underline">Browse the map</Link>
       </p>
     </div>
