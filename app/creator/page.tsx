@@ -5,8 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useAuth } from '@/lib/auth-context'
 import { normalizeRole } from '@/lib/roles'
-import { GlitchHeading } from '@/components/vault/glitch-heading'
-import { PageBackNav } from '@/components/vault/page-back-nav'
+import { PageHeader } from '@/components/vault/page-header'
 import { VaultFrame } from '@/components/vault/vault-frame'
 import {
   Calendar, Palette, Lightbulb, Users, BookOpen, BarChart3,
@@ -68,11 +67,12 @@ export default function CreatorDashboardPage() {
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-3xl">
-      <PageBackNav fallbackHref="/" />
-      <GlitchHeading as="h1" className="text-2xl font-bold text-vault-cream mb-1">Creator Dashboard</GlitchHeading>
-      <p className="text-sm text-muted-foreground mb-4">
-        {role === 'VTuber' ? 'Manage claimed profiles and fan tools.' : 'Clip, curate, and nominate creators.'}
-      </p>
+      <PageHeader
+        fallbackHref="/"
+        title="Creator Dashboard"
+        description={role === 'VTuber' ? 'Manage claimed profiles and fan tools.' : 'Clip, curate, and nominate creators.'}
+        className="mb-4"
+      />
       <VaultDivider className="mb-6" />
 
       <VaultFrame className="p-5 mb-6">

@@ -5,8 +5,7 @@ import { useAuth } from '@/lib/auth-context'
 import { Plus, Trash2, ChevronDown } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { PageBackNav } from '@/components/vault/page-back-nav'
-import { GlitchHeading } from '@/components/vault/glitch-heading'
+import { PageHeader } from '@/components/vault/page-header'
 import { VaultDivider, VaultPanel } from '@/components/vault/vault-surfaces'
 
 interface ScheduleSlot {
@@ -159,25 +158,20 @@ function SchedulePageContent() {
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-xl">
-      <PageBackNav fallbackHref={vtuberId ? `/vtuber/${vtuberId}` : '/discover'} />
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <GlitchHeading as="h1" className="text-2xl font-bold text-vault-cream mb-1">
-            Stream Schedule
-          </GlitchHeading>
-          <p className="text-muted-foreground text-sm">
-            {activeProfile ? `${activeProfile.name}'s stream times` : 'Know when they go live. No FOMO required.'}
-          </p>
-        </div>
-        {isOwner && vtuberId && (
+      <PageHeader
+        fallbackHref={vtuberId ? `/vtuber/${vtuberId}` : '/discover'}
+        title="Stream Schedule"
+        description={activeProfile ? `${activeProfile.name}'s stream times` : 'Know when they go live. No FOMO required.'}
+        className="mb-8"
+        actions={isOwner && vtuberId ? (
           <button
             onClick={() => setShowForm(s => !s)}
             className="flex items-center gap-1.5 h-9 px-4 rounded-lg bg-vault-gold text-vault-deep text-sm font-semibold flex-shrink-0"
           >
             <Plus className="h-4 w-4" /> Add
           </button>
-        )}
-      </div>
+        ) : null}
+      />
 
       {user && claimedProfiles.length > 0 && (
         <div className="mb-6">

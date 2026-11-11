@@ -42,7 +42,7 @@ export function PageBackNav({
         else if (sameOriginReferrer() || hasPreviousHistory()) router.back()
         else router.push(fallbackHref)
       }}
-      className={`inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-vault-gold transition-colors cursor-pointer ${className}`}
+      className={`flex items-center gap-1.5 text-sm text-muted-foreground hover:text-vault-gold transition-colors cursor-pointer ${className}`}
     >
       <ArrowLeft className="h-4 w-4" />
       {label}

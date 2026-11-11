@@ -6,8 +6,7 @@ import { useAuth } from '@/lib/auth-context'
 import { useStarMapData } from '@/hooks/use-star-map-data'
 import { ThumbsUp, Send } from 'lucide-react'
 import Link from 'next/link'
-import { PageBackNav } from '@/components/vault/page-back-nav'
-import { GlitchHeading } from '@/components/vault/glitch-heading'
+import { PageHeader } from '@/components/vault/page-header'
 import { VaultDivider, VaultPanel } from '@/components/vault/vault-surfaces'
 
 interface Post {
@@ -70,17 +69,15 @@ export default function ClusterForumPage() {
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-2xl">
-      <PageBackNav fallbackHref="/forums" label="All forums" />
-
-      <div className="flex items-center gap-3 mb-2">
-        {constellation && <span className="h-3 w-3 rounded-full flex-shrink-0" style={{ backgroundColor: constellation.color }} />}
-        <GlitchHeading as="h1" className="text-2xl font-bold text-vault-cream">
-          {constellation?.name ?? 'Forum'}
-        </GlitchHeading>
-      </div>
-      <p className="text-muted-foreground text-sm mb-4">
-        {constellation?.description ?? 'Where this constellation talks shop.'}
-      </p>
+      <PageHeader
+        fallbackHref="/forums"
+        backLabel="All forums"
+        title={constellation?.name ?? 'Forum'}
+        headingClassName="mb-0"
+        icon={constellation ? <span className="h-3 w-3 rounded-full flex-shrink-0" style={{ backgroundColor: constellation.color }} /> : null}
+        description={constellation?.description ?? 'Where this constellation talks shop.'}
+        className="mb-4"
+      />
       <VaultDivider className="mb-6" />
 
       {user ? (

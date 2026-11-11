@@ -4,8 +4,7 @@ import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { ThumbsUp, Share2 } from 'lucide-react'
-import { PageBackNav } from '@/components/vault/page-back-nav'
-import { GlitchHeading } from '@/components/vault/glitch-heading'
+import { PageHeader } from '@/components/vault/page-header'
 import { VaultPanel, VaultDivider } from '@/components/vault/vault-surfaces'
 import { useAuth } from '@/lib/auth-context'
 
@@ -85,18 +84,19 @@ export default function MemeSharePage() {
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-lg">
-      <PageBackNav
+      <PageHeader
         fallbackHref={meme.vtuber_id ? `/vtuber/${meme.vtuber_id}` : '/discover'}
-        label={meme.vtuber_name ? `Back to ${meme.vtuber_name}` : 'Back to Discover'}
+        backLabel={meme.vtuber_name ? `Back to ${meme.vtuber_name}` : 'Back to Discover'}
+        title="Vault Meme"
+        headingClassName="text-xl"
+        className="mb-4"
+        description={
+          <>
+            @{meme.submitted_by} dropped this
+            {meme.vtuber_name && <> · aimed at <span className="text-vault-cream">{meme.vtuber_name}</span></>}
+          </>
+        }
       />
-
-      <GlitchHeading as="h1" className="text-xl font-bold text-vault-cream mb-1">
-        Vault Meme
-      </GlitchHeading>
-      <p className="text-sm text-muted-foreground mb-4">
-        @{meme.submitted_by} dropped this
-        {meme.vtuber_name && <> · aimed at <span className="text-vault-cream">{meme.vtuber_name}</span></>}
-      </p>
       <VaultDivider className="mb-6" />
 
       <VaultPanel className="p-4">
