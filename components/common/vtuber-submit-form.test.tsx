@@ -335,4 +335,79 @@ describe('VTuberSubmitForm wizard', () => {
     expect(host.textContent).toContain('Chaos')
     expect(host.textContent).toContain('Comfy / Lore')
   })
+
+  it('keeps a replace control after a lookup picture and opens the picker from a button', async () => {
+    await act(async () => root.render(
+      <VTuberSubmitForm preview={{
+        step: 'details',
+        signedIn: true,
+        name: 'Pipuru',
+        avatarUrl: 'https://example.com/avatar.png',
+      }} />,
+    ))
+
+    const input = host.querySelector<HTMLInputElement>('input[type="file"]')
+    expect(input).toBeTruthy()
+    expect(input?.className.split(/\s+/)).toContain('sr-only')
+    expect(input?.className.split(/\s+/)).not.toContain('hidden')
+    expect(input?.closest('label')).toBeNull()
+
+    const replace = [...host.querySelectorAll('button')].find(b => b.textContent === 'Replace image')
+    expect(replace).toBeTruthy()
+    expect(replace?.closest('label')).toBeNull()
+    expect(host.querySelector('img[alt="Preview"]')?.getAttribute('src')).toBe('https://example.com/avatar.png')
+
+    const clickSpy = vi.spyOn(input!, 'click')
+    await act(async () => replace?.click())
+    expect(clickSpy).toHaveBeenCalledTimes(1)
+  })
+
+  it('shows an avatar upload error next to the picture control and scrolls it into view', async () => {
+    const scrollIntoView = vi.spyOn(HTMLElement.prototype, 'scrollIntoView').mockImplementation(() => {})
+
+    const fetchMock = vi.fn(async (input: RequestInfo) => {
+      const url = String(input)
+      if (url.includes('/api/tags')) {
+        return { ok: true, json: async () => TAG_ROWS }
+      }
+      if (url.includes('/api/vtubers/avatar')) {
+        return {
+          ok: false,
+          json: async () => ({ error: "Couldn't upload the profile picture. You can submit without one, or try a different image." }),
+        }
+      }
+      return { ok: true, json: async () => ({}) }
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    await mount()
+    await click(VTUBER_SUBMIT.skipLink)
+    await setInput(host.querySelector<HTMLInputElement>('#name')!, 'Pipuru')
+
+    const input = host.querySelector<HTMLInputElement>('input[type="file"]')!
+    const file = new File(['face'], 'face.png', { type: 'image/png' })
+    await act(async () => {
+      Object.defineProperty(input, 'files', { configurable: true, value: [file] })
+      input.dispatchEvent(new Event('change', { bubbles: true }))
+    })
+    await act(async () => {
+      await new Promise(resolve => setTimeout(resolve, 0))
+    })
+
+    await click(VTUBER_SUBMIT.next)
+    await click(VTUBER_SUBMIT.next)
+    await click(VTUBER_SUBMIT.next)
+    await click(VTUBER_SUBMIT.next)
+    expect(heading()).toBe(VTUBER_SUBMIT.steps.review.title)
+
+    await click('Submit for Review')
+    expect(heading()).toBe(VTUBER_SUBMIT.steps.details.title)
+    const alert = [...host.querySelectorAll('[role="alert"]')].find(el =>
+      el.textContent?.includes("Couldn't upload the profile picture"),
+    )
+    expect(alert).toBeTruthy()
+    expect(fetchMock.mock.calls.some(call => String(call[0]).includes('/api/vtubers/avatar'))).toBe(true)
+    expect(fetchMock.mock.calls.some(call => String(call[0]).includes('/api/vtubers') && !String(call[0]).includes('/api/vtubers/avatar'))).toBe(false)
+    expect(scrollIntoView).toHaveBeenCalled()
+  })
 })

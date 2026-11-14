@@ -79,7 +79,7 @@ export function ImageUploadField({ purpose, onUploaded, onClear, disabled, label
           ref={inputRef}
           type="file"
           accept="image/jpeg,image/png,image/gif,image/webp"
-          className="hidden"
+          className="sr-only"
           disabled={disabled || uploading}
           onChange={e => {
             const file = e.target.files?.[0]
