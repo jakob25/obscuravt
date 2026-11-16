@@ -83,6 +83,11 @@ export const DOSSIER = {
 } as const
 
 /** Add-a-VTuber form — paste a profile link, then edit anything that was pulled. */
+/** One line on /bets. Scraps only come from site activity (see /shop restock copy) and only
+ * buy site titles; there is no payment or cash-out path in the app. */
+export const BETS_SCRAPS_NOTE =
+  "Scraps are ObscuraVT's own play currency. You earn them on the site, they only work here, and they can't be bought or cashed out."
+
 /** Discover map first-visit hint, second line. The niche line restates the Add VTuber
  * niche step (VTUBER_SUBMIT.steps.niche.instruction) for people browsing. */
 export const DISCOVER_MAP_HINT = {
