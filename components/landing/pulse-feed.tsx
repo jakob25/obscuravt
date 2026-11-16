@@ -3,6 +3,7 @@ import { Film, Palette, Sparkles, Trophy, MessageSquare, ExternalLink, ArrowRigh
 import { GlitchHeading } from '@/components/vault/glitch-heading'
 import { VaultDivider, VaultPanel, GalleryWall, GalleryWallItem, StatCard } from '@/components/vault/vault-surfaces'
 import { PulseSectionShell } from '@/components/landing/pulse-section-shell'
+import { StartHere } from '@/components/landing/start-here'
 import { supabaseAdmin } from '@/lib/supabase'
 import { approvedCreatorCount } from '@/lib/creator-count'
 import { resolveClipThumbnail } from '@/lib/embed-utils'
@@ -69,6 +70,8 @@ async function getPulse() {
           .from('vtubers')
           .select('id,name,avatar_url,bio,created_at')
           .eq('approved', true)
+          // Undated rows are older imports; without this they sort first and read as "new"
+          .not('created_at', 'is', null)
           .order('created_at', { ascending: false })
           .limit(6),
       [] as any[]
@@ -194,6 +197,16 @@ async function getPulse() {
   }
 }
 
+/** "Nov 14" from a stored timestamp; null when the date is missing or unreadable. */
+function addedLabel(createdAt: unknown): string | null {
+  if (typeof createdAt !== 'string' || !createdAt.trim()) return null
+  // Postgres text form ("2026-11-14 22:09:13+00") → ISO the Date parser accepts
+  const iso = createdAt.trim().replace(' ', 'T').replace(/([+-]\d\d)$/, '$1:00')
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return null
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' })
+}
+
 function SectionHeader({
   icon: Icon,
   title,
@@ -242,6 +255,15 @@ export default async function PulseFeed() {
       </section>
 
       <div className="mx-auto w-full max-w-[1600px] px-2 sm:px-3 py-5 pb-5 space-y-5">
+        {(() => {
+          const first = (clips as { profile_id?: string | null; vtuber_name?: string | null }[]).find(c => !!c.profile_id)
+          return (
+            <StartHere
+              creatorHref={first?.profile_id ? `/vtuber/${first.profile_id}` : null}
+              creatorName={first?.profile_id ? ownerNameById[first.profile_id] || first.vtuber_name || null : null}
+            />
+          )
+        })()}
         <PulseSectionShell accent="from-sky-500/40 via-sky-500/15 to-transparent" staggerIndex={1}>
           <SectionHeader icon={Film} title="Fresh Clips" href="/clips" />
           {clips.length === 0 ? (
@@ -346,7 +368,7 @@ export default async function PulseFeed() {
         )}
 
         <PulseSectionShell accent="from-[#e056a0]/40 via-[#e056a0]/15 to-transparent" staggerIndex={3}>
-          <SectionHeader icon={Sparkles} title="New in the Vault" href="/search" />
+          <SectionHeader icon={Sparkles} title="New here" href="/search" />
           {vtubers.length === 0 ? (
             <p className="text-muted-foreground text-sm">No new creators this cycle.</p>
           ) : (
@@ -366,6 +388,9 @@ export default async function PulseFeed() {
                   )}
                   <div className="min-w-0">
                     <p className="font-semibold text-vault-cream truncate">{v.name}</p>
+                    {addedLabel(v.created_at) && (
+                      <p className="text-[10px] text-muted-foreground">added {addedLabel(v.created_at)}</p>
+                    )}
                     {clipsOnFile[v.id] ? (
                       <p className="text-[10px] text-vault-gold">{clipsOnFile[v.id]} on file</p>
                     ) : null}
