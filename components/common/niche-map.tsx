@@ -17,6 +17,8 @@ interface StarPosition {
 const ZOOM_THRESHOLD = 1.5
 
 const MIN_ZOOM = 0.4
+// Cluster label font as drawn when zoomed out (fixed screen size); used to keep labels in the initial view.
+const LABEL_FONT = '700 14px "Space Grotesk", sans-serif'
 const MAX_ZOOM = 5
 
 export function NicheMap() {
@@ -113,14 +115,21 @@ export function NicheMap() {
     const canvas = canvasRef.current
     const zb = zoomBehaviorRef.current
     if (!canvas || !zb || userMovedRef.current || !constellations.length) return
-    const fit = fitMapTransform(constellations.map(c => c.position), dimensions.width, dimensions.height, {
+    const measure = document.createElement('canvas').getContext('2d')
+    if (measure) measure.font = LABEL_FONT
+    const points = constellations.map(c => ({
+      ...c.position,
+      weight: getVTubersByNicheCluster(vtubers, c.id).length,
+      labelHalfWidthPx: (measure?.measureText(c.name).width ?? c.name.length * 9) / 2 + 6,
+    }))
+    const fit = fitMapTransform(points, dimensions.width, dimensions.height, {
       pad: 100, minK: MIN_ZOOM, maxK: 1, insetTop: 56, insetBottom: 48, insetX: 8,
     })
     if (!fit) return
     fittingRef.current = true
     select(canvas).call(zb.transform, zoomIdentity.translate(fit.x, fit.y).scale(fit.k))
     fittingRef.current = false
-  }, [constellations, dimensions.width, dimensions.height])
+  }, [constellations, vtubers, dimensions.width, dimensions.height])
 
   // Main render loop
   useEffect(() => {

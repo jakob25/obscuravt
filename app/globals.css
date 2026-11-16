@@ -42,6 +42,7 @@
   --vault-deep: #0d0d14;
   --vault-scrim: #0d0d14; /* locked dark value for media overlays */
   --vault-on-scrim: #f0e8d0; /* locked light text for labels on media scrims */
+  --panel-inset: 1rem; /* even inner padding for coloured section panels (p-panel) */
   --vault-dark: #12121e;
   --vault-gold: #d4a843;
   --vault-amber: #c9872a;
@@ -144,6 +145,7 @@
   --color-vault-deep: var(--vault-deep);
   --color-vault-scrim: var(--vault-scrim);
   --color-vault-on-scrim: var(--vault-on-scrim);
+  --spacing-panel: var(--panel-inset);
   --color-vault-dark: var(--vault-dark);
   --color-vault-gold: var(--vault-gold);
   --color-vault-amber: var(--vault-amber);
