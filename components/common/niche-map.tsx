@@ -23,7 +23,7 @@ const LABEL_FONT = '700 14px "Space Grotesk", sans-serif'
 const MAX_ZOOM = 5
 
 export function NicheMap({ hideInstructionsOnPhone = false }: {
-  /** Phones: the Discover first-visit card already says how to zoom/pan, so skip the pill while it shows. */
+  /** Phones: the Discover first-visit card already says how to zoom/pan, so skip the pill and zoom readout while it shows. */
   hideInstructionsOnPhone?: boolean
 } = {}) {
   const { vtubers, constellations, loading } = useNicheMapData()
@@ -478,7 +478,7 @@ export function NicheMap({ hideInstructionsOnPhone = false }: {
       />
 
       {/* Zoom indicator */}
-      <div className="absolute bottom-4 right-4 flex items-center gap-2 px-3 py-1.5 rounded-lg bg-black/70 border border-white/10 text-xs select-none">
+      <div className={`absolute bottom-4 right-4 ${hideInstructionsOnPhone ? 'max-sm:hidden' : ''} flex items-center gap-2 px-3 py-1.5 rounded-lg bg-black/70 border border-white/10 text-xs select-none`}>
         <span className="text-white/40">zoom</span>
         <span className="text-white font-medium tabular-nums">{zoomPct}%</span>
       </div>
