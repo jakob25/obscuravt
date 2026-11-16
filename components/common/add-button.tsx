@@ -25,6 +25,16 @@ export function hideAddFabOnMobile(pathname: string | null | undefined, dialogOp
 }
 
 
+/** Phones: tuck the + button away while scrolling down (so it never sits on top of what is being read)
+ * and bring it back on scroll up or at the end of the page, where the spacer below keeps it clear. */
+export function nextFabTucked(prevY: number, y: number, maxY: number, tucked: boolean): boolean {
+  if (y <= 80 || y >= maxY - 2) return false
+  if (y - prevY > 8) return true
+  if (prevY - y > 8) return false
+  return tucked
+}
+
+
 /** Open the compose dialog from a one-shot query flag, then return the URL with that flag removed. */
 export function consumeComposeSearch(search: string): { tab: Tab | null; nextSearch: string } {
   const params = new URLSearchParams(search.startsWith('?') ? search.slice(1) : search)
@@ -47,6 +57,20 @@ export function AddButton() {
   const [tab, setTab] = useState<Tab>('vtuber')
   const [menuOpen, setMenuOpen] = useState(false)
   const hideFabOnMobile = hideAddFabOnMobile(pathname, open)
+  const [tucked, setTucked] = useState(false)
+
+  useEffect(() => {
+    let lastY = window.scrollY
+    const onScroll = () => {
+      const y = window.scrollY
+      const maxY = document.documentElement.scrollHeight - window.innerHeight
+      if (Math.abs(y - lastY) <= 8 && y > 80 && y < maxY - 2) return
+      setTucked(prev => nextFabTucked(lastY, y, maxY, prev))
+      lastY = y
+    }
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
 
   const openTab = (t: Tab) => {
     setTab(t)
@@ -67,10 +91,10 @@ export function AddButton() {
     <>
       {/* In-flow spacer so the end of every page can scroll clear of the fixed + button
           (bottom-4 + h-14 on mobile, bottom-6 + h-14 on sm+, plus a little breathing room). */}
-      <div aria-hidden="true" className={`h-20 sm:h-24 shrink-0 ${hideFabOnMobile ? 'max-sm:hidden' : ''}`} />
+      <div aria-hidden="true" className={`h-[calc(5rem+env(safe-area-inset-bottom))] sm:h-24 shrink-0 ${hideFabOnMobile ? 'max-sm:hidden' : ''}`} />
       <div
         data-testid="add-fab"
-        className={`fixed bottom-[calc(1rem+env(safe-area-inset-bottom))] sm:bottom-6 right-4 sm:right-6 z-50 flex-col items-end gap-2 ${hideFabOnMobile ? 'hidden sm:flex' : 'flex'}`}
+        className={`fixed bottom-[calc(1rem+env(safe-area-inset-bottom))] sm:bottom-6 right-4 sm:right-6 z-50 flex-col items-end gap-2 transition-[translate,opacity] duration-300 ease-out motion-reduce:transition-none [html[data-mobile-nav-open]_&]:hidden ${tucked && !menuOpen ? 'max-sm:pointer-events-none max-sm:translate-y-[calc(100%+2rem)] max-sm:opacity-0' : ''} ${hideFabOnMobile ? 'hidden sm:flex' : 'flex'}`}
       >
         {menuOpen && (
           <div className="flex flex-col gap-2 mb-1">

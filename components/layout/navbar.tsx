@@ -42,6 +42,14 @@ export function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false)
   const [unread, setUnread] = useState(0)
 
+  // Let floating controls (the + button) step aside while the phone menu is open.
+  useEffect(() => {
+    const root = document.documentElement
+    if (mobileOpen) root.dataset.mobileNavOpen = ''
+    else delete root.dataset.mobileNavOpen
+    return () => { delete root.dataset.mobileNavOpen }
+  }, [mobileOpen])
+
   // Poll unread notifications every 60s when logged in
   useEffect(() => {
     if (!user) { setUnread(0); return }

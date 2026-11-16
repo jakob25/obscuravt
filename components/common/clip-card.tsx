@@ -97,7 +97,7 @@ export function ClipCard({ clip, onPlay, credit }: ClipCardProps) {
 
   return (
     <div className="group flex flex-col items-center pb-3">
-      <div className="relative w-full max-w-[320px] overflow-hidden rounded-md border border-vault-bronze/30 bg-vault-deep" style={{ aspectRatio: '16 / 9' }}>
+      <div className="relative w-full max-w-[320px] overflow-hidden rounded-md border border-vault-bronze/30 bg-vault-scrim" style={{ aspectRatio: '16 / 9' }}>
         {isPlaying && embedUrl ? (
           <iframe
             src={embedUrl + (platform === 'youtube' ? '&autoplay=1' : '&autoplay=true')}
@@ -111,7 +111,7 @@ export function ClipCard({ clip, onPlay, credit }: ClipCardProps) {
             type="button"
             onClick={handlePlay}
             aria-label={`Play clip: ${clip.title}`}
-            className="absolute inset-0 h-full w-full overflow-hidden bg-vault-deep outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-vault-gold/70"
+            className="absolute inset-0 h-full w-full overflow-hidden bg-vault-scrim outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-vault-gold/70"
             style={
               shownThumb
                 ? {
@@ -129,7 +129,7 @@ export function ClipCard({ clip, onPlay, credit }: ClipCardProps) {
               </div>
             </div>
             {duration && (
-              <div className="absolute bottom-2 right-2 flex items-center gap-1 rounded bg-vault-deep/80 px-2 py-1 text-[10px] text-vault-cream">
+              <div className="absolute bottom-2 right-2 flex items-center gap-1 rounded bg-vault-scrim/80 px-2 py-1 text-[10px] text-vault-on-scrim">
                 <Clock className="h-3 w-3" />
                 {duration}
               </div>
@@ -143,11 +143,11 @@ export function ClipCard({ clip, onPlay, credit }: ClipCardProps) {
             >
               {clip.type === 'raw' ? 'Raw Clip' : 'Edited'}
             </div>
-            <div className="absolute right-2 top-2 rounded bg-vault-deep/80 px-2 py-1 text-[10px] capitalize text-muted-foreground">
+            <div className="absolute right-2 top-2 rounded bg-vault-scrim/80 px-2 py-1 text-[10px] capitalize text-vault-on-scrim/70">
               {platformLabel}
             </div>
             {linkOnly && !shownThumb && (
-              <div className="absolute bottom-2 left-2 rounded bg-vault-deep/80 px-2 py-1 font-mono text-[10px] uppercase tracking-[0.1em] text-vault-cream/80">
+              <div className="absolute bottom-2 left-2 rounded bg-vault-scrim/80 px-2 py-1 font-mono text-[10px] uppercase tracking-[0.1em] text-vault-on-scrim/80">
                 Opens on {platformLabel}
               </div>
             )}
