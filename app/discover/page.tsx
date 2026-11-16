@@ -36,11 +36,12 @@ function FirstTimerBanner() {
             </p>
           </div>
           <button
+            type="button"
             onClick={() => {
               setShow(false)
               localStorage.setItem('vtvault_map_seen', '1')
             }}
-            className="text-xs text-white/40 hover:text-white flex-shrink-0 ml-auto"
+            className="rounded-sm text-xs text-white/40 hover:text-white active:text-white flex-shrink-0 ml-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-vault-gold/60 motion-safe:active:scale-[0.97] motion-reduce:active:opacity-80"
           >
             Close
           </button>
@@ -79,22 +80,26 @@ function DiscoverPageContent() {
         style={{ isolation: 'isolate' }}
       >
         <button
+          type="button"
+          aria-pressed={mode === 'vibe'}
           onClick={() => handleModeChange('vibe')}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-vault-gold/60 motion-safe:active:scale-[0.97] motion-reduce:active:opacity-80 ${
             mode === 'vibe'
-              ? 'bg-vault-gold/20 text-vault-gold border border-vault-gold/30'
-              : 'text-white/50 hover:text-white'
+              ? 'bg-vault-gold/20 text-vault-gold border-vault-gold/30'
+              : 'border-transparent text-white/50 hover:text-white'
           }`}
         >
           <Sparkles className="h-3.5 w-3.5" />
           Vibe Map
         </button>
         <button
+          type="button"
+          aria-pressed={mode === 'niche'}
           onClick={() => handleModeChange('niche')}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-vault-gold/60 motion-safe:active:scale-[0.97] motion-reduce:active:opacity-80 ${
             mode === 'niche'
-              ? 'bg-vault-gold/20 text-vault-gold border border-vault-gold/30'
-              : 'text-white/50 hover:text-white'
+              ? 'bg-vault-gold/20 text-vault-gold border-vault-gold/30'
+              : 'border-transparent text-white/50 hover:text-white'
           }`}
         >
           <BookOpen className="h-3.5 w-3.5" />
@@ -102,7 +107,7 @@ function DiscoverPageContent() {
         </button>
         <Link
           href="/search"
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-white/50 hover:text-white"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-transparent text-xs font-medium text-white/50 hover:text-white transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-vault-gold/60 motion-safe:active:scale-[0.97] motion-reduce:active:opacity-80"
         >
           <List className="h-3.5 w-3.5" />
           List

@@ -101,14 +101,17 @@ export function ClipCard({ clip, onPlay, credit }: ClipCardProps) {
         {isPlaying && embedUrl ? (
           <iframe
             src={embedUrl + (platform === 'youtube' ? '&autoplay=1' : '&autoplay=true')}
+            title={clip.title}
             className="absolute inset-0 h-full w-full"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowFullScreen
           />
         ) : (
           <button
+            type="button"
             onClick={handlePlay}
-            className="absolute inset-0 h-full w-full overflow-hidden bg-vault-deep"
+            aria-label={`Play clip: ${clip.title}`}
+            className="absolute inset-0 h-full w-full overflow-hidden bg-vault-deep outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-vault-gold/70"
             style={
               shownThumb
                 ? {
@@ -121,7 +124,7 @@ export function ClipCard({ clip, onPlay, credit }: ClipCardProps) {
           >
             <div className="absolute inset-0 bg-gradient-to-br from-vault-charcoal/40 to-vault-scrim/50" />
             <div className="relative z-10 flex h-full items-center justify-center">
-              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-vault-gold/90 shadow-lg transition-all group-hover:scale-110 group-hover:bg-vault-gold">
+              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-vault-gold/90 shadow-lg transition-all group-hover:scale-110 group-hover:bg-vault-gold motion-safe:group-active:scale-95 motion-reduce:group-active:opacity-80">
                 <Play className="ml-1 h-7 w-7 text-vault-deep" fill="currentColor" />
               </div>
             </div>

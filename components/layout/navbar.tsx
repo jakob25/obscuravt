@@ -8,7 +8,7 @@ import {
   Menu, X, Compass, Film, Trophy, User,
   LogIn, TrendingUp, Shield, Search, Gamepad2, Gift,
   Bell, ShoppingBag, Calendar, Zap, Eye, MessageSquare, LayoutDashboard,
-  Users, Star, HelpCircle,
+  Users, Star, HelpCircle, ChevronDown,
 } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/lib/auth-context'
@@ -82,6 +82,7 @@ export function Navbar() {
                 key={href}
                 href={href}
                 data-nav-glitch
+                aria-current={isActive ? 'page' : undefined}
                 className={cn(
                   'flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
                   isActive
@@ -100,7 +101,7 @@ export function Navbar() {
         <div className="flex items-center gap-2">
           {/* Search — always visible */}
           <Button asChild variant="ghost" size="icon" className="text-muted-foreground hover:text-vault-cream">
-            <Link href="/search" data-nav-glitch><Search className="h-5 w-5" /></Link>
+            <Link href="/search" data-nav-glitch aria-label="Search"><Search className="h-5 w-5" /></Link>
           </Button>
 
           {!loading && user ? (
@@ -118,10 +119,10 @@ export function Navbar() {
 
               {/* Notifications bell */}
               <Button asChild variant="ghost" size="icon" className="text-muted-foreground hover:text-vault-cream relative">
-                <Link href="/notifications" data-nav-glitch>
+                <Link href="/notifications" data-nav-glitch aria-label={unread > 0 ? `Notifications, ${unread} unread` : 'Notifications'}>
                   <Bell className="h-5 w-5" />
                   {unread > 0 && (
-                    <span className="absolute -top-0.5 -right-0.5 h-4 w-4 rounded-full bg-vault-gold text-vault-deep text-[10px] font-bold flex items-center justify-center">
+                    <span aria-hidden className="absolute -top-0.5 -right-0.5 h-4 w-4 rounded-full bg-vault-gold text-vault-deep text-[10px] font-bold flex items-center justify-center">
                       {unread > 9 ? '9+' : unread}
                     </span>
                   )}
@@ -135,19 +136,19 @@ export function Navbar() {
 
               {/* Shop */}
               <Button asChild variant="ghost" size="icon" className="hidden md:flex text-muted-foreground hover:text-vault-cream">
-                <Link href="/shop" data-nav-glitch><ShoppingBag className="h-5 w-5" /></Link>
+                <Link href="/shop" data-nav-glitch aria-label="Shop"><ShoppingBag className="h-5 w-5" /></Link>
               </Button>
 
               {/* Admin */}
               {user.isAdmin && (
                 <Button asChild variant="ghost" size="icon" className="hidden md:flex text-muted-foreground hover:text-vault-gold">
-                  <Link href="/admin" data-nav-glitch><Shield className="h-5 w-5" /></Link>
+                  <Link href="/admin" data-nav-glitch aria-label="Admin"><Shield className="h-5 w-5" /></Link>
                 </Button>
               )}
 
               {/* Profile */}
               <Button asChild variant="ghost" size="icon" className="hidden md:flex text-muted-foreground hover:text-vault-cream">
-                <Link href="/my-profile" data-nav-glitch><User className="h-5 w-5" /></Link>
+                <Link href="/my-profile" data-nav-glitch aria-label="My Profile"><User className="h-5 w-5" /></Link>
               </Button>
             </>
           ) : (
@@ -161,19 +162,20 @@ export function Navbar() {
           {/* More dropdown for desktop */}
           <div className="hidden md:relative md:flex">
             <details className="group">
-              <summary data-nav-glitch className="flex items-center gap-1 px-3 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:text-vault-cream hover:bg-muted/50 cursor-pointer list-none">
-                More ▾
+              <summary data-nav-glitch className="flex items-center gap-1 px-3 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:text-vault-cream hover:bg-muted/50 active:bg-muted cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+                More
+                <ChevronDown aria-hidden className="h-4 w-4 transition-transform duration-300 ease-out group-open:rotate-180 motion-reduce:transition-none" />
               </summary>
-              <div className="absolute right-0 top-full mt-1 w-48 vault-card rounded-xl border border-border shadow-xl z-50 py-1">
+              <div className="absolute right-0 top-full mt-1 w-48 vault-card rounded-xl border border-border shadow-xl z-50 py-1 animate-in fade-in-0 slide-in-from-top-1 duration-300 ease-out motion-reduce:animate-none">
                 {moreItems.map(({ href, label, icon: Icon }) => (
                   <Link key={href} href={href}
-                    className="flex items-center gap-2 px-4 py-2.5 text-sm text-muted-foreground hover:text-vault-cream hover:bg-muted/50 transition-colors">
+                    className="flex items-center gap-2 px-4 py-2.5 text-sm text-muted-foreground hover:text-vault-cream hover:bg-muted/50 active:bg-muted transition-colors">
                     <Icon className="h-4 w-4" /> {label}
                   </Link>
                 ))}
                 {user && (
                   <Link href="/creator"
-                    className="flex items-center gap-2 px-4 py-2.5 text-sm text-muted-foreground hover:text-vault-gold hover:bg-muted/50 transition-colors border-t border-border mt-1">
+                    className="flex items-center gap-2 px-4 py-2.5 text-sm text-muted-foreground hover:text-vault-gold hover:bg-muted/50 active:bg-muted transition-colors border-t border-border mt-1">
                     <LayoutDashboard className="h-4 w-4" /> Creator Dashboard
                   </Link>
                 )}
@@ -187,6 +189,9 @@ export function Navbar() {
             size="icon"
             data-nav-glitch
             className="md:hidden text-muted-foreground"
+            aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
+            aria-expanded={mobileOpen}
+            aria-controls="mobile-nav-menu"
             onClick={() => setMobileOpen(!mobileOpen)}
           >
             {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -195,22 +200,32 @@ export function Navbar() {
       </nav>
 
       {/* Mobile menu */}
-      {mobileOpen && (
-        <div className="md:hidden border-t border-border bg-vault-deep">
+      {/* Stays mounted so open and close both ease (300ms) instead of snapping;
+          inert keeps the collapsed links out of tab order and screen readers. */}
+      <div
+        id="mobile-nav-menu"
+        inert={!mobileOpen}
+        className={cn(
+          'md:hidden grid bg-vault-deep transition-[grid-template-rows,opacity] duration-300 ease-out motion-reduce:transition-none',
+          mobileOpen ? 'grid-rows-[1fr] opacity-100 border-t border-border' : 'grid-rows-[0fr] opacity-0',
+        )}
+      >
+        <div className="min-h-0 overflow-hidden">
           <div className="container mx-auto px-4 py-4 flex flex-col gap-1">
             {/* Search */}
             <Link href="/search" onClick={() => setMobileOpen(false)}
-              className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-muted-foreground hover:text-vault-cream hover:bg-muted/50">
+              className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-muted-foreground hover:text-vault-cream hover:bg-muted/50 active:bg-muted">
               <Search className="h-5 w-5" /> Search
             </Link>
 
             {navItems.map(({ href, label, icon: Icon }) => {
-              const isActive = pathname === href
+              const isActive = pathname === href || pathname?.startsWith(href + '/')
               return (
                 <Link key={href} href={href} onClick={() => setMobileOpen(false)}
+                  aria-current={isActive ? 'page' : undefined}
                   className={cn(
                     'flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors',
-                    isActive ? 'bg-vault-gold/10 text-vault-gold' : 'text-muted-foreground hover:text-vault-cream hover:bg-muted/50'
+                    isActive ? 'bg-vault-gold/10 text-vault-gold' : 'text-muted-foreground hover:text-vault-cream hover:bg-muted/50 active:bg-muted'
                   )}>
                   <Icon className="h-5 w-5" /> {label}
                 </Link>
@@ -221,7 +236,7 @@ export function Navbar() {
 
             {moreItems.map(({ href, label, icon: Icon }) => (
               <Link key={href} href={href} onClick={() => setMobileOpen(false)}
-                className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-muted-foreground hover:text-vault-cream hover:bg-muted/50">
+                className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-muted-foreground hover:text-vault-cream hover:bg-muted/50 active:bg-muted">
                 <Icon className="h-5 w-5" /> {label}
               </Link>
             ))}
@@ -230,20 +245,20 @@ export function Navbar() {
               <>
                 <div className="border-t border-border my-2" />
                 <Link href="/creator" onClick={() => setMobileOpen(false)}
-                  className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-muted-foreground hover:text-vault-gold hover:bg-muted/50">
+                  className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-muted-foreground hover:text-vault-gold hover:bg-muted/50 active:bg-muted">
                   <LayoutDashboard className="h-5 w-5" /> Creator Dashboard
                 </Link>
                 <Link href="/my-profile" onClick={() => setMobileOpen(false)}
-                  className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-muted-foreground hover:text-vault-cream hover:bg-muted/50">
+                  className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-muted-foreground hover:text-vault-cream hover:bg-muted/50 active:bg-muted">
                   <User className="h-5 w-5" /> My Profile
                 </Link>
                 <Link href="/shop" onClick={() => setMobileOpen(false)}
-                  className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-muted-foreground hover:text-vault-cream hover:bg-muted/50">
+                  className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-muted-foreground hover:text-vault-cream hover:bg-muted/50 active:bg-muted">
                   <ShoppingBag className="h-5 w-5" /> Shop
                 </Link>
                 {user.isAdmin && (
                   <Link href="/admin" onClick={() => setMobileOpen(false)}
-                    className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-muted-foreground hover:text-vault-gold hover:bg-muted/50">
+                    className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-muted-foreground hover:text-vault-gold hover:bg-muted/50 active:bg-muted">
                     <Shield className="h-5 w-5" /> Admin
                   </Link>
                 )}
@@ -258,7 +273,7 @@ export function Navbar() {
             )}
           </div>
         </div>
-      )}
+      </div>
     </NavRgbGlitch>
   )
 }
