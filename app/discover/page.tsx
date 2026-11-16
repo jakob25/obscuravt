@@ -11,19 +11,12 @@ import { DISCOVER_MAP_HINT } from '@/lib/site-copy'
 
 type MapMode = 'vibe' | 'niche'
 
-function FirstTimerBanner({ mode }: { mode: MapMode }) {
-  const [show, setShow] = useState(false)
+const MAP_HINT_SEEN_KEY = 'vtvault_map_seen'
 
-  useEffect(() => {
-    if (!localStorage.getItem('vtvault_map_seen')) {
-      setShow(true)
-    }
-  }, [])
-
-  if (!show) return null
-
+function FirstTimerBanner({ mode, onClose }: { mode: MapMode; onClose: () => void }) {
   return (
-    <div className="absolute bottom-4 left-4 z-30 max-w-sm pointer-events-auto">
+    // max-sm:right-20 keeps the card clear of the floating + button (right-4, 56px wide) on phones.
+    <div className="absolute bottom-4 left-4 max-sm:right-20 z-30 max-w-sm pointer-events-auto">
       <div className="bg-black/80 border border-white/10 rounded-xl px-4 py-3 backdrop-blur-sm">
         <div className="flex items-start gap-3">
           <Compass className="h-5 w-5 text-vault-gold flex-shrink-0" />
@@ -38,10 +31,7 @@ function FirstTimerBanner({ mode }: { mode: MapMode }) {
           </div>
           <button
             type="button"
-            onClick={() => {
-              setShow(false)
-              localStorage.setItem('vtvault_map_seen', '1')
-            }}
+            onClick={onClose}
             className="rounded-sm text-xs text-white/40 hover:text-white active:text-white flex-shrink-0 ml-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-vault-gold/60 motion-safe:active:scale-[0.97] motion-reduce:active:opacity-80"
           >
             Close
@@ -58,6 +48,18 @@ function DiscoverPageContent() {
 
   const initialMode = (searchParams.get('view') as MapMode) === 'niche' ? 'niche' : 'vibe'
   const [mode, setMode] = useState<MapMode>(initialMode)
+  // null until localStorage is read, so the map's own instruction pill never flashes
+  // underneath the first-visit card.
+  const [hintOpen, setHintOpen] = useState<boolean | null>(null)
+
+  useEffect(() => {
+    setHintOpen(!localStorage.getItem(MAP_HINT_SEEN_KEY))
+  }, [])
+
+  const closeHint = () => {
+    setHintOpen(false)
+    localStorage.setItem(MAP_HINT_SEEN_KEY, '1')
+  }
 
   const handleModeChange = (newMode: MapMode) => {
     setMode(newMode)
@@ -117,10 +119,10 @@ function DiscoverPageContent() {
 
       {/* Map */}
       <div className="absolute inset-0">
-        {mode === 'vibe' ? <StarMap /> : <NicheMap />}
+        {mode === 'vibe' ? <StarMap /> : <NicheMap hideInstructionsOnPhone={hintOpen !== false} />}
       </div>
 
-      <FirstTimerBanner mode={mode} />
+      {hintOpen && <FirstTimerBanner mode={mode} onClose={closeHint} />}
     </div>
   )
 }

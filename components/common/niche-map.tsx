@@ -22,7 +22,10 @@ const MIN_ZOOM = 0.4
 const LABEL_FONT = '700 14px "Space Grotesk", sans-serif'
 const MAX_ZOOM = 5
 
-export function NicheMap() {
+export function NicheMap({ hideInstructionsOnPhone = false }: {
+  /** Phones: the Discover first-visit card already says how to zoom/pan, so skip the pill while it shows. */
+  hideInstructionsOnPhone?: boolean
+} = {}) {
   const { vtubers, constellations, loading } = useNicheMapData()
   const router = useRouter()
 
@@ -525,7 +528,7 @@ export function NicheMap() {
       )}
 
       {/* Instructions — on phones the Discover map toggle covers the top-right, so sit just below it. */}
-      <div className="absolute max-sm:top-16 max-sm:left-4 sm:top-4 sm:right-4 px-3 py-1.5 rounded-lg bg-black/60 border border-white/10 text-xs text-white/30 select-none">
+      <div className={`absolute max-sm:top-16 max-sm:left-4 sm:top-4 sm:right-4 ${hideInstructionsOnPhone ? 'max-sm:hidden' : ''} px-3 py-1.5 rounded-lg bg-black/60 border border-white/10 text-xs text-white/30 select-none`}>
         <span className="sm:hidden">pinch to zoom · drag to pan · tap to explore</span><span className="hidden sm:inline">scroll to zoom · drag to pan · tap or click to explore</span>
       </div>
     </div>
