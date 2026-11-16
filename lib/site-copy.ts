@@ -83,6 +83,13 @@ export const DOSSIER = {
 } as const
 
 /** Add-a-VTuber form — paste a profile link, then edit anything that was pulled. */
+/** Discover map first-visit hint, second line. The niche line restates the Add VTuber
+ * niche step (VTUBER_SUBMIT.steps.niche.instruction) for people browsing. */
+export const DISCOVER_MAP_HINT = {
+  vibe: 'Personality constellations — not genre buckets.',
+  niche: 'Niche rooms — find creators by exactly what makes them different.',
+}
+
 export const VTUBER_SUBMIT = {
   pasteLink: 'Paste an X, YouTube, or Twitch profile link',
   linkPlaceholder: 'twitch.tv/name',

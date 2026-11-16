@@ -6,6 +6,7 @@ import { select } from 'd3-selection'
 import { useRouter } from 'next/navigation'
 import type { VTuber, Constellation } from '@/lib/types'
 import { fitMapTransform } from '@/lib/map-fit'
+import { labelNudges } from '@/lib/label-nudge'
 import { useNicheMapData, getVTubersByNicheCluster } from '@/hooks/use-niche-map-data'
 
 interface StarPosition {
@@ -123,7 +124,7 @@ export function NicheMap() {
       labelHalfWidthPx: (measure?.measureText(c.name).width ?? c.name.length * 9) / 2 + 6,
     }))
     const fit = fitMapTransform(points, dimensions.width, dimensions.height, {
-      pad: 100, minK: MIN_ZOOM, maxK: 1, insetTop: 56, insetBottom: 48, insetX: 8,
+      pad: 100, minK: MIN_ZOOM, maxK: 1, insetTop: dimensions.width < 640 ? 96 : 56, insetBottom: 48, insetX: 8,
     })
     if (!fit) return
     fittingRef.current = true
@@ -235,6 +236,16 @@ export function NicheMap() {
         })
       } else {
         // Zoomed out - show cluster orbs
+        // Label-only nudge so neighbouring cluster names never overlap (orbs stay put).
+        ctx.font = `700 ${14 / k}px "Space Grotesk", sans-serif`
+        const nudges = labelNudges(consts.map(c => ({
+          id: c.id,
+          x: c.position.x,
+          y: c.position.y,
+          halfWidth: ctx.measureText(c.name).width / 2,
+          above: 4 + 11 / k,
+          below: 17 / k,
+        })), 2 / k)
         consts.forEach(c => {
           const isHov = hovConst?.id === c.id
           const count = getVTubersByNicheCluster(vtubersRef.current, c.id).length
@@ -284,19 +295,20 @@ export function NicheMap() {
           }
 
           // Label
+          const ly = c.position.y + (nudges.get(c.id) ?? 0)
           ctx.font = `700 ${14 / k}px "Space Grotesk", sans-serif`
           ctx.textAlign = 'center'
           ctx.fillStyle = '#fff'
-          ctx.fillText(c.name, c.position.x, c.position.y - 4)
+          ctx.fillText(c.name, c.position.x, ly - 4)
 
           ctx.font = `500 ${10 / k}px "Space Grotesk", sans-serif`
           ctx.fillStyle = isHov ? c.color : 'rgba(200,220,255,0.75)'
-          ctx.fillText(`${count} creator${count !== 1 ? 's' : ''}`, c.position.x, c.position.y + 14 / k)
+          ctx.fillText(`${count} creator${count !== 1 ? 's' : ''}`, c.position.x, ly + 14 / k)
 
           if (isHov) {
             ctx.font = `400 ${9 / k}px "Space Grotesk", sans-serif`
             ctx.fillStyle = 'rgba(200,220,255,0.6)'
-            ctx.fillText('click to zoom in', c.position.x, c.position.y + 26 / k)
+            ctx.fillText('click to zoom in', c.position.x, ly + 26 / k)
           }
         })
       }
@@ -512,8 +524,8 @@ export function NicheMap() {
         </div>
       )}
 
-      {/* Instructions */}
-      <div className="absolute top-4 right-4 px-3 py-1.5 rounded-lg bg-black/60 border border-white/10 text-xs text-white/30 select-none">
+      {/* Instructions — on phones the Discover map toggle covers the top-right, so sit just below it. */}
+      <div className="absolute max-sm:top-16 max-sm:left-4 sm:top-4 sm:right-4 px-3 py-1.5 rounded-lg bg-black/60 border border-white/10 text-xs text-white/30 select-none">
         <span className="sm:hidden">pinch to zoom · drag to pan · tap to explore</span><span className="hidden sm:inline">scroll to zoom · drag to pan · tap or click to explore</span>
       </div>
     </div>

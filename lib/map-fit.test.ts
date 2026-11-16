@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { bestWindowStart, fitMapTransform } from './map-fit'
+import { bestWindowStart, fitMapTransform, windowScore } from './map-fit'
 
 const opts = { pad: 100, minK: 0.4, maxK: 1 }
 
@@ -23,7 +23,7 @@ describe('fitMapTransform', () => {
   })
 
   it('at the zoom floor, shows whole clusters instead of the empty middle', () => {
-    // Two groups far apart; the bigger group (by creators) should be fully on screen.
+    // Two groups far apart; the group with more populated clusters should be fully on screen.
     const pts = [
       { x: 100, y: 500, weight: 8 }, { x: 300, y: 600, weight: 7 },
       { x: 1600, y: 500, weight: 3 },
@@ -40,6 +40,39 @@ describe('fitMapTransform', () => {
   it('accounts for label width so long names are not clipped', () => {
     const f = fitMapTransform([{ x: 0, y: 0, labelHalfWidthPx: 150 }, { x: 600, y: 0 }], 390, 780, opts)!
     expect(0 * f.k + f.x - 150).toBeGreaterThanOrEqual(-1e-6)
+  })
+})
+
+describe('starting view scoring', () => {
+  const sx = (f: { k: number; x: number }, x: number) => x * f.k + f.x
+  const fullyIn = (f: { k: number; x: number }, x: number) => sx(f, x) - 100 * f.k >= -1e-6 && sx(f, x) + 100 * f.k <= 390 + 1e-6
+
+  it('prefers the most populated clusters over the most creators', () => {
+    const f = fitMapTransform([
+      { x: 0, y: 0, weight: 1 }, { x: 250, y: 0, weight: 1 }, { x: 500, y: 0, weight: 1 },
+      { x: 1600, y: 0, weight: 40 },
+    ], 390, 780, opts)!
+    expect([0, 250, 500].every(x => fullyIn(f, x))).toBe(true)
+  })
+
+  it('on a tie in cluster count, keeps the smallest clusters in view', () => {
+    const f = fitMapTransform([
+      { x: 0, y: 0, weight: 9 }, { x: 300, y: 0, weight: 8 },
+      { x: 1500, y: 0, weight: 1 }, { x: 1800, y: 0, weight: 2 },
+    ], 390, 780, opts)!
+    expect(fullyIn(f, 1500) && fullyIn(f, 1800)).toBe(true)
+  })
+
+  it('ignores empty clusters when choosing the view', () => {
+    const f = fitMapTransform([
+      { x: 0, y: 0, weight: 0 }, { x: 250, y: 0, weight: 0 }, { x: 500, y: 0, weight: 0 },
+      { x: 1600, y: 0, weight: 2 },
+    ], 390, 780, opts)!
+    expect(fullyIn(f, 1600)).toBe(true)
+  })
+
+  it('scores by populated count, then small-cluster bonus, then creators', () => {
+    expect(windowScore([{ lo: 0, hi: 1, w: 0 }, { lo: 0, hi: 1, w: 2 }, { lo: 0, hi: 1, w: 4 }])).toEqual([2, 0.75, 6])
   })
 })
 

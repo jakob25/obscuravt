@@ -6,8 +6,10 @@
  * visual extent (orb plus label). When the zoom floor stops everything fitting
  * (a phone at 40%), centring the overall bounding box lands on the sparse middle
  * of the map and cuts clusters off at both edges. Instead the camera picks the
- * window that shows the most creators in fully visible clusters, then centres
- * those clusters' extent in the viewport.
+ * window that fully shows the most clusters with at least one creator. Ties go to
+ * the window that keeps the smallest populated clusters in view (discovery first),
+ * then to more creators. The chosen clusters' extent is centred in the viewport.
+ * Empty clusters never decide the view.
  */
 export interface MapFitPoint {
   x: number
@@ -31,22 +33,40 @@ export interface MapFitOptions {
 
 interface Extent { lo: number; hi: number; w: number }
 
-/** Start of the window of length `span` that holds the most weight in whole extents,
- * then shifted so the chosen extents sit centred in it. */
+/** Ranks one candidate window; compared field by field, higher is better. */
+export function windowScore(inside: Extent[]): [number, number, number] {
+  const populated = inside.filter(i => i.w > 0)
+  return [
+    populated.length,
+    populated.reduce((n, i) => n + 1 / i.w, 0),
+    populated.reduce((n, i) => n + i.w, 0),
+  ]
+}
+
+function better(a: number[], b: number[]): number {
+  for (let i = 0; i < a.length; i++) {
+    if (Math.abs(a[i] - b[i]) > 1e-9) return a[i] > b[i] ? 1 : -1
+  }
+  return 0
+}
+
+/** Start of the window of length `span` that scores best (see windowScore),
+ * then shifted so the chosen populated extents sit centred in it. */
 export function bestWindowStart(items: Extent[], span: number): number {
   const allLo = Math.min(...items.map(i => i.lo))
   const allHi = Math.max(...items.map(i => i.hi))
   if (allHi - allLo <= span) return (allLo + allHi) / 2 - span / 2
   const mid = (allLo + allHi) / 2
   const starts = items.flatMap(i => [i.lo, i.hi - span])
-  let best: { score: number; dist: number; lo: number; hi: number } | null = null
+  let best: { score: number[]; lo: number; hi: number } | null = null
   for (const s of starts) {
     const inside = items.filter(i => i.lo >= s - 1e-6 && i.hi <= s + span + 1e-6)
     if (!inside.length) continue
-    const score = inside.reduce((n, i) => n + i.w, 0)
-    const dist = Math.abs(s + span / 2 - mid)
-    if (!best || score > best.score || (score === best.score && dist < best.dist)) {
-      best = { score, dist, lo: Math.min(...inside.map(i => i.lo)), hi: Math.max(...inside.map(i => i.hi)) }
+    // Centre on populated clusters when there are any; empty ones are along for the ride.
+    const anchor = inside.some(i => i.w > 0) ? inside.filter(i => i.w > 0) : inside
+    const score = [...windowScore(inside), inside.length, -Math.abs(s + span / 2 - mid)]
+    if (!best || better(score, best.score) > 0) {
+      best = { score, lo: Math.min(...anchor.map(i => i.lo)), hi: Math.max(...anchor.map(i => i.hi)) }
     }
   }
   if (!best) return mid - span / 2

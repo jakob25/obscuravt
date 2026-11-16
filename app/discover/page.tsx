@@ -6,11 +6,12 @@ import { StarMap } from '@/components/common/star-map'
 import { NicheMap } from '@/components/common/niche-map'
 import Link from 'next/link'
 import { Sparkles, BookOpen, Compass, List } from 'lucide-react'
+import { DISCOVER_MAP_HINT } from '@/lib/site-copy'
 
 
 type MapMode = 'vibe' | 'niche'
 
-function FirstTimerBanner() {
+function FirstTimerBanner({ mode }: { mode: MapMode }) {
   const [show, setShow] = useState(false)
 
   useEffect(() => {
@@ -32,7 +33,7 @@ function FirstTimerBanner() {
               <span className="hidden sm:inline">Scroll to zoom. Click a cluster. Find your people.</span>
             </p>
             <p className="text-xs text-white/50 mt-0.5">
-              Personality constellations — not genre buckets.
+              {DISCOVER_MAP_HINT[mode]}
             </p>
           </div>
           <button
@@ -119,7 +120,7 @@ function DiscoverPageContent() {
         {mode === 'vibe' ? <StarMap /> : <NicheMap />}
       </div>
 
-      <FirstTimerBanner />
+      <FirstTimerBanner mode={mode} />
     </div>
   )
 }
