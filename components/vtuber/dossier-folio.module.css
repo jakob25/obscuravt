@@ -149,6 +149,10 @@
   .gallery { columns: 1; }
   .artStudy,.artStudy:nth-child(even) { transform: none; margin-top: 0; }
 }
+/* Pressed feedback for taps (additive; resting look unchanged). */
+.tabs button:not([aria-selected=true]):active,.close:active,.pageNavigation button:not(:disabled):active { filter: brightness(.92); }
+.clipCard:active { transform: translateY(0); border-color: var(--case-teal); }
+.character:active,.textLink:active { opacity: .75; }
 @media (prefers-reduced-motion: reduce) {
   .book,.warmCover,.clipCard { transition: none; }
   .turning { animation: none; }

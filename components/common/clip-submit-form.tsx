@@ -134,7 +134,7 @@ export function ClipSubmitForm({ prefillVtuberId, prefillName, onSuccess, onCanc
     if (!value) return
     const validation = validateClipUrl(value)
     if (!validation.valid) {
-      setUrlError(validation.error || 'Invalid URL')
+      setUrlError(validation.error || null)
     } else {
       const info = extractVideoId(value)
       if (info) {
@@ -262,9 +262,12 @@ export function ClipSubmitForm({ prefillVtuberId, prefillName, onSuccess, onCanc
 
     const data = await res.json().catch(() => ({}))
     if (!res.ok) {
-      const detail = typeof data.detail === 'string' ? data.detail : null
-      const base = typeof data.error === 'string' ? data.error : 'Something went wrong.'
-      setSubmitError(detail ? `${base} (${detail})` : base)
+      // Plain words only: 4xx errors are already written for people; a server fault
+      // gets one calm line instead of a raw database message.
+      const plain = res.status < 500 && typeof data.error === 'string'
+        ? data.error
+        : "We couldn't save the clip just now. Nothing was posted, so try again in a minute."
+      setSubmitError(plain)
       setSubmitting(false)
       return
     }
@@ -319,6 +322,8 @@ export function ClipSubmitForm({ prefillVtuberId, prefillName, onSuccess, onCanc
             placeholder="https://youtube.com/watch?v=... or https://twitch.tv/..."
             value={url}
             onChange={e => handleUrlChange(e.target.value)}
+            aria-invalid={!!urlError || undefined}
+            aria-describedby={urlError ? 'clip-url-error' : undefined}
             className={`bg-muted/30 border-border text-vault-cream placeholder:text-muted-foreground pr-10 ${urlError ? 'border-destructive' : ''} ${urlValid ? 'border-vault-gold' : ''}`}
           />
           <div className="absolute right-3 top-1/2 -translate-y-1/2">
@@ -327,7 +332,7 @@ export function ClipSubmitForm({ prefillVtuberId, prefillName, onSuccess, onCanc
             {!metaLoading && urlValid && <CheckCircle className="h-4 w-4 text-vault-gold" />}
           </div>
         </div>
-        {urlError && <p className="mt-1 text-xs text-destructive">{urlError}</p>}
+        {urlError && <p id="clip-url-error" role="alert" className="mt-1 text-xs text-destructive">{urlError}</p>}
         {extractedInfo && (
           <p className="mt-1 text-xs text-vault-gold flex items-center gap-1">
             <LinkIcon className="h-3 w-3" /> Detected: {extractedInfo.platform}

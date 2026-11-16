@@ -6,23 +6,17 @@ import { StarMap } from '@/components/common/star-map'
 import { NicheMap } from '@/components/common/niche-map'
 import Link from 'next/link'
 import { Sparkles, BookOpen, Compass, List } from 'lucide-react'
+import { DISCOVER_MAP_HINT } from '@/lib/site-copy'
 
 
 type MapMode = 'vibe' | 'niche'
 
-function FirstTimerBanner() {
-  const [show, setShow] = useState(false)
+const MAP_HINT_SEEN_KEY = 'vtvault_map_seen'
 
-  useEffect(() => {
-    if (!localStorage.getItem('vtvault_map_seen')) {
-      setShow(true)
-    }
-  }, [])
-
-  if (!show) return null
-
+function FirstTimerBanner({ mode, onClose }: { mode: MapMode; onClose: () => void }) {
   return (
-    <div className="absolute bottom-4 left-4 z-30 max-w-sm pointer-events-auto">
+    // max-sm:right-20 keeps the card clear of the floating + button (right-4, 56px wide) on phones.
+    <div className="absolute bottom-4 left-4 max-sm:right-20 z-30 max-w-sm pointer-events-auto">
       <div className="bg-black/80 border border-white/10 rounded-xl px-4 py-3 backdrop-blur-sm">
         <div className="flex items-start gap-3">
           <Compass className="h-5 w-5 text-vault-gold flex-shrink-0" />
@@ -32,15 +26,13 @@ function FirstTimerBanner() {
               <span className="hidden sm:inline">Scroll to zoom. Click a cluster. Find your people.</span>
             </p>
             <p className="text-xs text-white/50 mt-0.5">
-              Personality constellations — not genre buckets.
+              {DISCOVER_MAP_HINT[mode]}
             </p>
           </div>
           <button
-            onClick={() => {
-              setShow(false)
-              localStorage.setItem('vtvault_map_seen', '1')
-            }}
-            className="text-xs text-white/40 hover:text-white flex-shrink-0 ml-auto"
+            type="button"
+            onClick={onClose}
+            className="rounded-sm text-xs text-white/40 hover:text-white active:text-white flex-shrink-0 ml-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-vault-gold/60 motion-safe:active:scale-[0.97] motion-reduce:active:opacity-80"
           >
             Close
           </button>
@@ -56,6 +48,18 @@ function DiscoverPageContent() {
 
   const initialMode = (searchParams.get('view') as MapMode) === 'niche' ? 'niche' : 'vibe'
   const [mode, setMode] = useState<MapMode>(initialMode)
+  // null until localStorage is read, so the map's own instruction pill never flashes
+  // underneath the first-visit card.
+  const [hintOpen, setHintOpen] = useState<boolean | null>(null)
+
+  useEffect(() => {
+    setHintOpen(!localStorage.getItem(MAP_HINT_SEEN_KEY))
+  }, [])
+
+  const closeHint = () => {
+    setHintOpen(false)
+    localStorage.setItem(MAP_HINT_SEEN_KEY, '1')
+  }
 
   const handleModeChange = (newMode: MapMode) => {
     setMode(newMode)
@@ -79,22 +83,26 @@ function DiscoverPageContent() {
         style={{ isolation: 'isolate' }}
       >
         <button
+          type="button"
+          aria-pressed={mode === 'vibe'}
           onClick={() => handleModeChange('vibe')}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-vault-gold/60 motion-safe:active:scale-[0.97] motion-reduce:active:opacity-80 ${
             mode === 'vibe'
-              ? 'bg-vault-gold/20 text-vault-gold border border-vault-gold/30'
-              : 'text-white/50 hover:text-white'
+              ? 'bg-vault-gold/20 text-vault-gold border-vault-gold/30'
+              : 'border-transparent text-white/50 hover:text-white'
           }`}
         >
           <Sparkles className="h-3.5 w-3.5" />
           Vibe Map
         </button>
         <button
+          type="button"
+          aria-pressed={mode === 'niche'}
           onClick={() => handleModeChange('niche')}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-vault-gold/60 motion-safe:active:scale-[0.97] motion-reduce:active:opacity-80 ${
             mode === 'niche'
-              ? 'bg-vault-gold/20 text-vault-gold border border-vault-gold/30'
-              : 'text-white/50 hover:text-white'
+              ? 'bg-vault-gold/20 text-vault-gold border-vault-gold/30'
+              : 'border-transparent text-white/50 hover:text-white'
           }`}
         >
           <BookOpen className="h-3.5 w-3.5" />
@@ -102,7 +110,7 @@ function DiscoverPageContent() {
         </button>
         <Link
           href="/search"
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-white/50 hover:text-white"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-transparent text-xs font-medium text-white/50 hover:text-white transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-vault-gold/60 motion-safe:active:scale-[0.97] motion-reduce:active:opacity-80"
         >
           <List className="h-3.5 w-3.5" />
           List
@@ -111,10 +119,10 @@ function DiscoverPageContent() {
 
       {/* Map */}
       <div className="absolute inset-0">
-        {mode === 'vibe' ? <StarMap /> : <NicheMap />}
+        {mode === 'vibe' ? <StarMap /> : <NicheMap hideInstructionsOnPhone={hintOpen !== false} />}
       </div>
 
-      <FirstTimerBanner />
+      {hintOpen && <FirstTimerBanner mode={mode} onClose={closeHint} />}
     </div>
   )
 }

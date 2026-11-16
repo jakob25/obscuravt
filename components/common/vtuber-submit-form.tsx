@@ -103,11 +103,14 @@ export function VTuberSubmitForm({ onSuccess, onCancel, preview }: VTuberSubmitF
   const [lookupMessage, setLookupMessage] = useState(preview?.lookupMessage ?? '')
   const [duplicate, setDuplicate] = useState<LookupDuplicate | null>(preview?.duplicate ?? null)
   const [error, setError] = useState('')
+  const [avatarError, setAvatarError] = useState('')
   const [success, setSuccess] = useState(false)
   const [skippedLink, setSkippedLink] = useState(false)
   const touchedRef = useRef({ name: false, handle: false, platform: false, bio: false })
   const lastLookupUrlRef = useRef('')
   const headingRef = useRef<HTMLHeadingElement>(null)
+  const avatarInputRef = useRef<HTMLInputElement>(null)
+  const avatarErrorRef = useRef<HTMLParagraphElement>(null)
 
   const vibeTagOptions = ['wholesome', 'chaotic', 'unhinged', 'cozy', 'competitive', 'artistic', 'meme', 'chill']
 
@@ -154,6 +157,11 @@ export function VTuberSubmitForm({ onSuccess, onCancel, preview }: VTuberSubmitF
     headingRef.current?.focus()
   }, [step])
 
+  useEffect(() => {
+    if (!avatarError) return
+    avatarErrorRef.current?.scrollIntoView({ block: 'center', behavior: 'smooth' })
+  }, [avatarError])
+
   const handleInputChange = (field: keyof typeof formData, value: string) => {
     if (field === 'name' || field === 'handle' || field === 'platform' || field === 'bio') {
       touchedRef.current[field] = true
@@ -167,11 +175,11 @@ export function VTuberSubmitForm({ onSuccess, onCancel, preview }: VTuberSubmitF
     if (!file) return
 
     if (!file.type.startsWith('image/')) {
-      setError('Please upload an image file')
+      setAvatarError('Please upload an image file')
       return
     }
     if (file.size > 5 * 1024 * 1024) {
-      setError('Image must be smaller than 5MB')
+      setAvatarError('Image must be smaller than 5MB')
       return
     }
 
@@ -180,13 +188,19 @@ export function VTuberSubmitForm({ onSuccess, onCancel, preview }: VTuberSubmitF
     const reader = new FileReader()
     reader.onload = (ev) => setAvatarPreview(ev.target?.result as string)
     reader.readAsDataURL(file)
-    setError('')
+    setAvatarError('')
   }
 
   const removeAvatar = () => {
     setAvatarFile(null)
     setAvatarPreview(null)
     setAvatarCleared(true)
+    setAvatarError('')
+    if (avatarInputRef.current) avatarInputRef.current.value = ''
+  }
+
+  const openAvatarPicker = () => {
+    avatarInputRef.current?.click()
   }
 
   const toggleVibeTag = (tag: string) => {
@@ -431,6 +445,7 @@ export function VTuberSubmitForm({ onSuccess, onCancel, preview }: VTuberSubmitF
 
     setSubmitting(true)
     setError('')
+    setAvatarError('')
 
     try {
       let avatarUrl: string | null = null
@@ -446,7 +461,9 @@ export function VTuberSubmitForm({ onSuccess, onCancel, preview }: VTuberSubmitF
         })
         const uploadData = await uploadRes.json().catch(() => ({})) as { error?: string; url?: string }
         if (!uploadRes.ok || !uploadData.url) {
-          throw new Error(uploadData.error || "Couldn't upload the profile picture. You can submit without one, or try a different image.")
+          setAvatarError(uploadData.error || "Couldn't upload the profile picture. You can submit without one, or try a different image.")
+          goTo('details')
+          return
         }
         avatarUrl = uploadData.url
         setUploading(false)
@@ -490,6 +507,7 @@ export function VTuberSubmitForm({ onSuccess, onCancel, preview }: VTuberSubmitF
         setAvatarPreview(null)
         setLookupAvatar(null)
         setAvatarCleared(false)
+        setAvatarError('')
         setLookupMessage('')
         setDuplicate(null)
         setSkippedLink(false)
@@ -649,30 +667,39 @@ export function VTuberSubmitForm({ onSuccess, onCancel, preview }: VTuberSubmitF
                   </button>
                 </div>
               ) : (
-                <label htmlFor="avatar-upload" className="flex h-20 w-20 cursor-pointer items-center justify-center rounded-xl border border-dashed hover:bg-muted/50">
+                <button
+                  type="button"
+                  onClick={openAvatarPicker}
+                  className="flex h-20 w-20 cursor-pointer items-center justify-center rounded-xl border border-dashed hover:bg-muted/50"
+                  aria-label="Upload profile picture"
+                >
                   <div className="text-center">
                     <Upload className="mx-auto h-6 w-6 text-muted-foreground" />
                     <span className="text-[10px] text-muted-foreground mt-1 block">Upload</span>
                   </div>
-                </label>
+                </button>
               )}
 
               <div>
                 <input
+                  ref={avatarInputRef}
                   type="file"
                   accept="image/*"
                   onChange={handleAvatarSelect}
-                  className="hidden"
+                  className="sr-only"
                   id="avatar-upload"
                 />
-                <label htmlFor="avatar-upload">
-                  <Button type="button" variant="outline" size="sm">
-                    Choose Image
-                  </Button>
-                </label>
+                <Button type="button" variant="outline" size="sm" onClick={openAvatarPicker}>
+                  {shownAvatar ? 'Replace image' : 'Choose Image'}
+                </Button>
                 <p className="text-xs text-muted-foreground mt-1">PNG, JPG up to 5MB</p>
               </div>
             </div>
+            {avatarError && (
+              <p ref={avatarErrorRef} className="text-sm text-red-400 mt-2" role="alert">
+                {avatarError}
+              </p>
+            )}
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

@@ -3,7 +3,7 @@ import { getSession } from '@/lib/session'
 import { allowSignedOutClipSubmit } from '@/lib/flags'
 import { rateLimits } from '@/lib/rate-limit'
 import { supabaseAdmin } from '@/lib/supabase'
-import { extractVideoId, resolveClipThumbnail } from '@/lib/embed-utils'
+import { extractVideoId, resolveClipThumbnail, validateClipUrl, CLIP_URL_ERRORS } from '@/lib/embed-utils'
 import { helixClipThumbnails } from '@/lib/twitch-helix'
 import { backfillMissingVtuberChannelLinks } from '@/lib/vtuber-channel-link'
 import { hydrateVtuberById } from '@/lib/vtuber-twitch-hydrate'
@@ -130,13 +130,17 @@ export async function POST(req: NextRequest) {
   const username = session?.username ?? 'guest'
 
   if (!title.trim())
-    return NextResponse.json({ error: 'Title is required.' }, { status: 400 })
+    return NextResponse.json({ error: 'Give the clip a title.' }, { status: 400 })
   if (!url.trim())
-    return NextResponse.json({ error: 'Video URL is required.' }, { status: 400 })
+    return NextResponse.json({ error: CLIP_URL_ERRORS.empty }, { status: 400 })
+  // Same link/platform check the form runs, so nothing unplayable is ever saved
+  const linkCheck = validateClipUrl(url.trim())
+  if (!linkCheck.valid)
+    return NextResponse.json({ error: linkCheck.error }, { status: 400 })
 
   if (!profile_id && !nameFromBody) {
     return NextResponse.json(
-      { error: 'Select a VTuber or enter their name.' },
+      { error: 'Pick the VTuber in this clip, or type their name.' },
       { status: 400 }
     )
   }

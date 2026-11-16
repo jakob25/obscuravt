@@ -192,23 +192,51 @@ export function isYouTubeShortsUrl(url: string): boolean {
   return /youtube\.com\/shorts\//.test(url);
 }
 
+/** Plain-words reasons a clip link can't be used. Shown before anything is saved. */
+export const CLIP_URL_ERRORS = {
+  empty: 'Paste a link to the clip first.',
+  notALink: "That doesn't look like a web link. Copy the clip's address from your browser and paste it here.",
+  shorts: "YouTube Shorts can't be added. ObscuraVT keeps raw clips and longer highlights, so paste the full video or VOD link instead.",
+  channel: (site: string) =>
+    `That ${site} link isn't a clip or video we can play. If it's a channel or profile page, open the clip itself and copy that link.`,
+  unsupported:
+    "We can't play links from that site. Use a YouTube video or VOD, Twitch clip or VOD, Kick clip, Rumble video, or X post.",
+} as const
+
+const KNOWN_SITES: { site: string; host: RegExp }[] = [
+  { site: 'YouTube', host: /(^|\.)(youtube\.com|youtu\.be)$/i },
+  { site: 'Twitch', host: /(^|\.)twitch\.tv$/i },
+  { site: 'Kick', host: /(^|\.)kick\.com$/i },
+  { site: 'Rumble', host: /(^|\.)rumble\.com$/i },
+  { site: 'X', host: /(^|\.)(x\.com|twitter\.com)$/i },
+]
+
+function hostOf(url: string): string | null {
+  const raw = url.trim()
+  if (!raw) return null
+  try {
+    return new URL(/^[a-z][a-z0-9+.-]*:\/\//i.test(raw) ? raw : `https://${raw}`).hostname
+  } catch {
+    return null
+  }
+}
+
 export function validateClipUrl(url: string): { valid: boolean; error?: string } {
+  if (!url || !url.trim()) return { valid: false, error: CLIP_URL_ERRORS.empty }
   // Reject YouTube Shorts
   if (isYouTubeShortsUrl(url)) {
-    return { 
-      valid: false, 
-      error: 'YouTube Shorts are not accepted. ObscuraVT is focused on raw, unedited clips and longer highlights that preserve context.' 
-    };
+    return { valid: false, error: CLIP_URL_ERRORS.shorts }
   }
-  
+
   const extracted = extractVideoId(url);
   if (!extracted) {
-    return { 
-      valid: false, 
-      error: 'Could not recognize this URL. Please use a YouTube video/VOD, Twitch clip/VOD, Kick clip, Rumble video, or X post link.' 
-    };
+    const host = hostOf(url)
+    if (!host || !host.includes('.')) return { valid: false, error: CLIP_URL_ERRORS.notALink }
+    const known = KNOWN_SITES.find(k => k.host.test(host))
+    if (known) return { valid: false, error: CLIP_URL_ERRORS.channel(known.site) }
+    return { valid: false, error: CLIP_URL_ERRORS.unsupported }
   }
-  
+
   return { valid: true };
 }
 

@@ -10,6 +10,7 @@ const clipsLimit = vi.fn()
 const clipsInsert = vi.fn()
 const matchCreator = vi.fn(async (..._args: unknown[]) => ({ status: 'none' }))
 const extractVideoId = vi.fn((_url?: string) => null)
+const validateClipUrl = vi.fn((_url?: string): { valid: boolean; error?: string } => ({ valid: true }))
 const resolveClipThumbnail = vi.fn(async (_url?: string) => null)
 
 vi.mock('@/lib/session', () => ({
@@ -55,6 +56,8 @@ vi.mock('@/lib/supabase', () => ({
 vi.mock('@/lib/embed-utils', () => ({
   extractVideoId: (url: string) => extractVideoId(url),
   resolveClipThumbnail: (url: string) => resolveClipThumbnail(url),
+  validateClipUrl: (url: string) => validateClipUrl(url),
+  CLIP_URL_ERRORS: { empty: 'Paste a link to the clip first.' },
 }))
 
 vi.mock('@/lib/twitch-helix', () => ({
@@ -102,6 +105,8 @@ describe('POST /api/clips scrap awards', () => {
     matchCreator.mockReset()
     extractVideoId.mockReset()
     resolveClipThumbnail.mockReset()
+    validateClipUrl.mockReset()
+    validateClipUrl.mockReturnValue({ valid: true })
 
     getSession.mockResolvedValue({ username: 'alice', role: 'Fan' })
     clipsMaybeSingle.mockResolvedValue({ data: null, error: null })
@@ -207,5 +212,15 @@ describe('POST /api/clips scrap awards', () => {
     expect(body.ok).toBe(true)
     expect(body.scrap_award).toBeNull()
     expect(rpc).not.toHaveBeenCalled()
+  })
+
+  it('turns away an unplayable link in plain words before saving anything', async () => {
+    validateClipUrl.mockReturnValue({ valid: false, error: "We can't play links from that site." })
+    const { POST } = await import('./route')
+    const res = await POST(postRequest({ ...validBody, url: 'https://example.com/not-a-clip' }))
+    expect(res.status).toBe(400)
+    const body = await res.json()
+    expect(body.error).toBe("We can't play links from that site.")
+    expect(clipsInsert).not.toHaveBeenCalled()
   })
 })

@@ -12,6 +12,7 @@ import type { Bet } from '@/lib/types'
 import { BetSlip } from '@/components/vault/vault-surfaces'
 import { GlitchHeading } from '@/components/vault/glitch-heading'
 import { VaultDivider } from '@/components/vault/vault-surfaces'
+import { BETS_SCRAPS_NOTE } from '@/lib/site-copy'
 
 // —— Per-bet interactive card ——
 
@@ -278,7 +279,12 @@ export default function BetsPage() {
   if (loading) {
     return (
       <div className="container mx-auto px-4 py-8">
-        <GlitchHeading as="h1" className="text-2xl font-bold text-vault-cream mb-6">VTuberBets</GlitchHeading>
+        <GlitchHeading as="h1" className="text-2xl font-bold text-vault-cream mb-2">VTuberBets</GlitchHeading>
+        {/* Same intro as the loaded page, so it is in the server HTML too */}
+        <p className="text-sm text-muted-foreground mb-1">
+          Wager scraps on stream outcomes. Vote when wagering closes.
+        </p>
+        <p className="text-xs text-muted-foreground mb-6">{BETS_SCRAPS_NOTE}</p>
         <div className="grid md:grid-cols-2 gap-4">
           {[1, 2, 3, 4].map(i => (
             <div key={i} className="vault-card rounded-xl p-5 h-52 animate-pulse bg-muted/20" />
@@ -291,9 +297,10 @@ export default function BetsPage() {
   return (
     <div className="container mx-auto px-4 py-8">
       <GlitchHeading as="h1" className="text-2xl font-bold text-vault-cream mb-2">VTuberBets</GlitchHeading>
-      <p className="text-sm text-muted-foreground mb-4">
+      <p className="text-sm text-muted-foreground mb-1">
         Wager scraps on stream outcomes. Vote when wagering closes.
       </p>
+      <p className="text-xs text-muted-foreground mb-4" data-testid="bets-scraps-note">{BETS_SCRAPS_NOTE}</p>
       <VaultDivider className="mb-8" />
 
       {bets.length === 0 && (

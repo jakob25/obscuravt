@@ -92,6 +92,8 @@ export async function POST(req: NextRequest) {
     approved: false,
     nominated_by: submitted_by,
     spotlight: false,
+    // Dated so the homepage "New here" strip can list fresh files truthfully
+    created_at: new Date().toISOString(),
   })
 
   if (error) return NextResponse.json({ error: 'Failed to submit VTuber.' }, { status: 500 })

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { consumeComposeSearch, hideAddFabOnMobile } from './add-button'
+import { consumeComposeSearch, hideAddFabOnMobile, nextFabTucked } from './add-button'
 
 describe('hideAddFabOnMobile', () => {
   it('hides the + button on the nominator and preview, or while the compose dialog is open', () => {
@@ -26,5 +26,22 @@ describe('consumeComposeSearch', () => {
     expect(consumeComposeSearch('?compose=clip')).toEqual({ tab: 'clip', nextSearch: '' })
     expect(consumeComposeSearch('?foo=bar')).toEqual({ tab: null, nextSearch: '?foo=bar' })
     expect(consumeComposeSearch('')).toEqual({ tab: null, nextSearch: '' })
+  })
+})
+
+describe('nextFabTucked', () => {
+  it('tucks away while scrolling down mid-page and returns on scroll up', () => {
+    expect(nextFabTucked(200, 260, 2000, false)).toBe(true)
+    expect(nextFabTucked(600, 540, 2000, true)).toBe(false)
+  })
+
+  it('stays visible near the top and at the end of the page', () => {
+    expect(nextFabTucked(0, 60, 2000, false)).toBe(false)
+    expect(nextFabTucked(1900, 2000, 2000, true)).toBe(false)
+  })
+
+  it('ignores tiny scroll jitter', () => {
+    expect(nextFabTucked(500, 504, 2000, true)).toBe(true)
+    expect(nextFabTucked(500, 496, 2000, false)).toBe(false)
   })
 })

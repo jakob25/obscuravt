@@ -5,6 +5,8 @@ import { zoom, zoomIdentity, ZoomTransform, D3ZoomEvent } from 'd3-zoom'
 import { select } from 'd3-selection'
 import { useRouter } from 'next/navigation'
 import type { VTuber, Constellation } from '@/lib/types'
+import { fitMapTransform } from '@/lib/map-fit'
+import { labelNudges } from '@/lib/label-nudge'
 import { useNicheMapData, getVTubersByNicheCluster } from '@/hooks/use-niche-map-data'
 
 interface StarPosition {
@@ -16,9 +18,14 @@ interface StarPosition {
 const ZOOM_THRESHOLD = 1.5
 
 const MIN_ZOOM = 0.4
+// Cluster label font as drawn when zoomed out (fixed screen size); used to keep labels in the initial view.
+const LABEL_FONT = '700 14px "Space Grotesk", sans-serif'
 const MAX_ZOOM = 5
 
-export function NicheMap() {
+export function NicheMap({ hideInstructionsOnPhone = false }: {
+  /** Phones: the Discover first-visit card already says how to zoom/pan, so skip the pill and zoom readout while it shows. */
+  hideInstructionsOnPhone?: boolean
+} = {}) {
   const { vtubers, constellations, loading } = useNicheMapData()
   const router = useRouter()
 
@@ -34,6 +41,9 @@ export function NicheMap() {
   const constellationsRef = useRef<Constellation[]>([])
   const vtubersRef = useRef<VTuber[]>([])
   const zoomBehaviorRef = useRef<ReturnType<typeof zoom<HTMLCanvasElement, unknown>> | null>(null)
+  // Initial fit only: stop re-fitting once the viewer pans, zooms or taps into a cluster.
+  const fittingRef = useRef(false)
+  const userMovedRef = useRef(false)
   const touchTapTimeoutRef = useRef<number | null>(null)
   const lastTapClusterIdRef = useRef<string | null>(null)
   const lastTapTimeRef = useRef(0)
@@ -92,6 +102,7 @@ export function NicheMap() {
       .scaleExtent([MIN_ZOOM, MAX_ZOOM])
       .on('zoom', (event: D3ZoomEvent<HTMLCanvasElement, unknown>) => {
         transformRef.current = event.transform
+        if (!fittingRef.current) userMovedRef.current = true
         setZoomPct(Math.round(event.transform.k * 100))
         setTooltip(null)
         setClusterHint(null)
@@ -100,6 +111,29 @@ export function NicheMap() {
     sel.call(zb)
     return () => { sel.on('.zoom', null) }
   }, [dimensions.width, dimensions.height])
+
+  // Confirmed bug fix (initial viewport only): open centred on all clusters, zoomed
+  // out as far as the zoom limits allow, instead of the world origin. Re-fits on
+  // resize until the viewer moves the map. Positions/placement are untouched.
+  useEffect(() => {
+    const canvas = canvasRef.current
+    const zb = zoomBehaviorRef.current
+    if (!canvas || !zb || userMovedRef.current || !constellations.length) return
+    const measure = document.createElement('canvas').getContext('2d')
+    if (measure) measure.font = LABEL_FONT
+    const points = constellations.map(c => ({
+      ...c.position,
+      weight: getVTubersByNicheCluster(vtubers, c.id).length,
+      labelHalfWidthPx: (measure?.measureText(c.name).width ?? c.name.length * 9) / 2 + 6,
+    }))
+    const fit = fitMapTransform(points, dimensions.width, dimensions.height, {
+      pad: 100, minK: MIN_ZOOM, maxK: 1, insetTop: dimensions.width < 640 ? 96 : 56, insetBottom: 48, insetX: 8,
+    })
+    if (!fit) return
+    fittingRef.current = true
+    select(canvas).call(zb.transform, zoomIdentity.translate(fit.x, fit.y).scale(fit.k))
+    fittingRef.current = false
+  }, [constellations, vtubers, dimensions.width, dimensions.height])
 
   // Main render loop
   useEffect(() => {
@@ -205,6 +239,16 @@ export function NicheMap() {
         })
       } else {
         // Zoomed out - show cluster orbs
+        // Label-only nudge so neighbouring cluster names never overlap (orbs stay put).
+        ctx.font = `700 ${14 / k}px "Space Grotesk", sans-serif`
+        const nudges = labelNudges(consts.map(c => ({
+          id: c.id,
+          x: c.position.x,
+          y: c.position.y,
+          halfWidth: ctx.measureText(c.name).width / 2,
+          above: 4 + 11 / k,
+          below: 17 / k,
+        })), 2 / k)
         consts.forEach(c => {
           const isHov = hovConst?.id === c.id
           const count = getVTubersByNicheCluster(vtubersRef.current, c.id).length
@@ -254,19 +298,20 @@ export function NicheMap() {
           }
 
           // Label
+          const ly = c.position.y + (nudges.get(c.id) ?? 0)
           ctx.font = `700 ${14 / k}px "Space Grotesk", sans-serif`
           ctx.textAlign = 'center'
           ctx.fillStyle = '#fff'
-          ctx.fillText(c.name, c.position.x, c.position.y - 4)
+          ctx.fillText(c.name, c.position.x, ly - 4)
 
           ctx.font = `500 ${10 / k}px "Space Grotesk", sans-serif`
           ctx.fillStyle = isHov ? c.color : 'rgba(200,220,255,0.75)'
-          ctx.fillText(`${count} creator${count !== 1 ? 's' : ''}`, c.position.x, c.position.y + 14 / k)
+          ctx.fillText(`${count} creator${count !== 1 ? 's' : ''}`, c.position.x, ly + 14 / k)
 
           if (isHov) {
             ctx.font = `400 ${9 / k}px "Space Grotesk", sans-serif`
             ctx.fillStyle = 'rgba(200,220,255,0.6)'
-            ctx.fillText('click to zoom in', c.position.x, c.position.y + 26 / k)
+            ctx.fillText('click to zoom in', c.position.x, ly + 26 / k)
           }
         })
       }
@@ -433,7 +478,7 @@ export function NicheMap() {
       />
 
       {/* Zoom indicator */}
-      <div className="absolute bottom-4 right-4 flex items-center gap-2 px-3 py-1.5 rounded-lg bg-black/70 border border-white/10 text-xs select-none">
+      <div className={`absolute bottom-4 right-4 ${hideInstructionsOnPhone ? 'max-sm:hidden' : ''} flex items-center gap-2 px-3 py-1.5 rounded-lg bg-black/70 border border-white/10 text-xs select-none`}>
         <span className="text-white/40">zoom</span>
         <span className="text-white font-medium tabular-nums">{zoomPct}%</span>
       </div>
@@ -482,8 +527,8 @@ export function NicheMap() {
         </div>
       )}
 
-      {/* Instructions */}
-      <div className="absolute top-4 right-4 px-3 py-1.5 rounded-lg bg-black/60 border border-white/10 text-xs text-white/30 select-none">
+      {/* Instructions — on phones the Discover map toggle covers the top-right, so sit just below it. */}
+      <div className={`absolute max-sm:top-16 max-sm:left-4 sm:top-4 sm:right-4 ${hideInstructionsOnPhone ? 'max-sm:hidden' : ''} px-3 py-1.5 rounded-lg bg-black/60 border border-white/10 text-xs text-white/30 select-none`}>
         <span className="sm:hidden">pinch to zoom · drag to pan · tap to explore</span><span className="hidden sm:inline">scroll to zoom · drag to pan · tap or click to explore</span>
       </div>
     </div>

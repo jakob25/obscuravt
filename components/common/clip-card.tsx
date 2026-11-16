@@ -97,18 +97,21 @@ export function ClipCard({ clip, onPlay, credit }: ClipCardProps) {
 
   return (
     <div className="group flex flex-col items-center pb-3">
-      <div className="relative w-full max-w-[320px] overflow-hidden rounded-md border border-vault-bronze/30 bg-vault-deep" style={{ aspectRatio: '16 / 9' }}>
+      <div className="relative w-full max-w-[320px] overflow-hidden rounded-md border border-vault-bronze/30 bg-vault-scrim" style={{ aspectRatio: '16 / 9' }}>
         {isPlaying && embedUrl ? (
           <iframe
             src={embedUrl + (platform === 'youtube' ? '&autoplay=1' : '&autoplay=true')}
+            title={clip.title}
             className="absolute inset-0 h-full w-full"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowFullScreen
           />
         ) : (
           <button
+            type="button"
             onClick={handlePlay}
-            className="absolute inset-0 h-full w-full overflow-hidden bg-vault-deep"
+            aria-label={`Play clip: ${clip.title}`}
+            className="absolute inset-0 h-full w-full overflow-hidden bg-vault-scrim outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-vault-gold/70"
             style={
               shownThumb
                 ? {
@@ -121,12 +124,12 @@ export function ClipCard({ clip, onPlay, credit }: ClipCardProps) {
           >
             <div className="absolute inset-0 bg-gradient-to-br from-vault-charcoal/40 to-vault-scrim/50" />
             <div className="relative z-10 flex h-full items-center justify-center">
-              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-vault-gold/90 shadow-lg transition-all group-hover:scale-110 group-hover:bg-vault-gold">
+              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-vault-gold/90 shadow-lg transition-all group-hover:scale-110 group-hover:bg-vault-gold motion-safe:group-active:scale-95 motion-reduce:group-active:opacity-80">
                 <Play className="ml-1 h-7 w-7 text-vault-deep" fill="currentColor" />
               </div>
             </div>
             {duration && (
-              <div className="absolute bottom-2 right-2 flex items-center gap-1 rounded bg-vault-deep/80 px-2 py-1 text-[10px] text-vault-cream">
+              <div className="absolute bottom-2 right-2 flex items-center gap-1 rounded bg-vault-scrim/80 px-2 py-1 text-[10px] text-vault-on-scrim">
                 <Clock className="h-3 w-3" />
                 {duration}
               </div>
@@ -140,11 +143,11 @@ export function ClipCard({ clip, onPlay, credit }: ClipCardProps) {
             >
               {clip.type === 'raw' ? 'Raw Clip' : 'Edited'}
             </div>
-            <div className="absolute right-2 top-2 rounded bg-vault-deep/80 px-2 py-1 text-[10px] capitalize text-muted-foreground">
+            <div className="absolute right-2 top-2 rounded bg-vault-scrim/80 px-2 py-1 text-[10px] capitalize text-vault-on-scrim/70">
               {platformLabel}
             </div>
             {linkOnly && !shownThumb && (
-              <div className="absolute bottom-2 left-2 rounded bg-vault-deep/80 px-2 py-1 font-mono text-[10px] uppercase tracking-[0.1em] text-vault-cream/80">
+              <div className="absolute bottom-2 left-2 rounded bg-vault-scrim/80 px-2 py-1 font-mono text-[10px] uppercase tracking-[0.1em] text-vault-on-scrim/80">
                 Opens on {platformLabel}
               </div>
             )}

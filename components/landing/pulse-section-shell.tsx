@@ -38,7 +38,8 @@ export function PulseSectionShell({
         )}
       />
       <CardRgbTearOverlay staggerIndex={staggerIndex} />
-      <div className="relative z-[2]">{children}</div>
+      {/* Even gap on all four sides between the coloured wash and its content. */}
+      <div className="relative z-[2] p-panel">{children}</div>
     </VaultPanel>
   )
 }

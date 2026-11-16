@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation'
 import { useStarMapData, getVTubersByConstellationLive } from '@/hooks/use-star-map-data'
 import { AnalogStaticCanvas } from '@/components/vault/analog-static-canvas'
 import type { VTuber, Constellation } from '@/lib/types'
+import { fitMapTransform } from '@/lib/map-fit'
 
 interface StarPosition {
   vtuber: VTuber
@@ -16,6 +17,8 @@ interface StarPosition {
 
 const ZOOM_THRESHOLD = 1.5
 const MIN_ZOOM = 0.4
+// Cluster label font as drawn when zoomed out (fixed screen size); used to keep labels in the initial view.
+const LABEL_FONT = '700 16px "Space Grotesk", sans-serif'
 const MAX_ZOOM = 5
 
 export function StarMap() {
@@ -36,6 +39,9 @@ export function StarMap() {
   const vtubersRef = useRef<VTuber[]>([])
   const imageCache = useRef<Map<string, HTMLImageElement>>(new Map())
   const zoomBehaviorRef = useRef<ReturnType<typeof zoom<HTMLCanvasElement, unknown>> | null>(null)
+  // Initial fit only: stop re-fitting once the viewer pans, zooms or taps into a cluster.
+  const fittingRef = useRef(false)
+  const userMovedRef = useRef(false)
 
   // Only use React state for things that affect overlay UI
   const [dimensions, setDimensions] = useState({ width: 900, height: 400 })
@@ -100,6 +106,7 @@ export function StarMap() {
       .scaleExtent([MIN_ZOOM, MAX_ZOOM])
       .on('zoom', (event: D3ZoomEvent<HTMLCanvasElement, unknown>) => {
         transformRef.current = event.transform
+        if (!fittingRef.current) userMovedRef.current = true
         setZoomPct(Math.round(event.transform.k * 100))
         // Clear tooltip on pan/zoom
         setTooltip(null)
@@ -108,6 +115,29 @@ export function StarMap() {
     sel.call(zb)
     return () => { sel.on('.zoom', null) }
   }, [dimensions.width, dimensions.height])
+
+  // Confirmed bug fix (initial viewport only): open centred on all clusters, zoomed
+  // out as far as the zoom limits allow, instead of the world origin. Re-fits on
+  // resize until the viewer moves the map. Positions/placement are untouched.
+  useEffect(() => {
+    const canvas = canvasRef.current
+    const zb = zoomBehaviorRef.current
+    if (!canvas || !zb || userMovedRef.current || !constellations.length) return
+    const measure = document.createElement('canvas').getContext('2d')
+    if (measure) measure.font = LABEL_FONT
+    const points = constellations.map(c => ({
+      ...c.position,
+      weight: getVTubersByConstellationLive(vtubers, c.id).length,
+      labelHalfWidthPx: (measure?.measureText(c.name).width ?? c.name.length * 9) / 2 + 6,
+    }))
+    const fit = fitMapTransform(points, dimensions.width, dimensions.height, {
+      pad: 110, minK: MIN_ZOOM, maxK: 1, insetTop: 56, insetBottom: 48, insetX: 8,
+    })
+    if (!fit) return
+    fittingRef.current = true
+    select(canvas).call(zb.transform, zoomIdentity.translate(fit.x, fit.y).scale(fit.k))
+    fittingRef.current = false
+  }, [constellations, vtubers, dimensions.width, dimensions.height])
 
   // ── Main render loop ─────────────────────────────────────────────────────────
   useEffect(() => {

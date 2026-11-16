@@ -6,8 +6,24 @@ function hasHttpLink(link: string | null | undefined): boolean {
   return !!(link && /^https?:\/\//i.test(link.trim()))
 }
 
-function compactKey(s: string): string {
-  return s.toLowerCase().replace(/[^a-z0-9]/g, '')
+/**
+ * Only replace a stored name with Twitch's display name when the stored one is still a
+ * placeholder: empty, or literally the login/handle (case-insensitive, nothing added).
+ * A styled name such as "Mai Kyua" for login maikyua is a deliberate edit and must stick,
+ * even though it compacts to the same letters. A changed Twitch login still brings the new
+ * display name, as before. Exported for tests.
+ */
+export function shouldTakeTwitchDisplayName(
+  storedName: string | null | undefined,
+  logins: string[],
+  loginChanged: boolean,
+): boolean {
+  if (loginChanged) return true
+  const name = (storedName || '').trim()
+  if (!name) return true
+  const lower = name.toLowerCase().replace(/^@/, '')
+  const isPlaceholder = logins.some(l => !!l && lower === l.trim().toLowerCase().replace(/^@/, ''))
+  return isPlaceholder
 }
 
 async function writeChannelIdentity(
@@ -20,12 +36,7 @@ async function writeChannelIdentity(
   if (!row.platform?.trim()) updates.platform = 'Twitch'
 
   const oldLogin = parseTwitchLogin(row.handle || '') || parseTwitchLogin(row.link || '') || ''
-  const nameKey = compactKey(row.name || '')
-  const nameLooksLikeLogin =
-    !!nameKey &&
-    (nameKey === compactKey(row.handle || '') || nameKey === compactKey(oldLogin) || nameKey === compactKey(login))
-
-  if (displayName && (oldLogin !== login || nameLooksLikeLogin)) {
+  if (displayName && shouldTakeTwitchDisplayName(row.name, [row.handle || '', oldLogin, login], oldLogin !== login)) {
     updates.name = displayName
   }
 
