@@ -50,6 +50,10 @@ describe('ProducerFile', () => {
     expect(html).toContain('href="https://vgen.co/neon"')
     expect(html).toContain('OPEN COMMISSION PAGE')
     expect(html).toContain('SOUND PROFILE')
+    // Services listed once (section), not repeated in the header fields.
+    expect(html.match(/SERVICES ON RECORD/g)).toHaveLength(1)
+    expect(html).toContain('FILED UNDER THE BOOTH')
+    expect(html).toContain('2 CREDITS')
     expect(html).toContain('href="/producers?tag=lo-fi"')
     expect(html).toContain('Stream BGM')
     expect(html).toContain('Mixing &amp; mastering')

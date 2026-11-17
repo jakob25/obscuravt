@@ -64,14 +64,15 @@ export function ProducerFile({ producer, credits }: { producer: ProducerRow; cre
       <CaseFolder className={styles.profilePaper} stampLabel={PRODUCERS.stamp}>
         <div className={styles.sectionKicker}>{PRODUCERS.kicker}</div>
         <div className={styles.profileTop}>
-          <CasePhoto src={avatar} alt={producer.name} caption={PRODUCERS.photoCaption} size="lg" />
+          {/* Capped so the placeholder doesn't dwarf the file at desktop widths. */}
+          <div className="w-full max-w-[220px]">
+            <CasePhoto src={avatar} alt={producer.name} caption={PRODUCERS.photoCaption} size="lg" />
+          </div>
           <div className={styles.profileFields}>
             <span className={styles.smallLabel}>{PRODUCERS.name}</span>
             <h1 className={styles.identityName}>{wrapDisplayName(producer.name)}</h1>
-            <CaseField
-              label={PRODUCERS.servicesOnRecord}
-              value={services.length ? services.map(s => PRODUCERS.services[s]).join(' · ') : undefined}
-            />
+            <CaseField label={PRODUCERS.sectionField} value={`${PRODUCERS.filedUnderValue} ${PRODUCERS.section.toUpperCase()}`} />
+            <CaseField label={PRODUCERS.creditsField} value={credits.length > 0 ? PRODUCERS.creditCount(credits.length).toUpperCase() : undefined} />
           </div>
         </div>
 

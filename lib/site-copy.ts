@@ -254,6 +254,10 @@ export const PRODUCERS = {
   kicker: 'Producer record / 01',
   name: 'Producer',
   photoCaption: 'FIG. 1 — PRODUCER',
+  /** Header fields, mirroring the dossier's CLUSTER / FILED UNDER row. */
+  sectionField: 'SECTION',
+  filedUnderValue: 'FILED UNDER',
+  creditsField: 'CREDITS',
   fieldNotes: 'FIELD NOTES',
   noBio: 'No field notes on file.',
   soundProfile: 'SOUND PROFILE',
