@@ -176,7 +176,7 @@ export const HOME_SHARE_LINE = "THE ALGORITHM DIDN'T SHOW YOU THIS. YOU DID."
 
 /** Find My Oshi results + share (CMO spec). */
 export const OSHI_SHARE = {
-  resultHeading: 'YOUR OSHI FILE // DECLASSIFIED',
+  resultHeading: 'YOUR OSHI FILE',
   shareLabel: 'SHARE MY FILE',
 } as const
 

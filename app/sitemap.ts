@@ -9,7 +9,7 @@ export const revalidate = 86400
 // Public pages anyone can open without signing in. /leaderboard stays (fan leaderboard, approved Nov 9).
 const PUBLIC_PAGES = [
   '', '/clips', '/search', '/discover', '/schedule', '/leaderboard', '/help', '/resources',
-  '/find-my-oshi', '/nominator', '/claim', '/bets', '/forums', '/weekly', '/fan-art', '/discovery-games',
+  '/find-my-oshi', '/nominator', '/bets', '/forums', '/weekly', '/fan-art', '/discovery-games',
 ]
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
