@@ -79,8 +79,12 @@ export function caseFileElement({ stamp, title, kicker, lines = [], corner, avat
             {stamp}
           </div>
           {corner ? (
-            <div style={{ display: 'flex', fontFamily: 'Govt Agent BB', fontSize: 24, color: corner.includes('UNCLAIMED') ? MUTED : GOLD, letterSpacing: 2 }}>
-              {corner}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontFamily: 'Govt Agent BB', fontSize: 24, color: corner.includes('UNCLAIMED') ? MUTED : GOLD, letterSpacing: 2 }}>
+              {/* The card font has no ● glyph, so draw the dot */}
+              {corner.trim().startsWith('●') ? (
+                <div style={{ display: 'flex', width: 14, height: 14, borderRadius: 7, background: corner.includes('UNCLAIMED') ? MUTED : GOLD }} />
+              ) : null}
+              {corner.replace(/^\s*●\s*/, '')}
             </div>
           ) : null}
         </div>
