@@ -5,7 +5,7 @@ import { VaultFrame } from '@/components/vault/vault-frame'
 import { VaultDivider } from '@/components/vault/vault-surfaces'
 import { ClaimRequestForm } from '@/components/claim/claim-request-form'
 import { pageMetadata } from '@/lib/og/page-meta'
-import { CLAIM_PAGE, SITE_CONTACT } from '@/lib/site-copy'
+import { CLAIM_PAGE } from '@/lib/site-copy'
 import { getSupabaseClient } from '@/lib/supabase'
 
 export const revalidate = 300
@@ -61,11 +61,7 @@ export default async function ClaimPage({ searchParams }: Props) {
                 {i === 0 ? (
                   <Link href="/login" className="underline underline-offset-2 hover:text-vault-gold">{step}</Link>
                 ) : i === 1 ? (
-                  <>
-                    {step.split(SITE_CONTACT.atHandle)[0]}
-                    <a href={SITE_CONTACT.url} target="_blank" rel="noopener noreferrer" className="text-vault-gold underline underline-offset-2">{SITE_CONTACT.atHandle}</a>
-                    {step.split(SITE_CONTACT.atHandle)[1]}
-                  </>
+                  <a href="#claim-request" className="underline underline-offset-2 hover:text-vault-gold">{step}</a>
                 ) : step}
               </span>
             </li>
@@ -73,9 +69,11 @@ export default async function ClaimPage({ searchParams }: Props) {
         </ol>
       </section>
 
-      <VaultFrame className="p-5">
-        <ClaimRequestForm files={files} preselected={preselected} />
-      </VaultFrame>
+      <div id="claim-request" className="scroll-mt-20">
+        <VaultFrame className="p-5">
+          <ClaimRequestForm files={files} preselected={preselected} />
+        </VaultFrame>
+      </div>
     </div>
   )
 }

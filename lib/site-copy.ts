@@ -176,8 +176,15 @@ export const HOME_SHARE_LINE = "THE ALGORITHM DIDN'T SHOW YOU THIS. YOU DID."
 
 /** Find My Oshi results + share (CMO spec). */
 export const OSHI_SHARE = {
-  resultHeading: 'YOUR OSHI FILE // DECLASSIFIED',
+  resultHeading: 'YOUR OSHI FILE',
   shareLabel: 'SHARE MY FILE',
+} as const
+
+/** Claim request form (CMO copy, Nov 16 2026). */
+export const CLAIM_FORM = {
+  submit: 'SUBMIT CLAIM →',
+  sentTitle: 'REQUEST ON FILE.',
+  sentBody: 'Pending review.',
 } as const
 
 /** Badge on the i-th quiz result: how closely it fits your answers, not a ranking of creators. */
@@ -227,7 +234,7 @@ export const CLAIM_PAGE = {
   stepsTitle: 'How to claim',
   steps: [
     'Make a free ObscuraVT account.',
-    `DM ${X_AT_HANDLE} on X from your VTuber account with your file link.`,
+    'Send the request below with a link that proves the channel is yours.',
     'We check that your channel and socials link to each other, then hand you the keys.',
   ],
 } as const

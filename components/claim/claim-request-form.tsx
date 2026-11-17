@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useAuth } from '@/lib/auth-context'
 import { Button } from '@/components/ui/button'
 import { CLAIM_REQUEST_LIMITS } from '@/lib/claim-requests'
+import { CLAIM_FORM } from '@/lib/site-copy'
 
 interface Props {
   files: { id: string; name: string }[]
@@ -31,7 +32,7 @@ export function ClaimRequestForm({ files, preselected }: Props) {
         <h2 className="text-base font-semibold mb-1">Request a claim on the site</h2>
         <p className="text-muted-foreground">
           <Link href={`/login?next=${encodeURIComponent(`/claim${preselected ? `?file=${preselected}` : ''}`)}`} className="text-vault-gold underline underline-offset-2">Sign in</Link>{' '}
-          to send a claim request here instead of a DM. It stays pending until it&apos;s checked and approved by hand.
+          to send a claim request. It stays pending until it&apos;s checked and approved by hand.
         </p>
       </div>
     )
@@ -40,8 +41,8 @@ export function ClaimRequestForm({ files, preselected }: Props) {
   if (state === 'sent') {
     return (
       <div role="status" className="text-sm text-vault-cream">
-        <h2 className="text-base font-semibold mb-1">Request sent</h2>
-        <p className="text-muted-foreground">It&apos;s pending. Once it&apos;s checked and approved by hand, the file will show up in your Creator Dashboard.</p>
+        <h2 className="text-base font-semibold mb-1">{CLAIM_FORM.sentTitle} {CLAIM_FORM.sentBody}</h2>
+        <p className="text-muted-foreground">Once it&apos;s checked and approved by hand, the file will show up in your Creator Dashboard.</p>
       </div>
     )
   }
@@ -92,7 +93,7 @@ export function ClaimRequestForm({ files, preselected }: Props) {
       </label>
       {state === 'error' && error && <p role="alert" className="text-destructive text-xs">{error}</p>}
       <Button type="submit" variant="vault" disabled={state === 'sending'}>
-        {state === 'sending' ? 'Sending…' : 'Send claim request'}
+        {state === 'sending' ? 'Sending…' : CLAIM_FORM.submit}
       </Button>
     </form>
   )
