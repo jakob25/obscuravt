@@ -1,5 +1,5 @@
 import { supabaseAdmin } from '@/lib/supabase'
-import { SITE_DESCRIPTION, SITE_TAGLINE } from '@/lib/site-copy'
+import { SITE_DESCRIPTION } from '@/lib/site-copy'
 
 /**
  * Server-rendered "what's here" text and a plain creator directory. Mounted inside
@@ -23,7 +23,7 @@ export async function WhatsHere() {
   return (
     <section aria-labelledby="whats-here-title" className="container mx-auto px-4 py-8 max-w-3xl">
       <h2 id="whats-here-title" className="text-xl font-bold text-vault-cream">What&apos;s here</h2>
-      <p className="text-sm text-muted-foreground mt-2">{SITE_TAGLINE} {SITE_DESCRIPTION}</p>
+      <p className="text-sm text-muted-foreground mt-2">{SITE_DESCRIPTION}</p>
       <p className="text-sm text-muted-foreground mt-2">
         The maps and search on this page need JavaScript. Without it, you can still open any
         creator&apos;s file below, or browse <a className="underline" href="/clips">clips</a>.

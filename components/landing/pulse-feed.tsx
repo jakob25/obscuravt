@@ -1,9 +1,10 @@
 import Link from 'next/link'
 import { Film, Palette, Sparkles, Trophy, MessageSquare, ExternalLink, ArrowRight, HandHelping } from 'lucide-react'
 import { GlitchHeading } from '@/components/vault/glitch-heading'
-import { VaultDivider, VaultPanel, GalleryWall, GalleryWallItem, StatCard } from '@/components/vault/vault-surfaces'
+import { VaultDivider, VaultPanel, GalleryWall, GalleryWallItem } from '@/components/vault/vault-surfaces'
 import { PulseSectionShell } from '@/components/landing/pulse-section-shell'
 import { StartHere } from '@/components/landing/start-here'
+import { HOME_HERO } from '@/lib/site-copy'
 import { supabaseAdmin } from '@/lib/supabase'
 import { approvedCreatorCount } from '@/lib/creator-count'
 import { resolveClipThumbnail } from '@/lib/embed-utils'
@@ -236,20 +237,48 @@ export default async function PulseFeed() {
     <div className="min-h-screen">
       <section className="border-b border-border bg-vault-deep/60">
         <div className="mx-auto w-full max-w-[1600px] px-2 sm:px-3 py-5">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div>
-              <GlitchHeading as="h1" className="text-2xl font-bold text-vault-cream">
-                The Vault Pulse
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-5">
+            <div className="max-w-2xl">
+              <GlitchHeading as="h1" className="text-2xl sm:text-3xl font-bold text-vault-cream">
+                {HOME_HERO.title}
               </GlitchHeading>
-              <p className="text-sm text-muted-foreground mt-1">
-                Find VTubers by clips and vibe — not subscriber count. Watch a moment, open the file, follow the channel.
-              </p>
+              <p className="text-sm text-muted-foreground mt-2">{HOME_HERO.sub}</p>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <Link
+                  href="/find-my-oshi"
+                  className="inline-flex items-center rounded-md bg-vault-gold px-4 py-2 text-xs font-bold tracking-wider text-vault-deep hover:bg-vault-amber focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring motion-safe:active:scale-[0.97]"
+                >
+                  {HOME_HERO.findOshi}
+                </Link>
+                <Link
+                  href="/nominator"
+                  data-testid="home-nominate"
+                  className="inline-flex items-center rounded-md border border-vault-gold/60 px-4 py-2 text-xs font-bold tracking-wider text-vault-gold hover:bg-vault-gold/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring motion-safe:active:scale-[0.97]"
+                >
+                  {HOME_HERO.nominate}
+                </Link>
+              </div>
             </div>
-            <div className="grid grid-cols-3 gap-3">
-              <StatCard label="Creators" value={stats.vtuberCount.toLocaleString()} />
-              <StatCard label="Clips" value={stats.clipCount.toLocaleString()} />
-              <StatCard label="Fans in the Vault" value={stats.userCount.toLocaleString()} />
-            </div>
+            {/* Stats stay, but quieter and after the pitch */}
+            <dl className="grid grid-cols-3 gap-2 text-center md:text-left md:min-w-[22rem]" aria-label="On file">
+              {[
+                { label: 'Creators', value: stats.vtuberCount, action: null },
+                { label: 'Clips', value: stats.clipCount, action: { href: '/clips?submit=1', text: HOME_HERO.fileClip } },
+                { label: 'Fans in the Vault', value: stats.userCount, action: { href: '/login', text: HOME_HERO.joinVault } },
+              ].map(s => (
+                <div key={s.label} className="rounded-lg border border-border/60 px-3 py-2">
+                  <dt className="text-[10px] uppercase tracking-wider text-muted-foreground">{s.label}</dt>
+                  <dd className="text-base font-semibold text-vault-cream tabular-nums">{s.value.toLocaleString()}</dd>
+                  {s.action && (
+                    <dd>
+                      <Link href={s.action.href} className="text-[10px] font-semibold tracking-wider text-vault-gold hover:underline">
+                        {s.action.text}
+                      </Link>
+                    </dd>
+                  )}
+                </div>
+              ))}
+            </dl>
           </div>
         </div>
       </section>
