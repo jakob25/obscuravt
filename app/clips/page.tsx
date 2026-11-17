@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { ClipSubmitForm } from '@/components/common/clip-submit-form'
 import { useClips, useVTubers } from '@/hooks/use-data'
 import { ClipCard } from '@/components/common/clip-card'
@@ -15,6 +15,12 @@ export default function ClipsPage() {
   const { vtubers } = useVTubers()
   const [filter, setFilter] = useState('')
   const [submitOpen, setSubmitOpen] = useState(false)
+
+  // Homepage "+ FILE A CLIP" links here with ?submit=1 to open the form straight away
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- read the link's query once after hydration
+    if (new URLSearchParams(window.location.search).get('submit') === '1') setSubmitOpen(true)
+  }, [])
 
   const filtered = clips.filter(c =>
     c.title.toLowerCase().includes(filter.toLowerCase()) ||
