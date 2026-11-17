@@ -182,6 +182,7 @@ export const OSHI_SHARE = {
 
 /** Claim request form (CMO copy, Nov 16 2026). */
 export const CLAIM_FORM = {
+  heading: 'FILE A CLAIM',
   submit: 'SUBMIT CLAIM →',
   sentTitle: 'REQUEST ON FILE.',
   sentBody: 'Pending review.',

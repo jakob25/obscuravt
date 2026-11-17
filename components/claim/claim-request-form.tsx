@@ -29,7 +29,7 @@ export function ClaimRequestForm({ files, preselected }: Props) {
   if (!user) {
     return (
       <div className="text-sm text-vault-cream">
-        <h2 className="text-base font-semibold mb-1">Request a claim on the site</h2>
+        <h2 className="text-base font-semibold mb-1">{CLAIM_FORM.heading}</h2>
         <p className="text-muted-foreground">
           <Link href={`/login?next=${encodeURIComponent(`/claim${preselected ? `?file=${preselected}` : ''}`)}`} className="text-vault-gold underline underline-offset-2">Sign in</Link>{' '}
           to send a claim request. It stays pending until it&apos;s checked and approved by hand.
@@ -63,7 +63,7 @@ export function ClaimRequestForm({ files, preselected }: Props) {
   return (
     <form onSubmit={submit} className="space-y-4 text-sm">
       <div>
-        <h2 className="text-base font-semibold text-vault-cream">Request a claim on the site</h2>
+        <h2 className="text-base font-semibold text-vault-cream">{CLAIM_FORM.heading}</h2>
         <p className="text-xs text-muted-foreground mt-1">It stays pending until it&apos;s checked and approved by hand.</p>
       </div>
       <label className="block">
