@@ -7,7 +7,7 @@ export const SITE_TAGLINE = 'Find VTubers by vibe and tag, not sub count.'
 export const SITE_HERO = 'Find VTubers by vibe and tag, not sub count.'
 
 export const SITE_DESCRIPTION =
-  'Browse dossiers, clips, and community bets. Every clip links back to the creator.'
+  'Find VTubers by vibe, tags and clips, not sub count. Every clip links back to the creator.'
 
 
 /** Public X account for feedback and profile-link requests. Handle is the single source. */
@@ -78,6 +78,8 @@ export const DOSSIER = {
   claimed: '● CLAIMED FILE',
   unclaimed: '● UNCLAIMED FILE',
   requestLink: `Is this you? Message ${X_AT_HANDLE} on X to get this profile linked to your account.`,
+  /** Dossier button to the /claim page (CMO spec, Nov 16 2026). */
+  claimCta: 'CLAIM THIS FILE →',
   pictures: 'Pictures',
   picturesOpen: 'Open post on X',
 } as const
@@ -157,4 +159,75 @@ export const VTUBER_SUBMIT = {
   submittedTitle: 'Submitted for review!',
   submittedBody: 'Your VTuber will appear on the maps once approved.',
   reviewedBeforeMaps: "We check each nomination to make sure it's a real VTuber channel that isn't already on the map.",
+} as const
+
+/** Homepage hero (CMO spec, Nov 16 2026). */
+export const HOME_HERO = {
+  title: 'Find VTubers by vibe, not sub count.',
+  sub: 'Watch a clip. Open the file. Follow the channel. Free. No agency. No cut.',
+  findOshi: 'FIND MY OSHI →',
+  nominate: 'NOMINATE A SUBJECT →',
+  fileClip: '+ FILE A CLIP',
+  joinVault: '+ JOIN THE VAULT',
+} as const
+
+/** Homepage share card lines (CMO spec). The second line is the site tagline. */
+export const HOME_SHARE_LINE = "THE ALGORITHM DIDN'T SHOW YOU THIS. YOU DID."
+
+/** Find My Oshi results + share (CMO spec). */
+export const OSHI_SHARE = {
+  resultHeading: 'YOUR OSHI FILE // DECLASSIFIED',
+  shareLabel: 'SHARE MY FILE',
+} as const
+
+/** Badge on the i-th quiz result: how closely it fits your answers, not a ranking of creators. */
+export function oshiMatchBadge(i: number): string {
+  return `MATCH ${String(i + 1).padStart(2, '0')}`
+}
+
+export function oshiShareText(topMatch: string): string {
+  return `My oshi file came back: ${topMatch}. Matched by vibe, not sub count. Find yours →`
+}
+
+/** Per-page titles/descriptions (CMO spec). Find My Oshi's question count is filled in from the quiz data. */
+export const PAGE_META = {
+  findMyOshi: {
+    title: 'Find My Oshi — VTuber vibe quiz · ObscuraVT',
+    description: (questionCount: number) =>
+      `${questionCount} questions. No follower counts. Get matched to VTubers by vibe.`,
+  },
+  discover: { title: 'Vibe Map — browse VTubers by personality · ObscuraVT' },
+  clips: { title: 'Raw Clips — every clip links back to the creator · ObscuraVT' },
+  nominator: {
+    title: 'Nominate a VTuber · ObscuraVT',
+    description: 'Name a VTuber the algorithm skipped. We verify, then file them.',
+  },
+} as const
+
+/**
+ * /claim page (CMO spec, Nov 16 2026). "What claiming does" lists only abilities that
+ * owner-gated code grants today (ownsVtuber checks in app/api/schedule, cmdmi set_goal, qa,
+ * karaoke status, stream-predictions, analytics, discovery-games/silhouette, collab/request).
+ * The footer promise about take-downs is held until Jacob confirms it.
+ */
+export const CLAIM_PAGE = {
+  title: 'CLAIM YOUR FILE',
+  body: ['Your file is on record. Claiming it is free.', 'No agency. No exclusivity. No revenue split.'],
+  doesTitle: 'What claiming does',
+  doesIntro: 'Your file gets marked as yours ("Your dossier") and you unlock the Creator Dashboard:',
+  does: [
+    'Stream schedule: set your weekly stream slots.',
+    'Chat Made Me Do It: run the stream ideas fans pitch and pledge scraps to.',
+    'Fan Corner controls: host Q&A sessions, manage the karaoke queue, post stream predictions.',
+    'Analytics: your Circle size and fan submissions on ObscuraVT.',
+    'Silhouette game: set up your silhouette for the guessing game.',
+    'Collab requests: send and get collab requests from other claimed creators who share a tag.',
+    'Your file shows CLAIMED FILE instead of UNCLAIMED.',
+  ],
+  stepsTitle: 'How to claim',
+  steps: [
+    'Make a free ObscuraVT account.',
+    `DM ${X_AT_HANDLE} on X from your VTuber account with your file link.`,
+    'We check that your channel and socials link to each other, then hand you the keys.',
+  ],
 } as const

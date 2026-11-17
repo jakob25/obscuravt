@@ -1,4 +1,8 @@
 import PulseFeed from '@/components/landing/pulse-feed'
+import { pageMetadata } from '@/lib/og/page-meta'
+import { SITE_DESCRIPTION, SITE_NAME } from '@/lib/site-copy'
+
+export const metadata = pageMetadata({ title: `${SITE_NAME} — Discover VTubers by Vibe`, description: SITE_DESCRIPTION, path: '/' })
 
 // Segment config must live on the page route — nested component exports are ignored.
 // Without this, the homepage freezes on an old ISR snapshot and new clips never appear.
