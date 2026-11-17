@@ -7,6 +7,9 @@ import { VaultFrame } from '@/components/vault/vault-frame'
 import { extractVideoId } from '@/lib/embed-utils'
 import { getSupabaseClient } from '@/lib/supabase'
 import type { Clip } from '@/lib/types'
+import type { Metadata } from 'next'
+import { pageMetadata } from '@/lib/og/page-meta'
+import { getClusterShare } from '@/lib/og/cluster-share'
 import { withYoutubeAvatars } from '@/lib/youtube-avatar'
 
 const supabase = getSupabaseClient()
@@ -51,6 +54,17 @@ export async function generateStaticParams() {
   if (error || !data) return []
 
   return data.map((row) => ({ clusterId: row.id as string }))
+}
+
+export async function generateMetadata({ params }: ClusterPageProps): Promise<Metadata> {
+  const { clusterId } = await params
+  const c = await getClusterShare(clusterId).catch(() => null)
+  if (!c) return {}
+  return pageMetadata({
+    title: `${c.name} · ObscuraVT`,
+    description: c.description || `VTubers filed under ${c.name} on ObscuraVT.`,
+    path: `/cluster/${encodeURIComponent(c.id)}`,
+  })
 }
 
 export default async function ClusterContentWallPage({ params }: ClusterPageProps) {

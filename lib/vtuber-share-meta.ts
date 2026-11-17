@@ -15,7 +15,7 @@ export const getShareProfile = cache(async (id: string) => {
   if (!supabase) return null
   const { data } = await supabase
     .from('vtubers')
-    .select('id,name,bio,avatar_url,platform,link,handle')
+    .select('id,name,bio,avatar_url,platform,link,handle,tags,claimed_by')
     .eq('id', id)
     .eq('approved', true)
     .maybeSingle()
