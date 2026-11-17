@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/auth-context'
 import { GlitchHeading } from '@/components/vault/glitch-heading'
 import { VaultFrame } from '@/components/vault/vault-frame'
+import { ClaimRequestsPanel } from '@/components/admin/claim-requests-panel'
 import { Shield, Check, X, ExternalLink, ScrollText } from 'lucide-react'
 import { clustersFromTagRows, describePendingTags, nichesFromTagRows, type ClusterOption, type NicheOption } from '@/lib/nomination-niche'
 
@@ -122,6 +123,8 @@ export default function AdminPage() {
       </div>
 
       {error && <p className="text-sm text-red-400 mb-4">{error}</p>}
+
+      {tab === 'pending' && <ClaimRequestsPanel />}
 
       {tab === 'pending' && (
         <VaultFrame className="p-5">

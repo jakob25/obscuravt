@@ -40,17 +40,15 @@ describe('ClaimProfileButton', () => {
     root = createRoot(host)
   }
 
-  it('shows a request note on an unclaimed approved profile, even when signed out', async () => {
+  it('links an unclaimed approved file to the /claim page, even when signed out', async () => {
     await setup()
     auth.user = null
     await mount({ claimedBy: null, approved: true })
-    expect(host.textContent).toBe(DOSSIER.requestLink)
+    expect(host.textContent).toBe(DOSSIER.claimCta)
     expect(host.querySelector('button')).toBeNull()
     const link = host.querySelector('a')
-    expect(link?.textContent).toBe(SITE_CONTACT.atHandle)
-    expect(link?.getAttribute('href')).toBe(SITE_CONTACT.url)
-    expect(link?.getAttribute('target')).toBe('_blank')
-    expect(link?.getAttribute('rel')).toBe('noopener noreferrer')
+    expect(link?.getAttribute('href')).toBe('/claim?file=vt_pipuru')
+    expect(host.textContent).not.toContain(SITE_CONTACT.atHandle)
   })
 
   it('keeps the owner, claimed-by, and pending states', async () => {

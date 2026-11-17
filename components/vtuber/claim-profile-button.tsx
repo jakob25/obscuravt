@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useAuth } from '@/lib/auth-context'
-import { DOSSIER, SITE_CONTACT } from '@/lib/site-copy'
+import { DOSSIER } from '@/lib/site-copy'
 import { ShieldCheck, Clock } from 'lucide-react'
 
 interface Props {
@@ -12,7 +12,7 @@ interface Props {
   approved?: boolean
 }
 
-export function ClaimProfileButton({ claimedBy, approved = true }: Props) {
+export function ClaimProfileButton({ vtuberId, claimedBy, approved = true }: Props) {
   const { user } = useAuth()
 
   if (user && claimedBy === user.username) {
@@ -42,32 +42,15 @@ export function ClaimProfileButton({ claimedBy, approved = true }: Props) {
     )
   }
   if (!claimedBy && approved) {
+    // One clear way in: the /claim page (request → human approval). Replaces the DM note.
     return (
-      <p className="text-xs text-muted-foreground max-w-[16rem] leading-snug">
-        <RequestLinkNote />
-      </p>
+      <Link
+        href={`/claim?file=${encodeURIComponent(vtuberId)}`}
+        className="inline-flex items-center rounded-md border border-vault-gold/60 px-3 py-1.5 text-xs font-semibold tracking-wider text-vault-gold hover:bg-vault-gold/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring motion-safe:active:scale-[0.97]"
+      >
+        {DOSSIER.claimCta}
+      </Link>
     )
   }
   return null
-}
-
-function RequestLinkNote() {
-  const handle = SITE_CONTACT.atHandle
-  const text = DOSSIER.requestLink
-  const index = text.indexOf(handle)
-  if (index < 0) return <>{text}</>
-  return (
-    <>
-      {text.slice(0, index)}
-      <a
-        href={SITE_CONTACT.url}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="text-vault-gold underline underline-offset-2 hover:text-white"
-      >
-        {handle}
-      </a>
-      {text.slice(index + handle.length)}
-    </>
-  )
 }
