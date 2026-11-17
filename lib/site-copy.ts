@@ -241,3 +241,69 @@ export const CLAIM_PAGE = {
     'We check that your channel and socials link to each other, then hand you the keys.',
   ],
 } as const
+
+/**
+ * Producer files (music producers who aren't VTubers). CMO copy, Nov 17 2026.
+ * `section` is the directory name; rename here only. No prices, commission
+ * status or rights claims anywhere: the commission page link covers those.
+ */
+export const PRODUCERS = {
+  section: 'The Booth',
+  stamp: 'PRODUCER FILE',
+  archiveLabel: 'ObscuraVT / The Booth',
+  kicker: 'Producer record / 01',
+  name: 'Producer',
+  photoCaption: 'FIG. 1 — PRODUCER',
+  fieldNotes: 'FIELD NOTES',
+  noBio: 'No field notes on file.',
+  soundProfile: 'SOUND PROFILE',
+  noSoundProfile: 'No sound profile on file.',
+  servicesOnRecord: 'SERVICES ON RECORD',
+  noServices: 'No services on file.',
+  creditsOnRecord: 'CREDITS ON RECORD',
+  noCredits: 'No public credits on record yet.',
+  commission: 'OPEN COMMISSION PAGE',
+  portfolio: 'Portfolio',
+  linksLabel: 'Links',
+  source: 'Source',
+  musicBy: 'Music by',
+  /** "[role] for [VTuber], [song]" — the page renders the VTuber as a link. */
+  creditFor: 'for',
+  share: 'Share',
+  shareAria: (name: string) => `Share ${name}'s producer file`,
+  backToBooth: 'Back to The Booth',
+  /** Directory page (/producers). */
+  directoryTitle: 'The Booth',
+  directoryIntro: 'Producers who make music for VTubers. Every credit links to the release that names them.',
+  directoryEmpty: 'No producers on file yet.',
+  directoryNoMatch: 'No producers match that filter.',
+  filterGenre: 'Sound',
+  filterService: 'Service',
+  filterAll: 'All',
+  clearFilters: 'Clear filters',
+  creditCount: (n: number) => (n === 1 ? '1 credit' : `${n} credits`),
+  /** Door into The Booth from The Studio's creators' files. */
+  studioDoor: 'Producers behind the music: The Booth →',
+  shareTagline: 'Producers who make music for VTubers.',
+  services: {
+    original_songs: 'Original songs',
+    stream_bgm: 'Stream BGM',
+    covers_instrumentals: 'Covers & instrumentals',
+    mixing_mastering: 'Mixing & mastering',
+    jingles_alerts: 'Jingles & alerts',
+  },
+  roles: {
+    produced: 'Produced',
+    composed: 'Composed',
+    mixed: 'Mixed',
+    lyrics: 'Lyrics',
+    bgm: 'BGM',
+  },
+  links: {
+    youtube: 'YouTube',
+    twitch: 'Twitch',
+    x: 'X',
+    bluesky: 'Bluesky',
+    soundcloud: 'SoundCloud',
+  },
+} as const

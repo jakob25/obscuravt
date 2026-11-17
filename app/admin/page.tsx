@@ -6,7 +6,8 @@ import { useAuth } from '@/lib/auth-context'
 import { GlitchHeading } from '@/components/vault/glitch-heading'
 import { VaultFrame } from '@/components/vault/vault-frame'
 import { ClaimRequestsPanel } from '@/components/admin/claim-requests-panel'
-import { Shield, Check, X, ExternalLink, ScrollText } from 'lucide-react'
+import { ProducersPanel } from '@/components/admin/producers-panel'
+import { Shield, Check, X, ExternalLink, ScrollText, Music } from 'lucide-react'
 import { clustersFromTagRows, describePendingTags, nichesFromTagRows, type ClusterOption, type NicheOption } from '@/lib/nomination-niche'
 
 interface PendingVtuber {
@@ -34,7 +35,7 @@ interface AuditEntry {
 export default function AdminPage() {
   const { user, loading } = useAuth()
   const router = useRouter()
-  const [tab, setTab] = useState<'pending' | 'audit'>('pending')
+  const [tab, setTab] = useState<'pending' | 'audit' | 'producers'>('pending')
   const [pending, setPending] = useState<PendingVtuber[]>([])
   const [audit, setAudit] = useState<AuditEntry[]>([])
   const [auditNote, setAuditNote] = useState('')
@@ -120,11 +121,20 @@ export default function AdminPage() {
         >
           <ScrollText className="h-3.5 w-3.5" /> Audit log
         </button>
+        <button
+          type="button"
+          onClick={() => setTab('producers')}
+          className={`px-3 py-1.5 rounded-lg text-sm flex items-center gap-1.5 ${tab === 'producers' ? 'bg-vault-gold/20 text-vault-gold border border-vault-gold/30' : 'text-muted-foreground border border-border'}`}
+        >
+          <Music className="h-3.5 w-3.5" /> Producers
+        </button>
       </div>
 
       {error && <p className="text-sm text-red-400 mb-4">{error}</p>}
 
       {tab === 'pending' && <ClaimRequestsPanel />}
+
+      {tab === 'producers' && <ProducersPanel />}
 
       {tab === 'pending' && (
         <VaultFrame className="p-5">
