@@ -6,6 +6,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { VaultFrame } from '@/components/vault/vault-frame'
 import { OWNER_EDIT_LIMITS } from '@/lib/owner-edit-limits'
+import { safeImageSrc } from '@/lib/safe-image-src'
 
 /**
  * Creator Dashboard: the approved owner edits their file's bio and picture. Pictures go through
@@ -42,6 +43,9 @@ export function OwnerFileEditor({ vtuberId }: { vtuberId: string }) {
 
   if (state !== 'ready') return null
 
+  // Only a local preview (blob:) or an https: picture is ever put in <img src>
+  const shownSrc = safeImageSrc(preview) ?? safeImageSrc(avatar)
+
   const save = async (e: React.FormEvent) => {
     e.preventDefault()
     setSaving(true); setMsg(null)
@@ -71,7 +75,7 @@ export function OwnerFileEditor({ vtuberId }: { vtuberId: string }) {
         <h2 className="text-sm font-semibold text-vault-cream">Edit your file</h2>
         <div className="flex items-center gap-4">
           {/* eslint-disable-next-line @next/next/no-img-element -- user upload preview */}
-          {(preview || avatar) && <img src={preview || avatar || ''} alt="Your current picture" className="h-16 w-16 rounded-full object-cover border border-border" />}
+          {shownSrc && <img src={shownSrc} alt="Your current picture" className="h-16 w-16 rounded-full object-cover border border-border" />}
           <div>
             <Label htmlFor="owner-avatar">Picture</Label>
             <input
