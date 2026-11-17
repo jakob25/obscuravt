@@ -2,14 +2,12 @@ import { NextRequest, NextResponse } from 'next/server'
 import { randomBytes } from 'crypto'
 import { requireAuth } from '@/lib/session'
 import { rateLimits } from '@/lib/rate-limit'
+import { VTUBER_AVATAR_BUCKET, avatarFolder } from '@/lib/avatar-path'
 
 const MAX_BYTES = 5 * 1024 * 1024
 const ALLOWED_TYPES = new Set(['image/jpeg', 'image/png', 'image/gif', 'image/webp'])
-const BUCKET = 'vtuber-avatars'
-
-function safeUsername(username: string) {
-  return username.replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 40) || 'user'
-}
+const BUCKET = VTUBER_AVATAR_BUCKET
+const safeUsername = avatarFolder
 
 export async function POST(req: NextRequest) {
   const session = await requireAuth(req)
