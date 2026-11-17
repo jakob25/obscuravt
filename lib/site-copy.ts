@@ -214,7 +214,8 @@ export const PAGE_META = {
 /**
  * /claim page (CMO spec, Nov 16 2026). "What claiming does" lists only abilities that
  * owner-gated code grants today (ownsVtuber checks in app/api/schedule, cmdmi set_goal, qa,
- * karaoke status, stream-predictions, analytics, discovery-games/silhouette, collab/request).
+ * karaoke status, stream-predictions, analytics, discovery-games/silhouette, collab/request,
+ * vtubers/owner-edit).
  * The footer promise about take-downs is held until Jacob confirms it.
  */
 export const CLAIM_PAGE = {
@@ -223,6 +224,7 @@ export const CLAIM_PAGE = {
   doesTitle: 'What claiming does',
   doesIntro: 'Your file gets marked as yours ("Your dossier") and you unlock the Creator Dashboard:',
   does: [
+    'Edit your file: change your bio and picture from the Creator Dashboard.',
     'Stream schedule: set your weekly stream slots.',
     'Chat Made Me Do It: run the stream ideas fans pitch and pledge scraps to.',
     'Fan Corner controls: host Q&A sessions, manage the karaoke queue, post stream predictions.',

@@ -12,6 +12,7 @@ import {
 } from 'lucide-react'
 import { VaultDivider } from '@/components/vault/vault-surfaces'
 import { CollabRequestForm } from '@/components/collab/collab-request-form'
+import { OwnerFileEditor } from '@/components/creator/owner-file-editor'
 import { CollabNotifications } from '@/components/collab/collab-notifications'
 
 interface ClaimedProfile {
@@ -122,6 +123,8 @@ export default function CreatorDashboardPage() {
           </div>
         )}
       </VaultFrame>
+
+      {activeId && <OwnerFileEditor key={activeId} vtuberId={activeId} />}
 
       <div className="grid sm:grid-cols-2 gap-4 mb-6">
         {TOOLS.map(tool => {
