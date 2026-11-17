@@ -10,6 +10,10 @@ import {
   producerLinks,
   producerServices,
   youtubeEmbedId,
+  SHOW_SOUNDCLOUD,
+  SHOW_BLUESKY,
+  adminLinkKeys,
+  producerPortfolio,
 } from './producers'
 import { PRODUCERS } from './site-copy'
 
@@ -77,8 +81,36 @@ describe('display helpers', () => {
   })
 
   it('lists valid links in order and skips missing or bad ones', () => {
-    expect(producerLinks({ soundcloud: 'https://soundcloud.com/a', youtube: 'https://youtube.com/@a', x: 'javascript:1', twitch: null }))
+    const row = { soundcloud: 'https://soundcloud.com/a', youtube: 'https://youtube.com/@a', x: 'javascript:1', twitch: null }
+    expect(producerLinks(row, { showSoundcloud: true }))
       .toEqual([{ key: 'youtube', url: 'https://youtube.com/@a' }, { key: 'soundcloud', url: 'https://soundcloud.com/a' }])
+  })
+
+  it('hides SoundCloud while SHOW_SOUNDCLOUD is off, but still stores it from the admin form', () => {
+    expect(SHOW_SOUNDCLOUD).toBe(false)
+    expect(producerLinks({ soundcloud: 'https://soundcloud.com/a', youtube: 'https://youtube.com/@a' }))
+      .toEqual([{ key: 'youtube', url: 'https://youtube.com/@a' }])
+    const r = parseProducerInput({ name: 'A', soundcloud: 'https://soundcloud.com/a' }, 'abcdef')
+    expect(r.ok && r.value.soundcloud).toBe('https://soundcloud.com/a')
+    expect(PRODUCERS.links.soundcloud).toBe('SoundCloud')
+  })
+
+  it('hides Bluesky the same way, and keeps both out of the admin form', () => {
+    expect(SHOW_BLUESKY).toBe(false)
+    expect(producerLinks({ bluesky: 'https://bsky.app/profile/a', x: 'https://x.com/a' }))
+      .toEqual([{ key: 'x', url: 'https://x.com/a' }])
+    expect(producerLinks({ bluesky: 'https://bsky.app/profile/a' }, { showBluesky: true }))
+      .toEqual([{ key: 'bluesky', url: 'https://bsky.app/profile/a' }])
+    expect(adminLinkKeys()).toEqual(['youtube', 'twitch', 'x'])
+    expect(adminLinkKeys({ showSoundcloud: true, showBluesky: true })).toEqual(['youtube', 'twitch', 'x', 'bluesky', 'soundcloud'])
+  })
+
+  it('does not sneak a hidden network in through the portfolio or another link column', () => {
+    expect(producerPortfolio({ portfolio_url: 'https://soundcloud.com/a/sets/demo' })).toBeNull()
+    expect(producerPortfolio({ portfolio_url: 'https://www.bsky.app/profile/a' })).toBeNull()
+    expect(producerPortfolio({ portfolio_url: 'https://www.youtube.com/playlist?list=PL1' })).toBe('https://www.youtube.com/playlist?list=PL1')
+    expect(producerPortfolio({ portfolio_url: 'https://soundcloud.com/a' }, { showSoundcloud: true })).toBe('https://soundcloud.com/a')
+    expect(producerLinks({ x: 'https://soundcloud.com/a' })).toEqual([])
   })
 
   it('keeps only known services in fixed order, each with a label', () => {

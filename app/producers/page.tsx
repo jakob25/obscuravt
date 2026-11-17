@@ -118,7 +118,9 @@ export default async function ProducersPage({ searchParams }: Props) {
                       {services.length > 0 && (
                         <p className="text-xs text-vault-cream/80 mt-1">{services.map(s => PRODUCERS.services[s]).join(' · ')}</p>
                       )}
-                      <p className="text-[10px] font-mono uppercase tracking-[0.1em] text-muted-foreground mt-2">{PRODUCERS.creditCount(n)}</p>
+                      {n > 0 && (
+                        <p className="text-[10px] font-mono uppercase tracking-[0.1em] text-muted-foreground mt-2">{PRODUCERS.creditCount(n)}</p>
+                      )}
                     </div>
                   </Link>
                 </VaultFrame>

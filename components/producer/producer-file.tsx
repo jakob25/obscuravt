@@ -10,6 +10,7 @@ import {
   producerAvatar,
   producerCaseId,
   producerLinks,
+  producerPortfolio,
   producerServices,
   youtubeEmbedId,
   type ProducerLinkKey,
@@ -54,7 +55,7 @@ export function ProducerFile({ producer, credits }: { producer: ProducerRow; cre
   const tags = producer.genre_tags ?? []
   const links = producerLinks(producer)
   const commission = httpsUrl(producer.commission_url)
-  const portfolio = httpsUrl(producer.portfolio_url)
+  const portfolio = producerPortfolio(producer)
 
   return (
     <div className={styles.stage}>

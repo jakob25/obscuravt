@@ -170,11 +170,53 @@ export function producerAvatar(row: Pick<ProducerRow, 'avatar_url'>): string | n
   return raw && isAllowedHttpsUrl(raw, ALLOWED_HOSTS.avatar) ? raw : null
 }
 
-/** Social links that are present and valid, in display order. */
-export function producerLinks(row: Partial<Record<ProducerLinkKey, string | null>>): { key: ProducerLinkKey; url: string }[] {
+/**
+ * SoundCloud and Bluesky columns stay in the DB, but neither is shown anywhere
+ * or offered in the admin form: SoundCloud until Jacob decides, Bluesky because
+ * Jacob said in October we don't need it. Flip a flag to true to render it as a plain link.
+ */
+export const SHOW_SOUNDCLOUD = false
+export const SHOW_BLUESKY = false
+
+export interface LinkVisibility { showSoundcloud?: boolean; showBluesky?: boolean }
+
+const HIDDEN_HOSTS: { key: 'soundcloud' | 'bluesky'; hosts: string[] }[] = [
+  { key: 'soundcloud', hosts: ['soundcloud.com', 'on.soundcloud.com'] },
+  { key: 'bluesky', hosts: ['bsky.app'] },
+]
+
+function shown(key: 'soundcloud' | 'bluesky', opts: LinkVisibility): boolean {
+  return key === 'soundcloud' ? (opts.showSoundcloud ?? SHOW_SOUNDCLOUD) : (opts.showBluesky ?? SHOW_BLUESKY)
+}
+
+/** Link columns the admin form offers (hidden networks aren't offered). */
+export function adminLinkKeys(opts: LinkVisibility = {}): ProducerLinkKey[] {
+  return PRODUCER_LINK_KEYS.filter(k => (k === 'soundcloud' || k === 'bluesky' ? shown(k, opts) : true))
+}
+
+/** False for a URL on a hidden network (e.g. a SoundCloud page pasted as the portfolio). */
+export function isShownUrl(url: string, opts: LinkVisibility = {}): boolean {
+  let host = ''
+  try { host = new URL(url).hostname.toLowerCase().replace(/^(www|m)\./, '') } catch { return false }
+  return HIDDEN_HOSTS.every(h => shown(h.key, opts) || !h.hosts.includes(host))
+}
+
+/** Portfolio link if present, valid, and not on a hidden network. */
+export function producerPortfolio(row: Pick<ProducerRow, 'portfolio_url'>, opts: LinkVisibility = {}): string | null {
+  const url = httpsUrl(row.portfolio_url)
+  return url && isShownUrl(url, opts) ? url : null
+}
+
+/** Social links that are present and valid, in display order. Hidden networks are skipped. */
+export function producerLinks(
+  row: Partial<Record<ProducerLinkKey, string | null>>,
+  opts: LinkVisibility = {},
+): { key: ProducerLinkKey; url: string }[] {
   const out: { key: ProducerLinkKey; url: string }[] = []
   for (const key of PRODUCER_LINK_KEYS) {
+    if ((key === 'soundcloud' || key === 'bluesky') && !shown(key, opts)) continue
     const url = httpsUrl(row[key])
+    if (url && !isShownUrl(url, opts)) continue
     if (url) out.push({ key, url })
   }
   return out

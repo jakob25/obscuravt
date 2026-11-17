@@ -37,6 +37,7 @@ describe('ProducerFile', () => {
           commission_url: 'https://vgen.co/neon',
           portfolio_url: 'https://www.youtube.com/playlist?list=PL1',
           soundcloud: 'https://soundcloud.com/neon',
+          bluesky: 'https://bsky.app/profile/neon',
           x: 'javascript:alert(1)',
         }}
         credits={[
@@ -52,7 +53,11 @@ describe('ProducerFile', () => {
     expect(html).toContain('href="/producers?tag=lo-fi"')
     expect(html).toContain('Stream BGM')
     expect(html).toContain('Mixing &amp; mastering')
-    expect(html).toContain('href="https://soundcloud.com/neon"')
+    // SoundCloud is stored but hidden while SHOW_SOUNDCLOUD is off.
+    expect(html).not.toContain('href="https://soundcloud.com/neon"')
+    expect(html).not.toContain('SoundCloud')
+    expect(html).not.toContain('bsky.app')
+    expect(html).not.toContain('Bluesky')
     expect(html).not.toContain('javascript:')
     expect(html).toMatch(/Composed for <a [^>]*href="\/vtuber\/vt_pipuru_123456"[^>]*>Pipuru<\/a>, <span[^>]*>Starfall<\/span>/)
     expect(html).toContain('href="https://soundcloud.com/neon/rainy"')

@@ -9,12 +9,12 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { PRODUCER_LINK_KEYS, PRODUCER_ROLES, PRODUCER_SERVICES, type ProducerRole, type ProducerService } from '@/lib/producers'
+import { adminLinkKeys, PRODUCER_ROLES, PRODUCER_SERVICES, type ProducerRole, type ProducerService } from '@/lib/producers'
 import { PRODUCERS } from '@/lib/site-copy'
 
-const EMPTY_PRODUCER = {
+const EMPTY_PRODUCER: Record<string, string> = {
   name: '', bio: '', genre_tags: '', commission_url: '', portfolio_url: '',
-  youtube: '', twitch: '', x: '', bluesky: '', soundcloud: '',
+  youtube: '', twitch: '', x: '',
 }
 const EMPTY_CREDIT = { producer_id: '', song_title: '', song_url: '', role: '' as ProducerRole | '' }
 
@@ -81,10 +81,10 @@ export function ProducersPanel() {
     setVtuberIds([])
   }
 
-  const field = (key: keyof typeof EMPTY_PRODUCER, label: string, placeholder = 'https://') => (
+  const field = (key: string, label: string, placeholder = 'https://') => (
     <div>
       <Label htmlFor={`producer-${key}`}>{label}</Label>
-      <Input id={`producer-${key}`} value={form[key]} placeholder={placeholder}
+      <Input id={`producer-${key}`} value={form[key] ?? ''} placeholder={placeholder}
         onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))} />
     </div>
   )
@@ -125,8 +125,8 @@ export function ProducersPanel() {
             </div>
           </fieldset>
           {field('commission_url', 'Commission page (VGen, Skeb, Coconala…)')}
-          {field('portfolio_url', 'Portfolio (YouTube playlist, SoundCloud…)')}
-          {PRODUCER_LINK_KEYS.map(k => <div key={k}>{field(k, PRODUCERS.links[k])}</div>)}
+          {field('portfolio_url', 'Portfolio (e.g. a YouTube playlist)')}
+          {adminLinkKeys().map(k => <div key={k}>{field(k, PRODUCERS.links[k])}</div>)}
           <Button type="submit" disabled={busy === 'producer'} className="bg-vault-gold hover:bg-vault-amber text-vault-deep font-semibold">
             {busy === 'producer' ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Adding…</> : 'Add producer'}
           </Button>

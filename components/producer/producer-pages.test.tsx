@@ -55,6 +55,9 @@ describe('The Booth directory', () => {
     const songs = renderToStaticMarkup(await ProducersPage({ searchParams: Promise.resolve({ service: 'original_songs' }) }))
     expect(songs).toContain('/producer/pr_kai_abcdef')
     expect(songs).not.toContain('/producer/pr_neon_abcdef')
+    // No credits yet: no "0 credits" line.
+    expect(all).not.toContain('0 credits')
+    expect(all).not.toMatch(/\d+ credits?</)
     const none = renderToStaticMarkup(await ProducersPage({ searchParams: Promise.resolve({ tag: 'metal' }) }))
     expect(none).toContain('No producers match that filter.')
   })
@@ -77,5 +80,20 @@ describe('/producer/[id]', () => {
   it('404s for unknown or malformed ids without querying', async () => {
     await expect(ProducerPage({ params: Promise.resolve({ id: 'vt_pipuru_123456' }) })).rejects.toThrow('NEXT_NOT_FOUND')
     await expect(ProducerPage({ params: Promise.resolve({ id: 'pr_nobody_abcdef' }) })).rejects.toThrow('NEXT_NOT_FOUND')
+  })
+})
+
+describe('directory credit count', () => {
+  it('shows the count only from 1 credit up', async () => {
+    db.producers = [neon, kai]
+    db.credits = [
+      { id: 'c1', producer_id: neon.id, vtuber_id: 'vt_pipuru_123456', song_title: 'A', song_url: 'https://youtu.be/dQw4w9WgXcQ', role: 'produced' },
+      { id: 'c2', producer_id: neon.id, vtuber_id: 'vt_pipuru_123456', song_title: 'B', song_url: 'https://youtu.be/dQw4w9WgXcR', role: 'mixed' },
+    ]
+    const html = renderToStaticMarkup(await ProducersPage({ searchParams: Promise.resolve({}) }))
+    expect(html).toContain('2 credits')
+    expect(html).not.toContain('0 credits')
+    db.credits = db.credits.slice(0, 1)
+    expect(renderToStaticMarkup(await ProducersPage({ searchParams: Promise.resolve({}) }))).toContain('1 credit<')
   })
 })
