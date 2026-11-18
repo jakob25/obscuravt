@@ -1,9 +1,11 @@
 'use client'
 
+import { useState } from 'react'
 import Link from 'next/link'
 import { useAuth } from '@/lib/auth-context'
 import { DOSSIER } from '@/lib/site-copy'
-import { ShieldCheck, Clock } from 'lucide-react'
+import { ShieldCheck, Clock, Pencil } from 'lucide-react'
+import { OwnerFileEditor } from '@/components/creator/owner-file-editor'
 
 interface Props {
   vtuberId: string
@@ -14,12 +16,25 @@ interface Props {
 
 export function ClaimProfileButton({ vtuberId, claimedBy, approved = true }: Props) {
   const { user } = useAuth()
+  const [editing, setEditing] = useState(false)
 
   if (user && claimedBy === user.username) {
     return (
-      <p className="text-xs text-vault-gold flex items-center gap-1.5">
-        <ShieldCheck className="h-3.5 w-3.5" /> You manage this profile
-      </p>
+      <div className="inline-flex flex-col items-start gap-2">
+        <button
+          type="button"
+          onClick={() => setEditing(o => !o)}
+          className="inline-flex items-center gap-1.5 rounded-md border border-vault-gold/60 px-3 py-1.5 text-xs font-semibold tracking-wider text-vault-gold hover:bg-vault-gold/10"
+        >
+          <Pencil className="h-3.5 w-3.5" />
+          {editing ? 'Close' : 'Edit'}
+        </button>
+        {editing && (
+          <div className="w-full max-w-lg">
+            <OwnerFileEditor vtuberId={vtuberId} />
+          </div>
+        )}
+      </div>
     )
   }
   if (user && claimedBy) {
@@ -42,7 +57,6 @@ export function ClaimProfileButton({ vtuberId, claimedBy, approved = true }: Pro
     )
   }
   if (!claimedBy && approved) {
-    // One clear way in: the /claim page (request → human approval). Replaces the DM note.
     return (
       <Link
         href={`/claim?file=${encodeURIComponent(vtuberId)}`}
