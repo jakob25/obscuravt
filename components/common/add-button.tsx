@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { ClipSubmitForm } from '@/components/common/clip-submit-form'
 import { BetSubmitForm } from '@/components/common/bet-submit-form'
 import { VTuberSubmitForm } from '@/components/common/vtuber-submit-form'
+import { cn } from '@/lib/utils'
 
 type Tab = 'vtuber' | 'clip' | 'bet'
 
@@ -142,7 +143,10 @@ export function AddButton() {
       )}
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-2xl bg-vault-dark border-border max-h-[90vh] overflow-y-auto">
+        <DialogContent className={cn(
+          'bg-vault-dark border-border max-h-[90vh] overflow-y-auto',
+          tab === 'vtuber' ? 'max-w-3xl' : 'max-w-lg',
+        )}>
           <DialogHeader>
             <DialogTitle className="text-vault-cream">
               {tabs.find(t => t.id === tab)?.label}
