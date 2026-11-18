@@ -1,6 +1,7 @@
 import { supabaseAdmin } from '@/lib/supabase'
 import { extractVideoId } from '@/lib/embed-utils'
 import { helixClipBroadcasters, helixProfileImage, helixUserProfile, parseTwitchLogin } from '@/lib/twitch-helix'
+import { youtubeChannelProfile, youtubeTarget } from '@/lib/youtube-avatar'
 
 function emptyText(v: string | null | undefined): boolean {
   return !(v && String(v).trim())
@@ -61,9 +62,38 @@ type HydrateRow = {
   avatar_url?: string | null
 }
 
+async function applyYoutubeToRow(row: HydrateRow): Promise<boolean> {
+  const target = youtubeTarget(row)
+  if (!target) return false
+  const profile = await youtubeChannelProfile(target)
+  if (!profile) return false
+
+  const updates: Record<string, string> = {}
+  if (emptyText(row.handle) && profile.handle) updates.handle = profile.handle
+  if (emptyText(row.link)) {
+    updates.link = profile.handle
+      ? `https://www.youtube.com/@${profile.handle}`
+      : `https://www.youtube.com/channel/${profile.id}`
+  }
+  if (emptyText(row.platform)) updates.platform = 'YouTube'
+  if (profile.avatarUrl && needsFace(row.avatar_url) && profile.avatarUrl !== row.avatar_url) {
+    updates.avatar_url = profile.avatarUrl
+  }
+  if (emptyText(row.bio) && profile.description) updates.bio = profile.description.slice(0, 500)
+
+  if (Object.keys(updates).length === 0) return false
+  const { error: upErr } = await supabaseAdmin.from('vtubers').update(updates).eq('id', row.id)
+  if (upErr) {
+    console.error('hydrate youtube update', row.id, upErr.message)
+    return false
+  }
+  return true
+}
+
 async function applyHelixToRow(row: HydrateRow): Promise<boolean> {
   const platform = (row.platform ?? '').toLowerCase()
-  if (platform.includes('youtube') || platform.includes('twitter')) return false
+  if (platform.includes('youtube')) return applyYoutubeToRow(row)
+  if (platform.includes('twitter')) return false
 
   const candidates = [row.link, row.handle, row.name].filter(Boolean) as string[]
   let profile = null as Awaited<ReturnType<typeof helixUserProfile>>
@@ -122,7 +152,7 @@ export async function hydrateEmptyVtubersFromTwitch(limit = 12): Promise<{ scann
 
   const targets = data.filter(row => {
     const platform = (row.platform ?? '').toLowerCase()
-    if (platform.includes('youtube') || platform.includes('twitter')) return false
+    if (platform.includes('twitter')) return false
     return emptyText(row.bio) || needsFace(row.avatar_url) || emptyText(row.link) || emptyText(row.handle)
   }).sort((a, b) => {
     const face = (row: HydrateRow) => (needsFace(row.avatar_url) ? 0 : 1)
