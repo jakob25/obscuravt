@@ -142,7 +142,7 @@ export function AddButton() {
       )}
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-lg bg-vault-dark border-border max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl bg-vault-dark border-border max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-vault-cream">
               {tabs.find(t => t.id === tab)?.label}

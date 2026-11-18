@@ -118,11 +118,11 @@ export function OwnerFileEditor({ vtuberId }: { vtuberId: string }) {
           </div>
         </div>
         <div>
-          <Label htmlFor="owner-tags">Tags</Label>
+          <Label htmlFor="owner-tags">Vibe tags</Label>
           <Input id="owner-tags" value={tags} onChange={e => setTags(e.target.value)} placeholder="chill, horror, art…" />
-          <p className="text-[10px] text-muted-foreground mt-1">Comma-separated. Up to {OWNER_EDIT_LIMITS.tags} tags.</p>
+          <p className="text-[10px] text-muted-foreground mt-1">Comma-separated vibe tags. Up to {OWNER_EDIT_LIMITS.tags}. Clusters stay as filed.</p>
         </div>
-        <p className="text-[10px] text-muted-foreground">Your name stays as verified. Ask an admin to change that.</p>
+        <p className="text-[10px] text-muted-foreground">Your name and constellation stay as verified. Ask an admin to change those.</p>
         {msg && <p role={msg.ok ? 'status' : 'alert'} className={`text-xs ${msg.ok ? 'text-vault-gold' : 'text-destructive'}`}>{msg.text}</p>}
         <Button type="submit" variant="vault" size="sm" disabled={saving}>{saving ? 'Saving…' : 'Save changes'}</Button>
       </form>

@@ -40,8 +40,8 @@ describe('owner edit rules', () => {
     expect(validateOwnerEdit({ handle: 'bad handle!' }, 'mai_k', SB).ok).toBe(false)
   })
 
-  it('accepts a short tag list and dedupes', () => {
-    const r = validateOwnerEdit({ tags: ['chill', ' horror ', 'chill'] }, 'mai_k', SB)
+  it('accepts vibe tags, strips clusters, and dedupes', () => {
+    const r = validateOwnerEdit({ tags: ['chill', ' horror ', 'chill', 'clust_horror'] }, 'mai_k', SB)
     expect(r).toEqual({ ok: true, updates: { tags: ['chill', 'horror'] } })
     expect(validateOwnerEdit({ tags: Array(13).fill('a') }, 'mai_k', SB).ok).toBe(false)
   })

@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/session'
 import { rateLimits } from '@/lib/rate-limit'
-import { canEditOwnFile, validateOwnerEdit } from '@/lib/owner-edit'
+import { canEditOwnFile, isClusterTag, validateOwnerEdit } from '@/lib/owner-edit'
 
 /**
  * Claimed creators edit their own file. Server-enforced: session user must be the
- * approved claimant (canEditOwnFile). Bio, picture, link, handle, tags are writable.
- * Name and claim columns stay locked. Previous values are logged first.
+ * approved claimant (canEditOwnFile). Bio, picture, link, handle, vibe tags are writable.
+ * Name, claim columns, and cluster tags stay locked. Previous values are logged first.
  */
 export async function PATCH(req: NextRequest) {
   const session = await requireAuth(req)
@@ -40,6 +40,13 @@ export async function PATCH(req: NextRequest) {
     process.env.NEXT_PUBLIC_SUPABASE_URL ?? '',
   )
   if (!checked.ok) return NextResponse.json({ error: checked.error }, { status: 400 })
+
+  // Keep existing cluster tags. Owners edit vibe tags only.
+  if (checked.updates.tags) {
+    const existing = Array.isArray(row.tags) ? row.tags.filter((t): t is string => typeof t === 'string') : []
+    const clusters = existing.filter(isClusterTag)
+    checked.updates.tags = [...clusters, ...checked.updates.tags.filter(t => !isClusterTag(t))]
+  }
 
   // Keep the previous version first; if that can't be saved, don't edit.
   const prev = Object.fromEntries(Object.keys(checked.updates).map(k => [k, (row as Record<string, unknown>)[k] ?? null]))
@@ -79,12 +86,13 @@ export async function GET(req: NextRequest) {
     .maybeSingle()
   const canEdit = await canEditOwnFile(session.username, vtuberId, row)
   if (!canEdit || !row) return NextResponse.json({ canEdit: false })
+  const tags = Array.isArray(row.tags) ? row.tags.filter((t): t is string => typeof t === 'string' && !isClusterTag(t)) : []
   return NextResponse.json({
     canEdit: true,
     bio: row.bio ?? '',
     avatar_url: row.avatar_url ?? null,
     link: row.link ?? '',
     handle: row.handle ?? '',
-    tags: Array.isArray(row.tags) ? row.tags : [],
+    tags,
   })
 }
