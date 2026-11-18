@@ -80,10 +80,10 @@ export function Navbar() {
 
   return (
     <NavRgbGlitch>
-      <nav className="container mx-auto flex h-16 items-center px-4 gap-6">
+      <nav className="container mx-auto flex h-16 items-center px-4 gap-4">
 
         {/* Logo */}
-        <Link href="/" data-nav-glitch className="flex items-center gap-2 group shrink-0 mr-2">
+        <Link href="/" data-nav-glitch className="flex items-center gap-2 group shrink-0">
           <div className="relative flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-vault-gold to-vault-bronze">
             <span className="font-bold text-vault-deep text-lg">O</span>
             <div className="absolute inset-0 rounded-lg bg-vault-gold/20 opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -121,7 +121,7 @@ export function Navbar() {
         </div>
 
         {/* Right side */}
-        <div className="flex items-center gap-2 ml-auto">
+        <div className="flex items-center gap-1.5 ml-auto shrink-0">
           {/* Search — always visible */}
           <Button asChild variant="ghost" size="icon" className="text-muted-foreground hover:text-vault-cream">
             <Link href="/search" data-nav-glitch aria-label="Search"><Search className="h-5 w-5" /></Link>
@@ -129,11 +129,11 @@ export function Navbar() {
 
           {!loading && user ? (
             <>
-              {/* Coin balance */}
+              {/* Coin balance — hide below lg so More stays on screen */}
               <Link
                 href="/my-profile"
                 data-nav-glitch
-                className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-muted/50 border border-border hover:border-vault-gold/40 transition-colors"
+                className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-muted/50 border border-border hover:border-vault-gold/40 transition-colors"
               >
                 <div className="h-4 w-4 rounded-full bg-gradient-to-br from-vault-gold to-vault-amber" />
                 <span className="text-sm font-medium text-vault-cream tabular-nums">{user.coins.toLocaleString()}</span>
@@ -153,24 +153,24 @@ export function Navbar() {
               </Button>
 
               {/* Profile switcher (multi-claimed VTubers) */}
-              <div className="hidden md:flex">
+              <div className="hidden lg:flex">
                 <ProfileSwitcher />
               </div>
 
               {/* Shop */}
-              <Button asChild variant="ghost" size="icon" className="hidden md:flex text-muted-foreground hover:text-vault-cream">
+              <Button asChild variant="ghost" size="icon" className="hidden lg:flex text-muted-foreground hover:text-vault-cream">
                 <Link href="/shop" data-nav-glitch aria-label="Shop"><ShoppingBag className="h-5 w-5" /></Link>
               </Button>
 
               {/* Admin */}
               {user.isAdmin && (
-                <Button asChild variant="ghost" size="icon" className="hidden md:flex text-muted-foreground hover:text-vault-gold">
+                <Button asChild variant="ghost" size="icon" className="hidden lg:flex text-muted-foreground hover:text-vault-gold">
                   <Link href="/admin" data-nav-glitch aria-label="Admin"><Shield className="h-5 w-5" /></Link>
                 </Button>
               )}
 
               {/* Profile */}
-              <Button asChild variant="ghost" size="icon" className="hidden md:flex text-muted-foreground hover:text-vault-cream">
+              <Button asChild variant="ghost" size="icon" className="hidden lg:flex text-muted-foreground hover:text-vault-cream">
                 <Link href="/my-profile" data-nav-glitch aria-label="My Profile"><User className="h-5 w-5" /></Link>
               </Button>
             </>
@@ -183,7 +183,7 @@ export function Navbar() {
           )}
 
           {/* More dropdown for desktop */}
-          <div className="hidden md:relative md:flex">
+          <div className="hidden md:relative md:flex shrink-0">
             <details className="group">
               <summary data-nav-glitch className="flex items-center gap-1 px-3 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:text-vault-cream hover:bg-muted/50 active:bg-muted cursor-pointer list-none [&::-webkit-details-marker]:hidden">
                 More
