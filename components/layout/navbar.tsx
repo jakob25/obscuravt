@@ -36,11 +36,25 @@ const moreItems = [
   { href: '/forums',        label: 'Forums',         icon: MessageSquare  },
 ]
 
+// Tailwind md breakpoint — desktop nav shows, mobile menu must stay closed
+const MD_BREAKPOINT = 768
+
 export function Navbar() {
   const pathname = usePathname()
   const { user, loading } = useAuth()
   const [mobileOpen, setMobileOpen] = useState(false)
   const [unread, setUnread] = useState(0)
+
+  // Close the mobile menu the moment the viewport crosses into desktop.
+  // Prevents the stacked "two navs" state when the user resizes or rotates.
+  useEffect(() => {
+    const closeIfDesktop = () => {
+      if (window.innerWidth >= MD_BREAKPOINT) setMobileOpen(false)
+    }
+    closeIfDesktop()
+    window.addEventListener('resize', closeIfDesktop)
+    return () => window.removeEventListener('resize', closeIfDesktop)
+  }, [])
 
   // Let floating controls (the + button) step aside while the phone menu is open.
   useEffect(() => {
@@ -65,10 +79,10 @@ export function Navbar() {
 
   return (
     <NavRgbGlitch>
-      <nav className="container mx-auto flex h-16 items-center justify-between px-4">
+      <nav className="container mx-auto flex h-16 items-center justify-between px-4 flex-nowrap overflow-hidden">
 
         {/* Logo */}
-        <Link href="/" data-nav-glitch className="flex items-center gap-2 group">
+        <Link href="/" data-nav-glitch className="flex items-center gap-2 group shrink-0">
           <div className="relative flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-vault-gold to-vault-bronze">
             <span className="font-bold text-vault-deep text-lg">O</span>
             <div className="absolute inset-0 rounded-lg bg-vault-gold/20 opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -82,7 +96,7 @@ export function Navbar() {
         </Link>
 
         {/* Desktop Nav */}
-        <div className="hidden md:flex items-center gap-1">
+        <div className="hidden md:flex items-center gap-1 min-w-0">
           {navItems.map(({ href, label, icon: Icon }) => {
             const isActive = pathname === href || pathname?.startsWith(href + '/')
             return (
@@ -106,7 +120,7 @@ export function Navbar() {
         </div>
 
         {/* Right side */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           {/* Search — always visible */}
           <Button asChild variant="ghost" size="icon" className="text-muted-foreground hover:text-vault-cream">
             <Link href="/search" data-nav-glitch aria-label="Search"><Search className="h-5 w-5" /></Link>
