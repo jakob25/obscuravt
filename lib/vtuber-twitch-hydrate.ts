@@ -11,6 +11,15 @@ function needsFace(url: string | null | undefined): boolean {
   return /-profile_image-(70x70|150x150|300x300)/i.test(String(url))
 }
 
+/** Short original-batch IDs are vt_<login>. Newer ones are vt_<name>_<hex>. */
+function loginFromId(id: string): string | null {
+  const m = /^vt_([a-z0-9_]{3,25})$/i.exec(id)
+  if (!m) return null
+  const slug = m[1].toLowerCase()
+  if (/_[0-9a-f]{6}$/.test(slug)) return null
+  return slug
+}
+
 async function loginFromClips(profileId: string, name?: string | null): Promise<string | null> {
   const { data: byId } = await supabaseAdmin
     .from('clips')
@@ -66,6 +75,10 @@ async function applyHelixToRow(row: HydrateRow): Promise<boolean> {
   if (!profile?.login) {
     const fromClip = await loginFromClips(row.id, row.name)
     if (fromClip) profile = await helixUserProfile(fromClip)
+  }
+  if (!profile?.login) {
+    const fromId = loginFromId(row.id)
+    if (fromId) profile = await helixUserProfile(fromId)
   }
   if (!profile?.login && row.name) {
     const compact = String(row.name).toLowerCase().replace(/[^a-z0-9_]/g, '')
