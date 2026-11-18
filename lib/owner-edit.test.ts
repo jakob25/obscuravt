@@ -33,8 +33,21 @@ describe('owner edit rules', () => {
     expect(validateOwnerEdit({ avatar_url: `${mine}/../../x` }, 'mai_k', SB).ok).toBe(false)
   })
 
-  it('ignores every other field', () => {
-    const r = validateOwnerEdit({ bio: 'hi', ...( { name: 'X', link: 'https://x', tags: ['a'], claimed_by: 'z' } as object) }, 'mai_k', SB)
+  it('accepts a clean https link and a handle', () => {
+    const r = validateOwnerEdit({ link: 'https://twitch.tv/mai', handle: '@Mai_K' }, 'mai_k', SB)
+    expect(r).toEqual({ ok: true, updates: { link: 'https://twitch.tv/mai', handle: 'Mai_K' } })
+    expect(validateOwnerEdit({ link: 'http://nope' }, 'mai_k', SB).ok).toBe(false)
+    expect(validateOwnerEdit({ handle: 'bad handle!' }, 'mai_k', SB).ok).toBe(false)
+  })
+
+  it('accepts a short tag list and dedupes', () => {
+    const r = validateOwnerEdit({ tags: ['chill', ' horror ', 'chill'] }, 'mai_k', SB)
+    expect(r).toEqual({ ok: true, updates: { tags: ['chill', 'horror'] } })
+    expect(validateOwnerEdit({ tags: Array(13).fill('a') }, 'mai_k', SB).ok).toBe(false)
+  })
+
+  it('ignores name and claim columns', () => {
+    const r = validateOwnerEdit({ bio: 'hi', ...( { name: 'X', claimed_by: 'z' } as object) }, 'mai_k', SB)
     expect(r).toEqual({ ok: true, updates: { bio: 'hi' } })
     expect(validateOwnerEdit({}, 'mai_k', SB).ok).toBe(false)
   })
