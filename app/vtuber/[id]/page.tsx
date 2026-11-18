@@ -7,7 +7,6 @@ import {
 } from '@/components/vault/vault-surfaces'
 import { PageBackNav } from '@/components/vault/page-back-nav'
 import { ClaimProfileButton } from '@/components/vtuber/claim-profile-button'
-import { DossierEditButton } from '@/components/vtuber/dossier-edit-button'
 import { AddToCircleButton } from '@/components/vtuber/add-to-circle-button'
 import { NeedsHelpContribute } from '@/components/vtuber/needs-help-contribute'
 import { DossierClipSubmit } from '@/components/vtuber/dossier-clip-submit'
@@ -323,7 +322,6 @@ export default async function VTuberProfilePage({ params }: Props) {
                 ariaLabel={`Share ${vtuber.name}'s profile`}
                 className="px-4 py-1.5 text-xs border border-case-ink-dim hover:bg-case-ink-dim hover:text-case-paper-1 transition-colors"
               />
-              <DossierEditButton vtuberId={vtuber.id} claimedBy={vtuber.claimed_by ?? null} />
               <ClaimProfileButton
                 vtuberId={vtuber.id}
                 vtuberName={vtuber.name}
