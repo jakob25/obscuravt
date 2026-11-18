@@ -144,8 +144,8 @@ export function AddButton() {
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className={cn(
-          'bg-vault-dark border-border max-h-[90vh] overflow-y-auto',
-          tab === 'vtuber' ? 'max-w-3xl' : 'max-w-lg',
+          'bg-vault-dark border-border max-h-[90vh] overflow-y-auto resize',
+          tab === 'vtuber' ? 'max-w-3xl min-w-[32rem] min-h-[24rem]' : 'max-w-lg min-w-[24rem] min-h-[20rem]',
         )}>
           <DialogHeader>
             <DialogTitle className="text-vault-cream">
