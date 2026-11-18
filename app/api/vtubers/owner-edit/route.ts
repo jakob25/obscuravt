@@ -4,9 +4,9 @@ import { rateLimits } from '@/lib/rate-limit'
 import { canEditOwnFile, validateOwnerEdit } from '@/lib/owner-edit'
 
 /**
- * Claimed creators edit their own bio and picture. Server-enforced: session user must be the
- * approved claimant (canEditOwnFile). Only bio/avatar_url are written; the previous values
- * are logged first (automation_log, action 'owner_edit_prev') so an admin can roll back.
+ * Claimed creators edit their own file. Server-enforced: session user must be the
+ * approved claimant (canEditOwnFile). Bio, picture, link, handle, tags are writable.
+ * Name and claim columns stay locked. Previous values are logged first.
  */
 export async function PATCH(req: NextRequest) {
   const session = await requireAuth(req)
@@ -26,7 +26,7 @@ export async function PATCH(req: NextRequest) {
   const { supabaseAdmin } = await import('@/lib/supabase')
   const { data: row } = await supabaseAdmin
     .from('vtubers')
-    .select('id,bio,avatar_url,claimed_by,claim_approved_at')
+    .select('id,bio,avatar_url,link,handle,tags,claimed_by,claim_approved_at')
     .eq('id', vtuberId)
     .maybeSingle()
   if (!row) return NextResponse.json({ error: 'File not found.' }, { status: 404 })
@@ -35,7 +35,7 @@ export async function PATCH(req: NextRequest) {
   }
 
   const checked = validateOwnerEdit(
-    { bio: body.bio, avatar_url: body.avatar_url },
+    { bio: body.bio, avatar_url: body.avatar_url, link: body.link, handle: body.handle, tags: body.tags },
     session.username,
     process.env.NEXT_PUBLIC_SUPABASE_URL ?? '',
   )
@@ -65,7 +65,7 @@ export async function PATCH(req: NextRequest) {
   return NextResponse.json({ ok: true, updated: Object.keys(checked.updates) })
 }
 
-/** Current bio/picture and whether the signed-in user may edit this file. */
+/** Current fields and whether the signed-in user may edit this file. */
 export async function GET(req: NextRequest) {
   const session = await requireAuth(req)
   if (session instanceof NextResponse) return session
@@ -74,10 +74,17 @@ export async function GET(req: NextRequest) {
   const { supabaseAdmin } = await import('@/lib/supabase')
   const { data: row } = await supabaseAdmin
     .from('vtubers')
-    .select('id,bio,avatar_url,claimed_by,claim_approved_at')
+    .select('id,bio,avatar_url,link,handle,tags,claimed_by,claim_approved_at')
     .eq('id', vtuberId)
     .maybeSingle()
   const canEdit = await canEditOwnFile(session.username, vtuberId, row)
   if (!canEdit || !row) return NextResponse.json({ canEdit: false })
-  return NextResponse.json({ canEdit: true, bio: row.bio ?? '', avatar_url: row.avatar_url ?? null })
+  return NextResponse.json({
+    canEdit: true,
+    bio: row.bio ?? '',
+    avatar_url: row.avatar_url ?? null,
+    link: row.link ?? '',
+    handle: row.handle ?? '',
+    tags: Array.isArray(row.tags) ? row.tags : [],
+  })
 }
