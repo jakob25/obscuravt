@@ -3,13 +3,14 @@ import { renderToStaticMarkup } from 'react-dom/server'
 
 const db = vi.hoisted(() => ({
   artError: false,
+  music: false,
   calls: [] as string[],
   profile: { id: 'existing', name: 'Existing creator', approved: true, platform: 'YouTube', handle: 'existing', link: 'https://youtube.com/@existing', avatar_url: 'https://example.com/avatar.jpg', bio: 'Real field notes from the profile.', tags: [], claimed_by: 'owner' },
 }))
 vi.mock('@/lib/supabase', () => {
   function from(table: string) {
     db.calls.push(table)
-    const result = () => table === 'vtubers' ? { data: db.profile } : table === 'clips' ? { data: [{ id: 'clip', title: 'Existing clip', clip_url: 'https://youtu.be/existing', thumbnail_url: null }] } : table === 'fan_art' ? (db.artError ? { data: null, error: { message: 'Optional table unavailable' } } : { data: [{ id: 'art', image_url: 'https://example.com/art.jpg', twitter_url: 'javascript:alert(1)', submitted_by: 'fan' }] }) : table === 'niche_photo_posts' ? { data: [{ id: 'photo', post_url: 'https://x.com/someone/status/1234567890123456789', created_at: '2026-01-01T00:00:00Z' }] } : { data: [] }
+    const result = () => table === 'vtubers' ? { data: db.profile } : table === 'clips' ? { data: [{ id: 'clip', title: 'Existing clip', clip_url: 'https://youtu.be/existing', thumbnail_url: null }] } : table === 'fan_art' ? (db.artError ? { data: null, error: { message: 'Optional table unavailable' } } : { data: [{ id: 'art', image_url: 'https://example.com/art.jpg', twitter_url: 'javascript:alert(1)', submitted_by: 'fan' }] }) : table === 'producer_credits' ? { data: db.music ? [{ producer_id: 'pr_neon_abcdef' }] : [] } : table === 'producers' ? { data: db.music ? [{ id: 'pr_neon_abcdef', name: 'Neon Producer' }] : [] } : table === 'niche_photo_posts' ? { data: [{ id: 'photo', post_url: 'https://x.com/someone/status/1234567890123456789', created_at: '2026-01-01T00:00:00Z' }] } : { data: [] }
     const query: Record<string, unknown> = {}
     for (const method of ['select', 'eq', 'in', 'contains', 'order', 'limit', 'ilike']) query[method] = () => query
     query.single = () => Promise.resolve(result())
@@ -32,7 +33,7 @@ vi.mock('@/components/vault/page-back-nav', () => ({ PageBackNav: () => <a href=
 
 import VTuberProfilePage from '@/app/vtuber/[id]/page'
 
-beforeEach(() => { db.artError = false; db.calls.length = 0; db.profile.bio = 'Real field notes from the profile.' })
+beforeEach(() => { db.artError = false; db.music = false; db.calls.length = 0; db.profile.bio = 'Real field notes from the profile.' })
 
 describe('server-composed live dossier', () => {
   it('uses existing profile, clips and art records without inventing world tables or fictional content', async () => {
@@ -84,5 +85,15 @@ describe('server-composed live dossier', () => {
     expect(html).not.toContain('02 / 04 · Pictures')
     expect(html).toContain('01 / 03 · Profile')
     expect(html).not.toContain('https://x.com/someone/status/1234567890123456789')
+  })
+
+  it('shows a "Music by" line only for real producer credits, outside the dossier components', async () => {
+    const none = renderToStaticMarkup(await VTuberProfilePage({ params: Promise.resolve({ id: 'existing' }) }))
+    expect(none).not.toContain('Music by')
+    expect(none).not.toContain('data-music-by')
+    db.music = true
+    const html = renderToStaticMarkup(await VTuberProfilePage({ params: Promise.resolve({ id: 'existing' }) }))
+    expect(html).toContain('Music by')
+    expect(html).toMatch(/href="\/producer\/pr_neon_abcdef"[^>]*>Neon Producer</)
   })
 })

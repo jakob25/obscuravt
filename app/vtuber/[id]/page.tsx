@@ -31,6 +31,9 @@ import styles from '@/components/vtuber/dossier-folio.module.css'
 import { assignNicheCluster } from '@/lib/niche-assignment'
 import { nichePageKindFor } from '@/lib/dossier-niche-pages'
 import { wrapDisplayName } from '@/lib/wrap-display-name'
+import { MusicByLine } from '@/components/producer/music-by-line'
+import { boothHasProducers, producersForVtuber } from '@/lib/producers-server'
+import { STUDIO_NICHE_ID } from '@/lib/producers'
 
 const supabase = getSupabaseClient()
 
@@ -84,6 +87,8 @@ export default async function VTuberProfilePage({ params }: Props) {
 
   // Optional art can load alongside the existing identity/sidebar lookups.
   const dossierArtPromise = fetchDossierArt(id)
+  // "Music by" credits (producer files); a missing table just means no line.
+  const musicByPromise = producersForVtuber(id)
 
   const synced = await syncTwitchChannelIdentity({
     id: vtuber.id,
@@ -227,6 +232,9 @@ export default async function VTuberProfilePage({ params }: Props) {
   const { art: dossierArt, unavailable: artUnavailable } = await dossierArtPromise
   const { posts: dossierPictures } = await dossierPicturesPromise
   const showPicturesPage = dossierPictures.length > 0
+  const musicBy = await musicByPromise
+  // Door into The Booth for creators in The Studio niche, once it has producers.
+  const showBoothDoor = nicheClusterId === STUDIO_NICHE_ID && await boothHasProducers()
 
   const accessLine = vtuber.claimed_by ? DOSSIER.claimed : DOSSIER.unclaimed
   // Reuse the existing curated creator overview; otherwise quote the actual bio.
@@ -307,6 +315,7 @@ export default async function VTuberProfilePage({ params }: Props) {
                   </div>
                 )}
               </div>
+            <MusicByLine producers={musicBy} studioDoor={showBoothDoor} />
             <div className={styles.actions}>
               <Link
                 href={`/vtuber/${id}/fan-corner`}
