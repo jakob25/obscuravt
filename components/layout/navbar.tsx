@@ -79,10 +79,10 @@ export function Navbar() {
 
   return (
     <NavRgbGlitch>
-      <nav className="container mx-auto flex h-16 items-center justify-between px-4 gap-4">
+      <nav className="container mx-auto flex h-16 items-center px-4 gap-6">
 
         {/* Logo */}
-        <Link href="/" data-nav-glitch className="flex items-center gap-2 group shrink-0">
+        <Link href="/" data-nav-glitch className="flex items-center gap-2 group shrink-0 mr-2">
           <div className="relative flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-vault-gold to-vault-bronze">
             <span className="font-bold text-vault-deep text-lg">O</span>
             <div className="absolute inset-0 rounded-lg bg-vault-gold/20 opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -96,7 +96,7 @@ export function Navbar() {
         </Link>
 
         {/* Desktop Nav */}
-        <div className="hidden md:flex items-center gap-1 flex-nowrap">
+        <div className="hidden md:flex items-center gap-1">
           {navItems.map(({ href, label, icon: Icon }) => {
             const isActive = pathname === href || pathname?.startsWith(href + '/')
             return (
@@ -106,13 +106,13 @@ export function Navbar() {
                 data-nav-glitch
                 aria-current={isActive ? 'page' : undefined}
                 className={cn(
-                  'flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap',
+                  'flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
                   isActive
                     ? 'bg-vault-gold/10 text-vault-gold'
                     : 'text-muted-foreground hover:text-vault-cream hover:bg-muted/50'
                 )}
               >
-                <Icon className="h-4 w-4 shrink-0" />
+                <Icon className="h-4 w-4" />
                 {label}
               </Link>
             )
@@ -120,7 +120,7 @@ export function Navbar() {
         </div>
 
         {/* Right side */}
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-2 ml-auto">
           {/* Search — always visible */}
           <Button asChild variant="ghost" size="icon" className="text-muted-foreground hover:text-vault-cream">
             <Link href="/search" data-nav-glitch aria-label="Search"><Search className="h-5 w-5" /></Link>
