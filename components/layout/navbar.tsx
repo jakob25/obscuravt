@@ -8,7 +8,7 @@ import {
   Menu, X, Compass, Film, Trophy, User,
   LogIn, TrendingUp, Shield, Search, Gamepad2, Gift,
   Bell, ShoppingBag, Calendar, Zap, Eye, MessageSquare, LayoutDashboard,
-  Users, Star, HelpCircle, ChevronDown,
+  Users, Star, HelpCircle, ChevronDown, Activity,
 } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/lib/auth-context'
@@ -16,14 +16,15 @@ import { ProfileSwitcher } from '@/components/profile/profile-switcher'
 import { NavRgbGlitch } from '@/components/vault/nav-rgb-glitch'
 
 const navItems = [
-  { href: '/discover',       label: 'Discover',      icon: Compass    },
+  { href: '/pulse',          label: 'Pulse',          icon: Activity   },
+  { href: '/discover',       label: 'Discover',       icon: Compass    },
   { href: '/clips',          label: 'Clips',          icon: Film       },
   { href: '/bets',           label: 'Bets',           icon: Trophy     },
-  { href: '/resources',      label: 'Stream Resources', icon: Gamepad2 },
   { href: '/leaderboard',    label: 'Leaderboard',    icon: TrendingUp },
 ]
 
 const moreItems = [
+  { href: '/resources',     label: 'Stream Resources', icon: Gamepad2  },
   { href: '/weekly',        label: 'Weekly Digest',  icon: Calendar       },
   { href: '/collab',        label: 'Collab',         icon: Users          },
   { href: '/nominator',     label: 'Nominator',      icon: Star           },
