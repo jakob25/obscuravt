@@ -15,7 +15,9 @@ export async function GET(req: NextRequest) {
     .limit(limit)
 
   if (error) {
-    if (error.code === '42P01') {
+    // 42P01 = undefined table (Postgres)
+    // PGRST205 = relation not found in schema cache (PostgREST)
+    if (error.code === '42P01' || error.code === 'PGRST205' || /schema cache/i.test(error.message ?? '')) {
       return NextResponse.json({ entries: [], migrationRequired: true })
     }
     return NextResponse.json({ error: error.message }, { status: 500 })
