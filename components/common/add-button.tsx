@@ -98,15 +98,15 @@ export function AddButton() {
         className={`fixed bottom-[calc(1rem+env(safe-area-inset-bottom))] sm:bottom-6 right-4 sm:right-6 z-50 flex-col items-end gap-2 transition-[translate,opacity] duration-300 ease-out motion-reduce:transition-none [html[data-mobile-nav-open]_&]:hidden ${tucked && !menuOpen ? 'max-sm:pointer-events-none max-sm:translate-y-[calc(100%+2rem)] max-sm:opacity-0' : ''} ${hideFabOnMobile ? 'hidden sm:flex' : 'flex'}`}
       >
         {menuOpen && (
-          <div className="flex flex-col gap-2 mb-1">
-            {tabs.map(t => {
+          <div className="flex flex-col gap-2 mb-1 origin-bottom">
+            {tabs.map((t, i) => {
               const Icon = t.icon
               return (
                 <button
                   key={t.id}
                   onClick={() => openTab(t.id)}
-                  className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-vault-dark border border-vault-gold/30 text-vault-cream text-sm font-medium shadow-xl hover:bg-vault-gold/10 hover:border-vault-gold/60 transition-all whitespace-nowrap"
-                  style={{ animation: 'slideUp 0.15s ease both' }}
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-vault-dark border border-vault-gold/30 text-vault-cream text-sm font-medium shadow-xl hover:bg-vault-gold/10 hover:border-vault-gold/60 transition-all whitespace-nowrap origin-bottom"
+                  style={{ animation: `fabIn 0.18s ease ${i * 0.04}s both`, transformOrigin: 'bottom right' }}
                 >
                   <Icon className="h-4 w-4 text-vault-gold" />
                   {t.label}
@@ -190,9 +190,9 @@ export function AddButton() {
       </Dialog>
 
       <style>{`
-        @keyframes slideUp {
-          from { opacity: 0; transform: translateY(8px); }
-          to   { opacity: 1; transform: translateY(0); }
+        @keyframes fabIn {
+          from { opacity: 0; transform: scale(0.6) translateY(8px); }
+          to   { opacity: 1; transform: scale(1) translateY(0); }
         }
       `}</style>
     </>
