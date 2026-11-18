@@ -16,7 +16,7 @@ export interface SessionPayload {
   exp: number
 }
 
-// ── Sign a new session token ──────────────────────────────────────────────────
+// ── Sign a new session token ───────────────────────────────────────────────────────
 export async function signSession(username: string, role: string | null): Promise<string> {
   return new SignJWT({ username, role })
     .setProtectedHeader({ alg: 'HS256' })
@@ -25,7 +25,7 @@ export async function signSession(username: string, role: string | null): Promis
     .sign(SECRET)
 }
 
-// ── Verify and decode a session token ────────────────────────────────────────
+// ── Verify and decode a session token ────────────────────────────────────────────
 export async function verifySession(token: string): Promise<SessionPayload | null> {
   try {
     const { payload } = await jwtVerify(token, SECRET)
@@ -35,14 +35,14 @@ export async function verifySession(token: string): Promise<SessionPayload | nul
   }
 }
 
-// ── Get session from request cookie ──────────────────────────────────────────
+// ── Get session from request cookie ──────────────────────────────────────────────────────
 export async function getSession(req: NextRequest): Promise<SessionPayload | null> {
   const token = req.cookies.get(COOKIE_NAME)?.value
   if (!token) return null
   return verifySession(token)
 }
 
-// ── Require auth — returns session or 401 response ───────────────────────────
+// ── Require auth — returns session or 401 response ─────────────────────────────
 export async function requireAuth(req: NextRequest): Promise<SessionPayload | NextResponse> {
   const session = await getSession(req)
   if (!session) {
@@ -52,11 +52,18 @@ export async function requireAuth(req: NextRequest): Promise<SessionPayload | Ne
 }
 
 // ── Admin usernames (single server-side list) ────────────────────────────────
+/** Owner is always admin even if ADMIN_USERNAMES env is set to something else. */
+const ALWAYS_ADMIN = 'BLUJAYRX'
+
 export function adminUsernames(): string[] {
-  return (process.env.ADMIN_USERNAMES ?? 'BLUJAYRX')
+  const fromEnv = (process.env.ADMIN_USERNAMES ?? '')
     .split(',')
     .map(s => s.trim())
     .filter(Boolean)
+  const merged = fromEnv.some(n => n.toLowerCase() === ALWAYS_ADMIN.toLowerCase())
+    ? fromEnv
+    : [...fromEnv, ALWAYS_ADMIN]
+  return merged
 }
 
 /** Server-side check against ADMIN_USERNAMES. Never trust a client-sent isAdmin flag. */
@@ -76,7 +83,7 @@ export async function requireAdmin(req: NextRequest): Promise<SessionPayload | N
   return session
 }
 
-// ── Set session cookie on a response ─────────────────────────────────────────
+// ── Set session cookie on a response ───────────────────────────────────────────────
 export function setSessionCookie(res: NextResponse, token: string): NextResponse {
   // Session cookie: no maxAge/expires — cleared when the browser closes
   res.cookies.set(COOKIE_NAME, token, {
@@ -88,7 +95,7 @@ export function setSessionCookie(res: NextResponse, token: string): NextResponse
   return res
 }
 
-// ── Clear session cookie ──────────────────────────────────────────────────────
+// ── Clear session cookie ──────────────────────────────────────────────────────────
 export function clearSessionCookie(res: NextResponse): NextResponse {
   res.cookies.set(COOKIE_NAME, '', {
     httpOnly: true,
