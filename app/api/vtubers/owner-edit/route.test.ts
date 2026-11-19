@@ -46,7 +46,7 @@ describe('PATCH /api/vtubers/owner-edit', () => {
 
   it('logs the previous bio, then writes only the bio', async () => {
     const { PATCH } = await import('./route')
-    const res = await PATCH(patch({ vtuberId: 'vt_1', bio: 'new bio', name: 'Hacked', link: 'https://evil', tags: ['x'], is_claimed: false }))
+    const res = await PATCH(patch({ vtuberId: 'vt_1', bio: 'new bio', name: 'Hacked', is_claimed: false, claimed_by: 'someone_else' }))
     expect(res.status).toBe(200)
     expect(ops[0]).toMatchObject({ table: 'automation_log', op: 'insert' })
     expect(JSON.parse((ops[0].payload as { tag: string }).tag).prev).toEqual({ bio: 'old bio' })

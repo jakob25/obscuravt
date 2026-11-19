@@ -55,7 +55,7 @@ describe('ClaimProfileButton', () => {
     await setup()
     auth.user = { username: 'Pipuru', role: 'VTuber' }
     await mount({ claimedBy: 'Pipuru', approved: true })
-    expect(host.textContent).toContain('You manage this profile')
+    expect(host.textContent).toContain('Edit')
 
     await act(async () => root.unmount())
     host.remove()

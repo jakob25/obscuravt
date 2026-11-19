@@ -462,7 +462,12 @@ export default async function VTuberProfilePage({ params }: Props) {
           }
           art={<DossierArtSheet art={dossierArt} unavailable={artUnavailable} vtuberId={vtuber.id} />}
         />
-        <SilhouetteAssetPanel vtuberId={vtuber.id} />
+        <SilhouetteAssetPanel
+          vtuberId={vtuber.id}
+          vtuberName={vtuber.name}
+          claimedBy={vtuber.claimed_by ?? null}
+          initialSilhouetteUrl={vtuber.silhouette_url ?? null}
+        />
       </div>
     </div>
   )
